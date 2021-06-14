@@ -1,0 +1,21 @@
+Program Structure
+Assembly
+Data Types
+Type Conversion (Type Casting)
+Nullables 
+The Null Coalescing Operator (??)
+Preprocessor Directives 
+Exception Handling 
+File I/O
+Modifiers
+Difference between IEnumerable and IEnumerator 
+Polymorphism
+Inheritance
+Encapsulation
+Access modifiers
+Abstract
+virtual functions
+Static
+Passing Parameters (value, reference, output, params, optional & named)
+Strings
+Arrays

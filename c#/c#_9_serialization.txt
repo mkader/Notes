@@ -1,0 +1,380 @@
+Serialization 
+	- Serialization is the process of converting an object into a stream of bytes. 
+	  From that stream, it can be stored in a database, a file, or memory.
+  	- Object -> Bytes -> (DB Or Memory or File)	  
+	- A stream, contains the data & also the object's type, such as its version, culture, and assembly name. 
+	- Uses for Serialization
+		- it allows to save the state of an object and recreate it as needed, 
+		  providing storage of objects as well as data exchange. 
+		- Through serialization, can perform actions like sending the object to a remote application(Web Service).
+	- System.Runtime.Serialization
+	- Types of Serialization
+		- Binary Serialization uses binary encoding to produce compact serialization for uses 
+		  such as storage or socket-based network streams. (Serializable, SerializableAttribute, ISerializable)
+		- XML serialization provides more readable code	(XmlSerializer)
+		- Data Contract serialization (DataContractAttribute,  DataMemberAttribute, DataContractSerializer)
+	- 2 Ways Serialization
+		- Basic Serialization -  it uses the .NET Framework to automatically serialize the object. 
+		  'SerializableAttribute' will serialized, 'NonSerializedAttribute' not 
+		- Custom Serialization - can specify exactly which objects will be serialized and how it will be done. 
+		  The class must be marked SerializableAttribute and implement the ISerializable interface.
+
+	- Designer Serialization (?) - is a special form of serialization that involves the kind of object persistence 
+	  usually associated with development tools. Designer serialization is the process of converting an object 
+	  graph into a source file that can later be used to recover the object graph. 
+	  A source file can contain code, markup, or even SQL table information. 
+	  
+	- Choosing the Right Serialization Technology to Support
+		- Data contract serialization - if instances of your type might need to be persisted or used in Web Services.
+		- XML serialization - if you need more control over the XML format that is produced when the type is serialized.
+		- Runtime serialization (Binary and SOAP) - if instances of your type need to travel across .NET Remoting boundaries.
+		- AVOID supporting runtime serialization or XML serialization just for general persistence reasons. 
+		  Prefer data contract serialization instead	  
+	- XmlSerializer ser = new XmlSerializer(typeof(DataSet)); - Serializing a DataSet
+	- XmlSerializer ser = new XmlSerializer(typeof(XmlElement));
+	- XmlSerializer ser = new XmlSerializer(typeof(XmlNode));
+Deserialization
+	- the reverse process of Serialization
+	- (DB Or Memory or File) -> Bytes -> Object	  
+	
+
+RunTime  Serialization - Binary
+--------------------
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
+namespace ConApp
+{
+    [Serializable]
+    class MyObject
+    {
+        public int i = 0;
+        [NonSerialized]
+        public double d = 0; // it can be created in xml or bin. it's called Selective Serialization
+        public string s = null;
+    }
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            SerializeMethod();
+            DeSerializeMethod();
+            Console.Read();
+        }
+
+        static void SerializeMethod()
+        {
+            MyObject mo = new MyObject();
+            mo.i = 10;
+            mo.s = "Testing";
+	    mo.d =123.12;
+	    
+            IFormatter f = new BinaryFormatter();
+            Stream s = new FileStream(@"C:\Users\kadermxabq\Downloads\MyFile.bin", FileMode.Create, FileAccess.Write, FileShare.None);
+            f.Serialize(s, mo);
+            s.Close();
+        }
+
+        static void DeSerializeMethod()
+        {
+            MyObject m = new MyObject();
+            IFormatter f = new BinaryFormatter();
+            Stream s = new FileStream(@"C:\Users\kadermxabq\Downloads\MyFile.bin", FileMode.Open, FileAccess.Read, FileShare.None);
+            m = (MyObject)f.Deserialize(s);
+            s.Close();
+
+            Console.WriteLine(m.i + "  "+ m.s + "  " + m.d);
+        }
+    }
+}
+    ÿÿÿÿ          =ConApp, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null   ConApp.MyObject   is    
+      Testing
+   
+RunTime Serialization - Soap
+-----------------------------
+using System.Runtime.Serialization.Formatters.Soap;
+IFormatter f = new SoapFormatter();
+Stream s = new FileStream(@"C:\Users\kadermxabq\Downloads\MyFile.xml", FileMode.Create, FileAccess.Write, FileShare.None);
+f.Serialize(s, mo);
+s.Close();
+
+IFormatter f = new SoapFormatter();
+Stream s = new FileStream(@"C:\Users\kadermxabq\Downloads\MyFile.xml", FileMode.Open, FileAccess.Read, FileShare.None);
+m = (MyObject)f.Deserialize(s);
+
+<SOAP-ENV:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:clr="http://schemas.microsoft.com/soap/encoding/clr/1.0" SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<SOAP-ENV:Body>
+<a1:MyObject id="ref-1" xmlns:a1="http://schemas.microsoft.com/clr/nsassem/ConApp/ConApp%2C%20Version%3D1.0.0.0%2C%20Culture%3Dneutral%2C%20PublicKeyToken%3Dnull">
+<i>10</i>
+<s id="ref-3">Testing</s>
+</a1:MyObject>
+</SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
+
+
+The Serializable attribute cannot be inherited. throw error, must be [Serializable]
+-----------------------------------------------------------------------------------
+class MyStuff : MyObject
+{
+	public double d = 0;
+}
+
+MyStuff mo = new MyStuff();
+mo.i = 10;
+mo.s = "Testing";
+mo.d = 123.12;
+
+IFormatter f = new SoapFormatter();
+Stream s = new FileStream(@"C:\Users\kadermxabq\Downloads\MyFile.xml", FileMode.Create, FileAccess.Write, FileShare.None);
+f.Serialize(s, mo); // throw error
+s.Close();
+
+Data Contract Serialization
+---------------------------
+	- Constructors are not called when objects are deserialized. 
+	    
+	- KnownTypeAttribute used when deserializing a complex object graph. 
+	  For example, if a type of a deserialized data member is represented by an abstract class, the serializer will 
+	  need the known type information
+	    // The KnownTypeAttribute specifies types to be used during serialization.
+	    [KnownType(typeof(USAddress))]
+	    [DataContract]
+	    class Person4
+	    {
+		[DataMember]
+		string fullNameValue;
+		[DataMember]
+		Address address; // Address is abstract
+
+		public Person4(string fullName, Address address)
+		{
+		    this.fullNameValue = fullName;
+		    this.address = address;
+		}
+
+		public string FullName
+		{
+		    get { return fullNameValue; }
+		}
+	    }
+
+	    [DataContract]
+	    public abstract class Address
+	    {
+		public abstract string FullAddress { get; }
+	    }
+
+	    [DataContract]
+	    public class USAddress : Address
+	    {
+		[DataMember]
+		public string Street { get; set; }
+		[DataMember]
+		public string zip { get; set; }
+		
+		public override string FullAddress
+		{
+		    get
+		    {
+			return Street + zip;
+		    }
+		}
+	    }	  
+
+data contractor example 1 - memory stream
+--------------------------
+using System.Runtime.Serialization;
+using System.IO;
+using System.Xml.Linq;
+namespace ConApp
+{
+    [DataContract]
+    class MyObject
+    {
+        [DataMember]
+        public int id {get;set;}
+        public double price { get; set; } //not serialized
+        [DataMember]
+        public string name {get;set;}
+    }
+
+    class Program
+    {
+        static MemoryStream s = new MemoryStream();
+        static void Main(string[] args)
+        {
+            SerializeMethod();
+            DeSerializeMethod();
+            s.Close();
+            Console.Read();
+        }
+
+        static void SerializeMethod()
+        {
+            MyObject mo = new MyObject();
+            mo.id= 10;
+            mo.name = "Testing";
+            mo.price = 123.12;
+
+            DataContractSerializer f = new DataContractSerializer(mo.GetType());//typeof(MyObject)); 
+            //Stream s = new MemoryStream();
+            f.WriteObject(s, mo);
+        }
+
+        static void DeSerializeMethod()
+        {
+            MyObject m = new MyObject();
+
+            DataContractSerializer r = new DataContractSerializer(m.GetType());
+            s.Seek(0, SeekOrigin.Begin);
+            Console.WriteLine(XElement.Parse(Encoding.ASCII.GetString(s.GetBuffer()).Replace("\0", "")));
+            //<MyObject xmlns=\"http://schemas.datacontract.org/2004/07/ConApp\" xmlns:i=\"http://www.w3.org/2001/XMLSchema-instance\"><id>10</id><name>Testing</name></MyObject>
+        }
+    }
+}	    
+
+data contractor example 2 - file with OnDeserialized
+--------------------------
+using System.Runtime.Serialization;
+using System.IO;
+namespace ConApp
+{
+    [DataContract]
+    class MyObject
+    {
+        [DataMember] //tag <first> or  [DataMember(Name="FirstName")] tag <FirstName>
+        public string first { get; set; }
+        [DataMember]
+        public string last { get; set; }
+        public string name { get; set; } //not serialized
+
+        // This constructor is not called during deserialization.
+        public MyObject(string first, string last)
+        {
+            this.first = first;
+            this.last = last;
+            this.name = first + " " + last;
+        }
+
+        // This method is called after the object is completely deserialized. Use it instead of the constructror.
+        [OnDeserialized]
+        void OnDeserialized(StreamingContext c)
+        {
+            this.name = this.first + " " + this.last;
+        }
+    }
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            SerializeMethod();
+            DeSerializeMethod();
+            Console.Read();
+        }
+
+        static void SerializeMethod()
+        {
+            MyObject mo = new MyObject("f", "l");
+            Console.WriteLine(mo.name);
+            
+            DataContractSerializer f = new DataContractSerializer(mo.GetType());
+            Stream s = new FileStream(@"C:\Users\kadermxabq\Downloads\MyFile.xml", FileMode.Create, FileAccess.Write, FileShare.None);
+            f.WriteObject(s, mo);
+            s.Close();
+        }
+
+        static void DeSerializeMethod()
+        {
+            
+            DataContractSerializer r = new DataContractSerializer(typeof(MyObject));
+            Stream s = new FileStream(@"C:\Users\kadermxabq\Downloads\MyFile.xml", FileMode.Open, FileAccess.Read, FileShare.None);
+            MyObject m = (MyObject)r.ReadObject(s);
+
+            Console.WriteLine(m.first + " " + m.last + " " + m.name);
+            s.Close();
+        }
+    }
+}
+//<MyObject xmlns="http://schemas.datacontract.org/2004/07/ConApp" xmlns:i="http://www.w3.org/2001/XMLSchema-instance"><first>f</first><last>l</last></MyObject>
+
+XML Serialization Example
+--------------------------
+using System.Xml.Serialization;
+using System.IO;
+namespace ConApp
+{
+    public class MyObject
+    {
+        [System.Xml.Serialization.XmlAttribute]
+        public string first { get; set; }
+        [System.Xml.Serialization.XmlElement(ElementName="LastName")]  //Controlling XML Serialization Using Attributes
+        public string last { get; set; }
+    }
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            SerializeMethod();
+            DeSerializeMethod();
+            Console.Read();
+        }
+
+        static void SerializeMethod()
+        {
+            MyObject m = new MyObject();
+            m.first = "f";
+            m.last = "f";
+
+            XmlSerializer f = new XmlSerializer(m.GetType());
+            Stream s = new FileStream(@"C:\Users\kadermxabq\Downloads\MyFile.xml", FileMode.Create, FileAccess.Write, FileShare.None);
+            f.Serialize(s, m);
+            s.Close();
+        }
+
+        static void DeSerializeMethod()
+        {
+
+            XmlSerializer r = new XmlSerializer(typeof(MyObject));
+            Stream s = new FileStream(@"C:\Users\kadermxabq\Downloads\MyFile.xml", FileMode.Open, FileAccess.Read, FileShare.None);
+            MyObject m = (MyObject)r.Deserialize(s);
+
+            Console.WriteLine(m.first + " " + m.last );
+        }
+    }
+}
+
+
+Version Tolerant Serialization
+------------------------------
+// Version 1 of the Address class.  
+[Serializable]  
+public class Address  
+{  
+    public string Street;  
+    public string City;  
+}  
+// Version 2.0 of the Address class.  
+[Serializable]  
+public class Address  
+{  
+    public string Street;  
+    public string City;  
+    // The older application ignores this data.  
+    public string CountryField;  
+}   
+
+replace 
+[Serializable]  
+public class Address  
+{  
+    public string Street;  
+    public string City;  
+  
+    [OptionalField]  
+    public string CountryField;  
+    
+    [OptionalField(VersionAdded = 2)]  
+    public string CountryField; 
+}

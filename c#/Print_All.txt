@@ -1,0 +1,1014 @@
+Program Structure
+-----------------
+Framework - Reusable library (dll), jit compiling source code to machine language & running.
+IDE - Integrated Development Enviroment - tools which helps us make our development life easy, write syntax, compile, run
+
+//the using keyword is used to include the System namespace in the program.
+using System;  //the namespace declaration. A namespace is a collection of classes. 
+//The HelloWorldApplication namespace contains the class HelloWorld.
+namespace HelloWorldApp { class HelloWorld { void Print() { }  } }
+
+Assembly
+	- it is pre compiled .net code which can be run by the CLR
+	- it can be either EXE or DLL ( Dynamic Link Library).
+	- it contains code, config, assembly -> compile -> Assembly (Single unit)
+	- EXE is running in is own memory address
+	- DLL will run inside some other memory address, means needs a consumer to invoke
+
+Data Types
+----------
+	Value types - value type variables can be assigned a value directly. (int, bool, char, ...)
+		- get the exact size of a type or a variable - sizeof(int)	
+	Reference types 
+		- the data not stored in a variable, but it contain a reference to the variables, means it refer to a memory location. 
+		- Using multiple variables, If the data in the memory location is changed by one of the variables, the other variable automatically reflects this change in value.
+		- object, dynamic, and String.
+		- object obj = 100; //it will assign at comiple time (strongly typed)
+		- dynamic d = 100; //it will assign at run time (dynamically typed)
+		  try =>  dynamic x = "c#";  x++; => the code will compile, but during runtime it will throw an exception.
+		  
+		- String s ="C# code"; or @"c# code";
+		
+		- var i = 10; => (type 'i',it looks right side & says, this 'i' is an integer automatically.)
+		  Var keywords looks at the data from right and then decides the datatype during compile time.
+		  		  
+		  When should we use the VAR keyword? 
+		  Use the VAR keyword when we cannot guess what kind of data can 
+		  come from the right hand side, for example linq  var  x= (from i in emps select new())
+		  to generate new anonymous type,   without defining custom type.
+		  
+		  do not use var for primitive datatypes(int,bool, decimal).
+		  do not use var keyword when you know the data type.
+		  
+		  Difference between Var and Dynamic
+		  var is statically typed (early bounded), Dynamic is late bounded or checked on runtime.
+		  var x "string"; int l = x.Length (type x. intelligence coming up, so it knew the data type)
+		  
+		  dynamic y "string"; int m = y.Length (type y. intelligence won't come up, bcaz it doesn't data type)
+		  when you run, the line of int l, it use reflection internally and tries to figure out 
+		  if that is a property called us length and then it tries to invoke it.
+		  
+		  yield - it help us to do custom & stateful iteration over a collection. yield break - to end the iteration.
+		  -----
+		    List<int> l = new List<int>();  l.Add(20);l.Add(21);  l.Add(22); l.Add(23); l.Add(24);  l.Add(25);
+
+		    //foreach (int i in l) Console.WriteLine(i);
+		    //foreach (int i in FilterWithTemp(l)) Console.WriteLine(i);
+
+		    //custom iteration example
+		    //foreach (int i in FilterWithoutTemp(l)) Console.WriteLine(i);
+		    /*FilterWithoutTemp, i=1,2,3,4 check 4>3=true, back to main function, print 4, 
+		      retun back to FilterWithoutTemp, start from 5.*/
+		      
+		    //stateful iteration
+		    foreach (int i in RunningTotal(l)) Console.WriteLine(i);
+
+		//filtering with out a temp collection
+		static IEnumerable<int> FilterWithTemp(List<int> l) {
+		    List<int> t = new List<int>();
+		    foreach (int i in l) if (i > 3) t.Add(i);
+		    return t;
+		}
+
+		static IEnumerable<int> FilterWithoutTemp(List<int> l) {
+		    foreach (int i in l)if (i > 3) yield return i;
+		}
+
+		static IEnumerable<int> RunningTotal(List<int> l) {
+		    int t = 0; //this value has to be preserved
+		    foreach (int i in l) { yield return t += i;  }
+        	}
+		
+	Pointer types (Unsafe Codes) - store the memory address of another type. char* cptr;
+		
+Type Conversion (Type Casting)
+----------------------------
+  - converting one type of data to another type, 2 forms
+  - Implicit type conversion
+  	- performed by in a type-safe
+  	- int i = 123456789;
+  	  long l = il
+  	- Derived d = new Derived();
+  	  Base b = d;
+  - Explicit type conversion
+  	- conversions are done explicitly  by users using the pre-defined functions. Explicit conversions require a cast operator. 
+  	- double d = 1234.67;
+  	  int i= (int)d; // 1234
+  - type coversion methods -   ToBolean, ToByte, ToChar, ToString()
+  	- int i = 75; i.ToString();  
+  	
+Nullables - a special data types, to which you can assign normal range of values as well as null values.  
+---------
+	int? num1 = null; //
+	int? num2 = 45; //45
+	double? num3 = new double?(); //
+	double? num4 = 3.14157; //3.14157
+	bool? boolval = new bool?(); //
+
+The Null Coalescing Operator (??)  - If the value of the 1st null, then the 2nd return, otherwise return 1st value
+--------------------------------
+	double? num1 = null; 
+	double? num2 = 3.14157;
+	double num3 = num1 ?? 5.34;  //     5.34  
+	num3 = num2 ?? 5.34; //3.14157
+
+Namespace - The class names declared in one namespace does not conflict with the same class names declared in another.	
+---------
+      first_space.namespace_cl fc = new first_space.namespace_cl().func();  
+      second_space.namespace_cl sc = new second_space.namespace_cl().func(); /not conflict
+        
+      Nested Namespaces - access members of nested namespace by using the dot (.) operator
+      ------------------
+	using first_space;
+	using first_space.second_space;
+        
+Preprocessor Directives - give instruction to the compiler to preprocess the information before actual compilation starts.
+-----------------------
+ - #define, #undef, #warning, #error, #if, #elif, #endif, #endregion
+      #define DEBUG 
+      #define MYTEST
+      //#define TRACE  
+      #undef TRACE  
+        
+	#if (DEBUG && !MYTEST)  
+		Console.WriteLine("DEBUG is defined");  
+		#warning DEBUG is defined
+		#error DEBUG is defined 
+	#elif (DEBUG && MYTEST)  
+		Console.WriteLine("DEBUG and MYTEST are defined");  
+	#else  
+		Console.WriteLine("DEBUG and MYTEST are not defined");  
+	#endif  
+
+Exception Handling - It is built upon four keywords: try, catch, finally, and throw.
+------------------
+	try {}: block of codes.
+	catch ( ExceptionName e1 ){ thorw e1 }: it will catch an exception with an exception handler
+	finally {}: it is used to execute a given statements, whether an exception is thrown or not thrown. 
+         For example, if you open a file, it must be closed whether an exception is raised or not.
+	throw: A program throws an exception when a problem shows up. This is done using a throw keyword.
+	User-Defined Exceptions - you can create
+
+File I/O
+--------
+  BinaryReader, BinaryWriter	- Reads/Writes data from a binary stream.
+  StreamReader, StreamWriter	- Reads/Writes characters  from a byte stream.
+  StringReader, StringWriter	- Reads/Writes from a string  buffer.
+  Directory, DirectoryInfo, DriveInfo, File, FileInfo, FileStream, Path
+  
+ FileStream F = new FileStream("sample.txt", FileMode.Open, FileAccess.Read, FileShare.Read);
+ FileMode  Create, Open, Append (opens an existing file and puts cursor at the end of file, or creates the file, if not exist.),
+ 	Truncate (It opens an existing file and truncates its size to zero bytes.)
+ FileAccess - Read, ReadWrite, Write.
+ FileShare  - Inheritable, None, Read, ReadWrite, Write (It allows opening the file for writing)
+ 
+
+Modifiers 
+---------
+	Access Modifiers - see 'c#_2_oops.txt(230): Access modifiers'
+	abstract, async, const, event, extern, in, out, override, readonly, sealed, static, unsafe, virtual, volatile
+
+Difference between IEnumerable and IEnumerator - both help's you to loop through collection
+----------------------------------------------
+	- IEnumerator, do move next & use the current element to access
+	- Actually IEnumerable uses internally IEnumerator interface, see //ie.GetEnumerator has IEnumerator function
+	    IEnumerable<int> ie = (IEnumerable<int>)l;
+	    foreach (int i in ie)Console.WriteLine(i);
+
+	    IEnumerator<int> ir = l.GetEnumerator();
+	    while(ir.MoveNext()) Console.WriteLine(ir.Current.ToString());
+	
+	- the main difference between IEnumerable and IEnumerator is cursor states, 
+	- IEnumerable does not remember currently which row is currently rating through while IEnumerator does
+	- IEnumerator is good fit where you want to pass that enumerator from one function to other function
+	  and you want remember till at what position the current cursor is
+
+	    while (ir.MoveNext())   {
+		Console.WriteLine("FR " + ir.Current.ToString());
+		if (ir.Current > 22)  RemainingRow(ir);
+	    }
+
+	static void RemainingRow(IEnumerator<int> ir)	{
+	    while (ir.MoveNext())	    {
+		Console.WriteLine("RR " + ir.Current.ToString());
+	    }
+        output = > FR 20 - FR 21 - FR 22 - FR 23 - RR 24 - RR 25
+        
+        IEnumerable<int> ie = (IEnumerable<int>)l;
+	StartFirstRow(ie);
+
+	static void StartFirstRow(IEnumerable<int> ie)	{
+	    foreach (int i in ie)	    {
+		Console.WriteLine("FR " + i);
+		if (i > 22)   RemainingRow(ie);
+	    }
+	}
+
+	static void RemainingRow(IEnumerable<int> ie)	{
+	    foreach (int i in ie) { Console.WriteLine("RR* " + i); }
+        }
+        FR 20 - FR 21 - FR 22 - FR 23 - {RR* 20 - RR* 21 - RR* 22 - RR* 23 - RR* 24 - RR* 25} - FR 24 - {}...
+
+
+Polymorphism  - Polymorphism can be static or dynamic.	
+------------
+- In static polymorphism, ti ii decideed at the compile time (called early binding or static binding). 
+	- 1 Function overloading - same function name in the same scope with differ from data types and/or the nubmer of arguments
+		void print(int i), void print(double f), void print(string s)
+	- 2 Operator Overloading - define the keyword operator followed by the symbol for the operator
+		 public class OpClass   {
+			public int num;
+
+			public static OpClass operator +(OpClass a, OpClass b){
+				OpClass opc = new OpClass();
+				opc.num = a.num + b.num; //add 2 number and return new OpClass
+				return opc;
+			}
+
+			public static OpClass operator *(OpClass a, OpClass b)	{
+			    OpClass opc = new OpClass();
+			    opc.num = a.num * b.num; //add 2 number and return new OpClass
+			    return opc;
+			}
+
+			public static OpClass operator ++(OpClass w){
+				w.num++; // Increment
+				return w;
+			}
+		    }
+
+		    OpClass w = new OpClass();
+		     w++; // 1
+		     w++; //2
+
+		    OpClass g = new OpClass();
+		    g++; //1
+
+		    OpClass t = w + g; //3
+
+		    OpClass t1 = w * g; //2
+
+
+ - In dynamic polymorphism, it is decided at run-time. it is implemented by abstract classes and virtual functions.
+ 
+Method Overloading  - two or more methods with the same name but different signatures in the same scope.  
+	class Person {
+	    Person() { }
+	    Person(String FirstName)  { }
+	    Person(String FirstName, String LastName)  { }
+	}
+
+Method Overriding -  different implementation of the same method in the inherited class. two methods would have the same signature, 
+but different implementation. 
+
+	class Circle {   public double getArea()   {}}
+	class Cylinder extends Circle {   public double getArea()  { }}
+
+---------------------------------------------------------
+
+Inheritance - a class can be derived from base class
+-----------
+
+Interface - like a class, but has no implementaion. Inherited classes or strcuts must provide an implementaion of interface member.       
+   interface IValue   {       int Count { get; set; } // Property interface.    } 
+    class Image : IValue // Implements interface. { public int Count { get {} set {} } }
+
+Multiple Inheritance /interface in c#
+
+Interfaces in C# are provided as a replacement of multiple inheritance. Because C# does not support multiple inheritance.
+
+namespace  MultipleInheritance {
+	class A { public void disp() {} }
+	class B { publi void display() {} }
+	
+	class Z extends A { }
+	Z obj = new Z();
+	obj.disp(); => disp() method of Class A
+
+A Class cannot have multiple Base Classes
+	class Z extends A,B { }    // can't be mulitple inheriance
+
+Multiple Interfaces can be implemented
+	class A { publi void disp() {	}	}
+	interface B { void display() {}	}
+	interface C { void print() {}	}
+
+	class Z:A,B,C { 
+		publi void display() {}
+		publi void print() {}
+	}
+	Z obj = new Z();
+	obj.disp(); => disp() method of Class A
+	obj.display();
+	obj.print();
+
+---------------------------------------------------------
+
+Encapsulation - to hide its members from outside class or interface, whereas abstraction is used to show only essential features. 
+-------------
+
+class BankAccountPrivate {
+    private string m_name; //can't access
+
+    public string CustomerName
+    {
+        get { return m_name; }
+        set { m_name = value; }
+    }
+}
+
+Access modifiers
+----------------
+public - The type or member can be accessed by any other code in the same assembly or another assembly that references it.
+class PublicTest {    public int x; }
+PublicTest p = new PublicTest();  p.x = 10;   // Direct access to public members:
+
+private -  can only be accessed by code in the same class or struct. 
+class Employee2 {  private int x = 10   public string getX() {  return x;  }}
+Employee2 e = new Employee2(); e.getX(); e.x; //throw error 
+
+protected - can only be accessed by code in the same class or struct, or in a derived class.
+class A {    protected int x = 123;}
+
+class B : A {
+   void Main() {
+        A a = new A(); B b = new B(); [a.x = 10; Error ]  b.x = 10;  // OK, because this class derives from A.
+    }
+}
+
+internal -  can be accessed by any code in the same assembly, but not from another assembly.
+Access is limited to the current assembly.
+// Assembly1.cs 
+internal class BaseClass  {  public static int intM = 0; }
+
+// Compile with: /reference:Assembly1.dll
+class TestAccess  {
+   static void Main() {      BaseClass myBase = new BaseClass();   //error   }}
+
+// Assembly2.cs
+public class BaseClass {
+   internal static int intM = 0;
+   public void print() { Debug.Write(intM);} //access the same assembly
+}
+
+// Compile with: /reference:Assembly2.dll
+public class TestAccess  {
+   static void Main()  {
+      BaseClass myBase = new BaseClass();   // Ok.
+      BaseClass.intM = 444;    // CS0117
+      myBase.print();
+   }
+}
+
+protected internal -  can be accessed by any code in the same assembly, or by any derived class in another assembly.
+
+--Assembly name as ClassLibrary1
+namespace ClassLibrary1 {
+	public class Class1  {
+		protected internal void ProInt() {  }
+		protected void Pro() { }
+		internal void Inte(){ }
+	}
+	
+	public class Class3 : Class1{
+		public Class3() {
+			Console.WriteLine("class3");
+			Inte();
+			Pro();
+			ProInt();
+		}
+	}
+
+	public class class4 {
+		public static void Main() {
+			Class1 c3 = new Class1();
+			c3.ProInt();
+			c3.Inte();
+			//--Here we cant access Prtotected Method
+		}
+	}
+}
+
+-- Assembly name as ClassLibrary2
+namespace ClassLibrary2 {
+	public class Class5 :Class1 {
+		public void Main() {
+			ProInt();
+			Pro();
+			//--Here we cant access internal method
+		}
+	}
+}
+
+---------------------------------------------------------
+Abstract
+
+    abstract class Animal
+    {
+        public virtual string Describe()
+        {
+            return "Not much is known about this four legged animal!";
+        }
+    }
+
+    class Dog : Animal    {}
+
+Dog dog = new Dog();
+dog.Describe()
+
+Animal animal = new Animal(); // error , Cannot create an instance of the abstract class or interface
+
+class Dog : Animal
+{
+    public override string Describe()
+    {
+        return "This four legged animal is a Dog!";
+    }
+}
+      
+---------------------------------------------------------
+The Differences between Abstraction and Encapsulation
+
+Abstraction							Encapsulation
+1. Abstraction solves the problem at the design level.		1. Encapsulation solves the problem in the implementation level.
+2. Abstraction hides unwanted data and provides relevant	2. Encapsulation means hiding the code and data into a single 
+   data.							   unit to protect the data from the outside world. 	
+3. Abstraction lets you focus on what the object does 		3. Encapsulation means hiding the internal details or mechanics 
+   instead of how it does it					   of how an object does something.
+4. Abstraction: Outer layout, used in terms of design.		4. Encapsulation- Inner layout, used in terms of implementation.
+   For example: An external of a Mobile Phone, like it 		   For example: the internal details of a Mobile Phone, how the 
+   has a display screen and keypad buttons to dial a number.	   keypad button  and display screen are connected with each other using circuits.	
+	
+
+virtual functions -  a function defined in a class that you want to be implemented in an inherited class(es)
+-----------------
+Static  - Static classes cannot have instance constructors, only 1 instance of static class actually existing memory 
+--------
+
+Parameters by Value -  a new storage location is created for each value parameter.
+-------------------------
+
+Parameters by Reference - a new storage location is not created, The reference value must be inititated.
+-------------------------------
+A reference parameter is a reference to a same memory location of the actual variable. 
+
+Parameters by Output - A return statement can be used for returning only one value from a function. 
+------------------------------
+The output parameter need not be assigned a value
+
+using System;
+namespace PassingParaApplication {
+   class PassingParaClass {
+      public void ParaValue(int x, int y) {
+         int temp;
+         temp = x;
+         x = y;   
+         y = temp; 
+      }
+      
+      public void ParaReference(ref int x, ref int y) {
+	int temp;
+	temp = x; 
+	x = y;    
+	y = temp; 
+      }
+      
+      public void ParaOut(out int x, out int y) {
+      	int i = 10;
+      	x = i;
+      	y = 25;
+      }
+      
+      static void Main(string[] args) {
+         PassingParaClass n = new PassingParaClass();
+         int a = 10;
+         int b = 20;         //Before a,b = 10, 20
+         n.ParaValue(a, b); //After a,b = 10, 20
+         
+         int c = 10;
+	 int d = 20;	//Before c,d = 10, 20
+	 n.ParaReference(ref c, ref d); //After c,d = 20, 10
+         
+	int e = 20;
+	int f; 	//Before e,f = 20
+	n.ParaOut(out e, out f); //After e,f = 10,25
+      }
+   }
+}
+
+Parameters by params - slower than regular array method 
+--------------------
+void UseParams(params int[] list)
+{
+    Debug.WriteLine(String.Join(" ", list));
+}
+
+void UseParams2(params object[] list)
+{
+    Debug.WriteLine(String.Join(" ", list));
+}
+UseParams(1, 2, 3, 4); //1 2 3 4
+UseParams2(1, 'a', "test"); // 1 a test
+UseParams2(); //blank
+int[] myIntArray = { 5, 6, 7, 8, 9 };
+UseParams(myIntArray); //5 6 7 8 9
+UseParams2(myIntArray); //it won't throw error, display System.Int32[]
+
+Option Parameters - no performance effect.
+-----------------
+Named Parameter - performance, slow, should be avoided in most C# , alternative is overload
+---------------
+OptionMethod(); // Omit the optional parameters. //value = 1, name = Perl
+OptionMethod(4); // Omit second optional parameter. //value = 4, name = Perl
+// Method("Dot"); // You can't omit the first but keep the second.
+OptionMethod(4, "Dot"); //value = 4, name = Dot
+OptionMethod(name: "Sam");// Specify one named parameter. //value = 1, name = Sam
+OptionMethod(value: 5, name: "Allen"); // Specify both named parameters. //value = 5, name = Allen
+OptionMethod(name: "Test", value: 6);  //value = 6, name = Test
+	
+Strings
+------
+//from string literal and string concatenation
+string fname = "A", lname ="B";
+string fullname = fname + lname; //string concatenation AB
+
+char[] letters = { 'H', 'e', 'l', 'l','o' }; 
+string greetings = new string(letters); //Hello
+
+string[] sarray = { "Hello", "From", "Tutorials", "Point" };
+string message = String.Join(" ", sarray); // Hello From Tutorials Point
+
+DateTime waiting = new DateTime(2012, 10, 10, 17, 58, 1);
+string chat = String.Format("Message sent at {0:t} on {0:D}", waiting); //Message sent at 5:58 PM on Wednesday, October 10, 2012
+This is test
+string str1 = "This is test";
+string str2 = "This is text";
+String.Compare(str1, str2) == 0 //compare
+str1.Contains("test") //contains  true
+str1.Substring(9); substring test
+
+String is immutable, which means that when you create a string you can never change it, rather it will create a new string to store 
+the new value, this can be inefficient if you need to change the value of a string variable a lot.
+string s = string.Empty;  s += i.ToString() + " ";
+
+Stringbuilder is mutable string so is good for when you need to change a string a lot. 
+It is more effiecent way to manipulatting string
+StringBuilder sb = new StringBuilder();   sb.Append(i);
+
+
+Arrays
+------
+Declaring Arrays - int[] id;
+Initializing an Array - int[] id = new id[10];  - 0..9
+Assigning Values to an Array 
+	id[0]= 1;
+	int[] id = {1,2,3,4};
+	int[] id = new int[5] {1,2,3,4};
+	int[] id = new int[] {1,2,3,4};
+	int[] num = id //copy, both point to the same memory location
+Accessing Array Elements - id[0]	
+
+Multi-dimensional arrays (rectangular array)
+---------------------------------------------
+2-dimensional array 
+	string [,] names
+	Initializing - int [,] a = new int [3,4] {{0, 1, 2, 3}, {4, 5, 6, 7}, {8, 9, 10, 11}};
+	accessing  - a[2,3]
+
+3-dimensional array - int [ , , ] m;
+
+A Jagged array is an array of arrays.
+--------------
+Declaring an array, does not create the array in memory.
+int[][] scores = new int[5][];
+for (int i = 0; i < scores.Length; i++) scores[i] = new int[4];
+or
+initialize - int[][] scores = new int[2][]{new int[]{92,93,94},new int[]{85,66,87,88}};
+
+Properties of the Array Class - IsFixedSize, AsReadOnly, IsSynchronized, Length, Rank
+Methods of the Array Class - Clear, Copy(Array, Array, Int32), Copyto(Array, Int32), GetLength, GetUpperBound, GetValue(Int32)
+			   - IndexOf(Array, Object), Reverse(Array), SetValue(Object, Int32), Sort(Array), ToStringk	
+AsReadOnly Example
+	String[] myArr = { "The", "quick", "brown", "fox" }; //The quick brown fox
+	Debug.WriteLine(myArr.IsFixedSize); //True
+	Debug.WriteLine(myArr.IsReadOnly); //False
+        Debug.WriteLine(myArr.IsSynchronized); //False
+	IList<String> myList = Array.AsReadOnly( myArr ); //The quick brown fox
+	Debug.WriteLine(myList.IsReadOnly); //True
+        myList[3] = "CAT"; //throw error, "Collection is read-only."
+	myArr[2] = "RED";
+	Debug.WriteLine(String.Join(" ", myArr)); //The quick RED fox
+        Debug.WriteLine(String.Join(" ", myList)); //The quick RED fox
+
+--------------------------------------------------------------------------
+System.Collection.Generic  namespace
+------------------------------------
+Dictionary
+----------
+	- A dictionary is a collection of (key, value) pairs.
+	- Dictionary provides fast lookups for values using keys.
+	- Keys in the dictionary must be unique.
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Account a1 = new Account()
+            {
+                id = 11,
+                name = "A",
+                amount = 2000
+            };
+
+            Account a2 = new Account()
+            {
+                id = 21,
+                name = "B",
+                amount = 5000
+            };
+
+            Account a3 = new Account()
+            {
+                id = 31,
+                name = "C",
+                amount = 7000
+            };
+
+            //Declare
+            Dictionary<int, Account> d = new Dictionary<int, Account>();
+            //Add 
+            d.Add(a1.id, a1);
+            d.Add(a2.id, a2);
+            d.Add(a3.id, a3);
+
+            //key must be must be unique
+            //d.Add(a3.id, a3); = >{"An item with the same key has already been added."}
+            //use contains key to avoid the error
+
+            //Reterive by key
+            Account a = d[11];
+            Console.WriteLine("Display 1");
+            Display(a);
+            Console.WriteLine("");
+            //Account an = d[111]; => //{"The given key was not present in the dictionary."} error will throws
+            //to avoid the error
+            Console.WriteLine("Display Contains Key");
+            if (d.ContainsKey(111)) Display(d[111]);
+            if (d.ContainsKey(21)) Display(d[21]);
+            Console.WriteLine("");
+
+            Console.WriteLine("Display TryGetValue");
+            if (d.TryGetValue(11, out a)) Display(a);
+            if (d.TryGetValue(111, out a)) Display(a);
+            Console.WriteLine("");
+            //Count                
+            Console.WriteLine("Count");
+            Console.WriteLine(d.Count);
+            Console.WriteLine(d.Count(dc => dc.Value.amount>4000));
+            Console.WriteLine("");
+
+            //For loop
+            //foreach (KeyValuePair<int, Account> kv in d)
+            Console.WriteLine("Display For Each");
+            foreach (var kv in d)
+            {
+                Console.WriteLine(kv.Key);
+                Display(kv.Value);
+            }
+            Console.WriteLine("");
+
+            //only keys
+            Console.WriteLine("Display For Each Keys");
+            foreach (int i in d.Keys) Console.WriteLine(i);
+            Console.WriteLine("");
+
+            //only values
+            Console.WriteLine("Display For Each Values");
+            foreach (Account av in d.Values) Display(av);
+            Console.WriteLine("");
+
+
+            //Remove one dictionary
+            Console.WriteLine("Remove");
+            d.Remove(11);
+            foreach (int i in d.Keys) Console.WriteLine(i);
+            Console.WriteLine("");
+
+            //Clear all
+            Console.WriteLine("Clear");
+            d.Clear();
+            foreach (int i in d.Keys) Console.WriteLine(i);
+            Console.WriteLine("");
+
+            //Convert array to dictionary
+            Account[] accounts = new Account[3];
+            accounts[0] = a1;
+            accounts[1] = a2;
+            accounts[2] = a3;
+            Console.WriteLine("Convert Array");
+            Dictionary<int,Account> d1 =  accounts.ToDictionary(cust => cust.id, cust=>cust);
+            foreach (int i in d1.Keys) Console.WriteLine(i);
+            Console.WriteLine("");
+
+            //Convert array to list
+            List<Account> lacct = new List<Account>();
+            lacct.Add(a1);
+            lacct.Add(a2);
+            lacct.Add(a3);
+            Console.WriteLine("Convert List");
+            Dictionary<int, Account> d2 = lacct.ToDictionary(c=>c.id, c=>c);
+            foreach (int i in d2.Keys) Console.WriteLine(i);
+            Console.WriteLine("");
+
+            Console.ReadLine();
+        }
+
+        private static void Display(Account a)
+        {
+            Console.WriteLine(a.id + " " + a.name + " " + a.amount);
+        }
+
+    }
+
+    class Account
+    {
+        public int id { set; get; }
+        public double amount { set; get; }
+        public string name { set; get; }
+        
+    }	
+    
+List
+----
+
+
+
+Attributes 
+----------
+	- to attach declarative information to method, class, namespace, assembly
+	- Attributes are accessed at compile-time or runtime through the metadata.
+	- Obsolete or ObsoleteAttribute  is a readymade attribute
+	
+	public class AttributeClass
+	{
+		[Obsolete] //allow to compile
+		public void OldMethod() { }
+		public void NewMethod() { }
+		[Obsolete("Use NewMethod")]  //passing the message, so developers know it, allow to compile
+		public void OldMethod1() { }  
+		[Obsolete("Use NewMethod", true)]  //true, bit strict and do not want developers, not allow to compile
+		public void OldMethod2() { }  
+	}
+
+	public class Program
+	{
+		public void Main()
+		{
+		    AttributeClass a = new AttributeClass();
+		    //all will compile
+		    a.OldMethod(); //it will compile, there is green line under this method, 
+				   //if you put cursor on the method, you can see the below msg
+				    /*[deprecated] void 	 AttributeClass.OldMethod()
+
+				     Warning:
+				       'UnitTest.AttributeClass.OldMethod()' is Obsolete*/
+		    a.NewMethod();
+		    a.OldMethod1();  //it will compile, 'UnitTest.AttributeClass.OldMethod()' is Obsolete: 'Use NewMethod'
+
+
+		    a.OldMethod2() ; //there is red line under this method, if you put cursor on the method, you can see the below msg
+				     //it won't compile, if you compile you will error msg
+					'UnitTestVM.AttributeClass.OldMethod2()' is obsolete: 'Use NewMethod'
+		}
+	}	
+
+
+	Custom Attributes
+	-----------------
+		- To create a custom attributes you need to inherit from the attribute class
+	
+		class HelpAttribute : Attribute
+		{
+			public string HelpInfo { get; set; }
+			public int NameLength { get; set; }
+		}
+
+		[Help(HelpInfo="Custom Attribute Class information")]
+		class AttributeClass
+		{
+			private string _FirstName;
+
+			[Help(HelpInfo = "Custom Attribute Property information")]
+			public string Name
+			{
+				get { return _FirstName; }
+				set { _FirstName = value; }
+			}
+
+			[Help(HelpInfo = "Custom Attribute Method information")]
+			public void Create() {}
+		}
+
+	Retrict custom attribute
+	------------------------
+		- restrict to any level(method, class, namespace, assembly) using AttributeUsage
+		- AttributeTargets.All, .Assembly, .Class, Constructor, .Delegate, .Enum, .Event, .Field, .Method,
+		 .GenericParametet, .Interface, .Module, .Method, .Property, .Parameter, .ReturnValue, .Struct
+		 
+		[AttributeUsage(AttributeTargets.Method)]
+		class HelpAttribute : Attribute
+		{
+			public string HelpInfo { get; set; }
+			public int NameLength { get; set; }
+		}
+		
+		-compile, you will get error message
+		  Attribute 'Help' is not valid on this declaration type. It is only valid on 'method' declarations.
+		  
+		[AttributeUsage(AttributeTargets.Method | AttributeTargets.Property)] //allowed to declare both method and propery
+		class HelpAttribute : Attribute
+		{
+			public string HelpInfo { get; set; }
+			public int NameLength { get; set; }
+		}
+		class AttributeClass
+		{
+			private string _FirstName;
+		
+		        [Help(MaxLength = 10)]
+			public string Name
+		        {
+				get { return _FirstName; }
+				set { _FirstName = value; }
+		        } 
+		        
+		        [Help(HelpInfo = "Custom Attribute Method information")]
+        		public void Create() { }
+    		}
+    		
+	 -Querying the attributes of each property     		
+	 -------------------------------------------------------
+	    [TestClass]
+	    public class Program
+	    {
+		[TestMethod]
+		public void Main()
+		{
+		    AttributeClass ac = new AttributeClass();
+		    ac.Name = "Donald Duck";
+		    Type objtype = ac.GetType(); // get the type of object, we can browse properties, methods etc of the object. 
+		    foreach (PropertyInfo p in objtype.GetProperties()) //Loop through all properties
+		    {
+			foreach (Attribute a in p.GetCustomAttributes(false)) // for every property loop through all attributes
+			{
+			    HelpAttribute h = (HelpAttribute)a;
+			    if (p.Name == "Name")
+			    {
+				if (ac.Name.Length > h.NameLength)
+				    throw new Exception(" Max length issues ");
+			    }
+			}
+		    }
+		}	
+	    }
+
+	 Attributes get inherited
+	 ------------------------
+	 	- Yes, they get inherited in the child classes. 
+	 	- some attributes to be prevented from inheriting. 
+	 	- setInherited=false, this attributes will not be inherited in the child classes
+	 	   [AttributeUsage(AttributeTargets.Property,Inherited=false)]
+		   class Help : Attribute
+		   {
+		   	public string HelpInfo { get; set; }
+		    	public int MaxLength { get; set; }
+		   }
+		   
+	Attribute to be used only once in a program ,set ,AllowMultiple=false
+	------------------------------------------
+		[AttributeUsage(AttributeTargets.Method,AllowMultiple=false)]
+		class Help : Attribute
+		{
+			public string HelpInfo { get; set; }
+		}
+		
+		class AttributeClass
+		{
+		        [Help(HelpInfo = "Custom Attribute Method information1")]
+		        [Help(HelpInfo = "Custom Attribute Method information")] //"Duplicate 'Help' attribute"
+		        public void Create() { }
+    		}
+    		
+    		//it won't compile, throw error  "Duplicate 'Help' attribute"
+    		
+    		- ,AllowMultiple=true, mulitple declaration [Help(HelpInfo is allowed.
+    		
+-------------------------------------------------------------------------------------
+
+What is Reflection
+------------------
+    For example look at your Visual Studio editor intellisense, 
+    when you type “.” (dot) before any object, it gives you all the members of the object. 
+    This is possible because of Reflection.
+    DataSet ds;
+    ds.get
+        GetChanges
+        GetHashCode
+        GetObjectData
+        GetService
+        GetType
+    
+
+
+System.Reflection
+  Reflection objects are used for obtaining type information (attribute, assembly, late binding methods & properties  at runtime. 
+
+namespace UnitTestVM
+{
+    [TestClass]
+    public class ReflectionClass
+    {
+        public static int Id;
+        public static string Name;
+
+        public static void ReflectionMethod()
+        {
+            Type type = typeof(ReflectionClass); // type pointer
+            Debug.WriteLine("Fields Info");
+            FieldInfo[] fields = type.GetFields(); // Obtain all fields
+            foreach (var field in fields) // Loop through fields
+            {
+                string name = field.Name; // attribute name
+                object obj = field.GetValue(null); // attribute value
+                System.Type typ = obj.GetType();  //attribute type
+                Debug.WriteLine(name + " = " + obj + ", " + typ );
+            }
+
+            Debug.WriteLine("Assembly Info");
+            System.Reflection.Assembly info = typeof(System.Int32).Assembly;
+            Debug.WriteLine(info); //get assembly information
+
+            Debug.WriteLine("Custom Attributes");
+            System.Reflection.MemberInfo member = typeof(ReflectionClass);
+            object[] att = member.GetCustomAttributes(true);
+            for (int i = 0; i < att.Length; i++) Debug.WriteLine(att[i]);
+            
+            Debug.WriteLine("Method Info");
+            MethodInfo[] mi = type.GetMethods();
+            for (int i = 0; i < mi.Length; i++) Debug.WriteLine(mi[i]);
+            
+            Debug.WriteLine("Member Info");
+            MemberInfo[] memi = type.GetMembers();
+            for (int i = 0; i < memi.Length; i++) Debug.WriteLine(memi[i]);
+            
+            Debug.WriteLine("Property Info");
+            PropertyInfo[] pi = type.GetProperties();
+            for (int i = 0; i < pi.Length; i++) Debug.WriteLine(pi[i]);
+        }
+    }
+
+  
+    [TestClass]
+    public class SOAPTest
+    {
+        [TestMethod]
+        public void ReflectionTestMethod()
+        {
+            ReflectionClass.Id = 123;
+            ReflectionClass.Name = "C#";
+            ReflectionClass.ReflectionMethod(); // Invoke reflection methods
+
+        }
+    }
+}    
+
+Fields Info
+	Id = 123, System.Int32
+	Name = C#, System.String
+Assembly Info
+	mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
+Custom Attributes
+	Microsoft.VisualStudio.TestTools.UnitTesting.TestClassAttribute
+Method Info
+	Void ReflectionMethod()
+	System.String ToString()
+	Boolean Equals(System.Object)
+	Int32 GetHashCode()
+	System.Type GetType()
+Member Info
+	Void ReflectionMethod()
+	System.String ToString()
+	Boolean Equals(System.Object)
+	Int32 GetHashCode()
+	System.Type GetType()
+	Void .ctor()
+	Int32 Id
+	System.String Name
+Property Info
+    		
+ 			Reflection	Dynamic (introduced in .net 4.0)
+Inspect (meta-data) 	Yes 		No 
+Invoke public members	Yes		Yes
+Invoke private members	Yes		No
+Caching			No		Yes
+Static class  		Yes 		No     		

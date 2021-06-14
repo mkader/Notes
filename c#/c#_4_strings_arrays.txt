@@ -1,0 +1,224 @@
+Strings
+------
+//from string literal and string concatenation
+string fname = "A", lname ="B";
+string fullname = fname + lname; //string concatenation AB
+
+char[] letters = { 'H', 'e', 'l', 'l','o' }; 
+string greetings = new string(letters); //Hello
+
+string[] sarray = { "Hello", "From", "Tutorials", "Point" };
+string message = String.Join(" ", sarray); // Hello From Tutorials Point
+
+DateTime waiting = new DateTime(2012, 10, 10, 17, 58, 1);
+string chat = String.Format("Message sent at {0:t} on {0:D}", waiting); //Message sent at 5:58 PM on Wednesday, October 10, 2012
+This is test
+string str1 = "This is test";
+string str2 = "This is text";
+String.Compare(str1, str2) == 0 //compare
+str1.Contains("test") //contains  true
+str1.Substring(9); substring test
+
+
+String is immutable, which means that when you create a string you can never change it, rather it will create a new string to store 
+the new value, this can be inefficient if you need to change the value of a string variable a lot.
+string s = string.Empty;
+for (i = 0; i < 1000; i++) {
+  s += i.ToString() + " ";
+}
+
+
+Stringbuilder can be used to simulate a mutable string so is good for when you need to change a string a lot. 
+It is more effiecent way to manipulatting string
+
+StringBuilder sb = new StringBuilder();
+for (i = 0; i < 1000; i++) {
+  sb.Append(i);
+  sb.Append(' ');
+}
+
+
+Arrays
+------
+Declaring Arrays - int[] id;
+Initializing an Array - int[] id = new id[10];  - 0..9
+Assigning Values to an Array 
+	id[0]= 1;
+	int[] id = {1,2,3,4};
+	int[] id = new int[5] {1,2,3,4};
+	int[] id = new int[] {1,2,3,4};
+	int[] num = id //copy, both point to the same memory location
+Accessing Array Elements - id[0]	
+
+Multi-dimensional arrays (rectangular array)
+---------------------------------------------
+2-dimensional array 
+	string [,] names
+	Initializing - int [,] a = new int [3,4] {{0, 1, 2, 3}, {4, 5, 6, 7}, {8, 9, 10, 11}};
+	accessing  - a[2,3]
+
+3-dimensional array - int [ , , ] m;
+
+A Jagged array is an array of arrays.
+--------------
+Declaring an array, does not create the array in memory.
+int[][] scores = new int[5][];
+for (int i = 0; i < scores.Length; i++) scores[i] = new int[4];
+or
+initialize - int[][] scores = new int[2][]{new int[]{92,93,94},new int[]{85,66,87,88}};
+
+Properties of the Array Class - IsFixedSize, AsReadOnly, IsSynchronized, Length, Rank
+Methods of the Array Class - Clear, Copy(Array, Array, Int32), Copyto(Array, Int32), GetLength, GetUpperBound, GetValue(Int32)
+			   - IndexOf(Array, Object), Reverse(Array), SetValue(Object, Int32), Sort(Array), ToStringk	
+AsReadOnly Example
+	String[] myArr = { "The", "quick", "brown", "fox" }; //The quick brown fox
+	Debug.WriteLine(myArr.IsFixedSize); //True
+	Debug.WriteLine(myArr.IsReadOnly); //False
+        Debug.WriteLine(myArr.IsSynchronized); //False
+	IList<String> myList = Array.AsReadOnly( myArr ); //The quick brown fox
+	Debug.WriteLine(myList.IsReadOnly); //True
+        myList[3] = "CAT"; //throw error, "Collection is read-only."
+	myArr[2] = "RED";
+	Debug.WriteLine(String.Join(" ", myArr)); //The quick RED fox
+        Debug.WriteLine(String.Join(" ", myList)); //The quick RED fox
+
+--------------------------------------------------------------------------
+System.Collection.Generic  namespace
+------------------------------------
+Dictionary
+----------
+	- A dictionary is a collection of (key, value) pairs.
+	- Dictionary provides fast lookups for values using keys.
+	- Keys in the dictionary must be unique.
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Account a1 = new Account()
+            {
+                id = 11,
+                name = "A",
+                amount = 2000
+            };
+
+            Account a2 = new Account()
+            {
+                id = 21,
+                name = "B",
+                amount = 5000
+            };
+
+            Account a3 = new Account()
+            {
+                id = 31,
+                name = "C",
+                amount = 7000
+            };
+
+            //Declare
+            Dictionary<int, Account> d = new Dictionary<int, Account>();
+            //Add 
+            d.Add(a1.id, a1);
+            d.Add(a2.id, a2);
+            d.Add(a3.id, a3);
+
+            //key must be must be unique
+            //d.Add(a3.id, a3); = >{"An item with the same key has already been added."}
+            //use contains key to avoid the error
+
+            //Reterive by key
+            Account a = d[11];
+            Console.WriteLine("Display 1");
+            Display(a);
+            Console.WriteLine("");
+            //Account an = d[111]; => //{"The given key was not present in the dictionary."} error will throws
+            //to avoid the error
+            Console.WriteLine("Display Contains Key");
+            if (d.ContainsKey(111)) Display(d[111]);
+            if (d.ContainsKey(21)) Display(d[21]);
+            Console.WriteLine("");
+
+            Console.WriteLine("Display TryGetValue");
+            if (d.TryGetValue(11, out a)) Display(a);
+            if (d.TryGetValue(111, out a)) Display(a);
+            Console.WriteLine("");
+            //Count                
+            Console.WriteLine("Count");
+            Console.WriteLine(d.Count);
+            Console.WriteLine(d.Count(dc => dc.Value.amount>4000));
+            Console.WriteLine("");
+
+            //For loop
+            //foreach (KeyValuePair<int, Account> kv in d)
+            Console.WriteLine("Display For Each");
+            foreach (var kv in d)
+            {
+                Console.WriteLine(kv.Key);
+                Display(kv.Value);
+            }
+            Console.WriteLine("");
+
+            //only keys
+            Console.WriteLine("Display For Each Keys");
+            foreach (int i in d.Keys) Console.WriteLine(i);
+            Console.WriteLine("");
+
+            //only values
+            Console.WriteLine("Display For Each Values");
+            foreach (Account av in d.Values) Display(av);
+            Console.WriteLine("");
+
+
+            //Remove one dictionary
+            Console.WriteLine("Remove");
+            d.Remove(11);
+            foreach (int i in d.Keys) Console.WriteLine(i);
+            Console.WriteLine("");
+
+            //Clear all
+            Console.WriteLine("Clear");
+            d.Clear();
+            foreach (int i in d.Keys) Console.WriteLine(i);
+            Console.WriteLine("");
+
+            //Convert array to dictionary
+            Account[] accounts = new Account[3];
+            accounts[0] = a1;
+            accounts[1] = a2;
+            accounts[2] = a3;
+            Console.WriteLine("Convert Array");
+            Dictionary<int,Account> d1 =  accounts.ToDictionary(cust => cust.id, cust=>cust);
+            foreach (int i in d1.Keys) Console.WriteLine(i);
+            Console.WriteLine("");
+
+            //Convert array to list
+            List<Account> lacct = new List<Account>();
+            lacct.Add(a1);
+            lacct.Add(a2);
+            lacct.Add(a3);
+            Console.WriteLine("Convert List");
+            Dictionary<int, Account> d2 = lacct.ToDictionary(c=>c.id, c=>c);
+            foreach (int i in d2.Keys) Console.WriteLine(i);
+            Console.WriteLine("");
+
+            Console.ReadLine();
+        }
+
+        private static void Display(Account a)
+        {
+            Console.WriteLine(a.id + " " + a.name + " " + a.amount);
+        }
+
+    }
+
+    class Account
+    {
+        public int id { set; get; }
+        public double amount { set; get; }
+        public string name { set; get; }
+        
+    }	
+    
+List
+----

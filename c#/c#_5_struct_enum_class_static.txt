@@ -1,0 +1,139 @@
+Class
+-----
+  Constructors 
+  ------------
+ 	- it is executed whenever create new objects of that class.
+ 	- A constructor has exactly the same name as that of class and it does not have any return type. 
+	- A default constructor does not have any parameter but if you need, a constructor can have parameters. 
+	  (called parameterized constructors.)
+	class Line
+	{
+		public Line()
+		{
+		 Console.WriteLine("Object is being created");
+		}
+	}
+	Line line = new Line();    
+
+	public Line(double len)  //Parameterized constructor
+	{
+	 Console.WriteLine("Object is being created, length = {0}", len);
+	 length = len;
+	}
+	Line line = new Line(5);  
+
+  Destructors
+  ------------
+	- it is executed whenever an object of its class goes out of scope. 
+	- A destructor has exactly the same name as that of the class with a prefixed tilde (~) 
+	- it can neither return a value nor can it take any parameters.
+	- Destructor can be very useful for releasing memory resources before exiting the program. 
+	- Destructors cannot be inherited or overloaded.
+	
+	~Line() //destructor
+      {
+         Console.WriteLine("Object is being deleted");
+      }	
+
+   Static Members of a Class
+   -----------------------------
+    - declare a member of a class as static, it means no matter how many objects of the class are created, 
+      there is only one copy of the static member.
+    - declare a member function as static. Such functions can access only static variables. 
+      The static functions exist even before the object is created.
+	   class StaticVar
+	   {
+	      public static int num;
+	      public void count()
+	      {
+		 num++;
+	      }
+	      public int getNum()
+	      {
+		 return num;
+	      }
+	      public static int getNum1()
+	      {
+	               return num;
+      		}
+	   }
+	   class StaticTester
+	   {
+	      static void Main(string[] args)
+	      {
+		 StaticVar s1 = new StaticVar();
+		 StaticVar s2 = new StaticVar();
+		 s1.count();
+		 s1.count();
+		 s1.count();
+		 s2.count();
+		 s2.count();
+		 s2.count();
+		 Debug.WriteLine(s1.getNum()); //6
+		 Debug.WriteLine(s2.getNum()); //6
+		 Debug.WriteLine(StaticVar.getNum1()); //6
+	      }
+	   }
+	
+   
+Static - The static modifier on a class means that the class cannot be instantiated, and that all of its members are static. 
+A static member has one version regardless of how many instances of its enclosing type are created.
+
+A static class is basically the same as a non-static class, but there is one difference: a static class cannot be instantiated. 
+In other words, you cannot use the new keyword to create a variable of the class type. Because there is no instance variable, 
+you access the members of a static class by using the class name itself.
+
+Static methods are inherently threadsafe, as long as they're not accessing objects that are shared by other parts of 
+your application. So in your ReadData/WriteData methods, if you're just accepting parameters, creating a DB connection, 
+executing statements and returning something then you should be OK.
+
+
+Struct
+------
+ 	- a structure is a value type data type. 
+	- Structures can have methods, fields, indexers, properties, operator methods, and events.
+	- Structures can have defined constructors, but not destructors. 
+	  Cannot define a default constructor for a structure.
+  	- Unlike classes, structures cannot inherit other structures or classes.  
+  	- Structures cannot be used as a base for other structures or classes.
+  	- A structure can implement one or more interfaces.
+  	- Structure members cannot be specified as abstract, virtual, or protected.
+Example
+-------
+struct Books
+{
+   public string title;
+   
+   public void getValues(string t)
+   {
+         title = t;
+   }
+   public void display()
+   {
+         Debug.WriteLine(title);
+   }
+};   	
+
+void Main(string[] args)
+{
+	Books Book1; 
+	Book1.title = "Java";
+	
+	Debug.WriteLine(Book1.title);
+
+	Books Book2 = new Books();
+	Book2.getValues("C#");
+	Book2.display(); 
+}
+
+Class versus Structure
+---------------------
+	classes are reference types and structs are value types
+	structures do not support inheritance
+	structures cannot have default constructor
+
+Enum - enumeration  is a set of named integer constants	
+----
+ enum Days { Sun, Mon, tue, Wed, thu, Fri, Sat };
+ int WeekdayStart = (int)Days.Mon; //1
+ int WeekdayEnd = (int)Days.Fri; //5

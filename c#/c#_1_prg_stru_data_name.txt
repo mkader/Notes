@@ -1,0 +1,505 @@
+The following table lists important features introduced in each version of C#:
+
+Version	.NET Framework		Visual Studio		Features
+C# 1.0	.NET Framework 1.0/1.1	Visual Studio .NET 2002	Basic features
+C# 2.0	.NET Framework 2.0	Visual Studio 2005	Generics
+							Partial types
+							Anonymous methods
+							Iterators
+							Nullable types
+							Private setters (properties)
+							Method group conversions (delegates)
+							Covariance and Contra-variance
+							Static classes
+C# 3.0	.NET Framework 3.0\3.5	Visual Studio 2008	Implicitly typed local variables
+							Object and collection initializers
+							Auto-Implemented properties
+							Anonymous types
+							Extension methods
+							Query expressions
+							Lambda expressions
+							Expression trees
+							Partial Methods
+C# 4.0	.NET Framework 4.0	Visual Studio 2010	Dynamic binding (late binding)
+							Named and optional arguments
+							Generic co- and contravariance
+							Embedded interop types
+C# 5.0	.NET Framework 4.5	Visual Studio2012/2013	Async features
+							Caller information
+							
+Program Structure
+-----------------
+Language - Syntaxes, for loops, if conditions
+Framework - Reusable library (dll), jit compiling source code to machine language & running.
+IDE - Integrated Development Enviroment - tools which helps us make our development life easy, write syntax, compile, run
+
+//the using keyword is used to include the System namespace in the program.
+using System;  
+//the namespace declaration. A namespace is a collection of classes. 
+//The HelloWorldApplication namespace contains the class HelloWorld.
+namespace HelloWorldApplication (black color)
+{
+   //a class declaration, the class HelloWorld contains the data and methods
+   class HelloWorld (light green color)
+   {
+      // the mehod declaration
+      void Print() (black color)
+      {
+	//Comments
+	/*...*/ 
+	System. (namespace black color)
+		Console. (class light green color)
+			WriteLine(); (method black color)
+      }
+   }
+}
+C# is case sensitive.
+All statements and expression must end with a semicolon (;).
+
+Assembly
+	- it is pre compiled .net code which can be run by the CLR
+	- it can be either EXE or DLL ( Dynamic Link Library).
+	- it contains code, config, assembly -> compile -> Assembly (Single unit)
+	- EXE is running in is own memory address
+	- DLL will run inside some other memory address, means needs a consumer to invoke
+
+Data Types
+----------
+	Value types 
+		- value type variables can be assigned a value directly.
+		- bool, byte, char, decimal, double, float, int, long, sbyte, short, uint, ulong, ushort
+		- get the exact size of a type or a variable - sizeof(int)	
+		- System.Numerics , BigInteger
+	Reference types
+		- The reference types do not contain the actual data stored in a variable, but they contain a reference to the variables. in other words, they refer to a memory location. 
+		- Using multiple variables, the reference types can refer to a memory location. If the data in the memory location is changed by one of the variables, the other variable automatically reflects this change in value.
+		- object, dynamic, and String.
+		- object obj = 100; //it will assign at comiple time (strongly typed)
+		- dynamic d = 100; //it will assign at run time (dynamically typed)
+		  in visual studio, if type d.  (you can see the below message)
+		  		    	(dynamic experssion)
+					This operation will be resolved at runtime.
+		  try 
+		  dynamic x = "c#";
+		  x++;					
+		  the code will compile, but during runtime it will throw an exception.
+		  
+		- String s ="C# code"; or @"c# code";
+		
+		- var
+		  var i = 10;
+		  i (type 'i',it looks right hand side, then it says, this 'i' is an integer automatically.)
+		  Var keywords looks at the data from right and then decides the datatype during compile time.
+		  
+		  VAR uses for primitive datatypes(int,bool, decimal), then the code will not be readable at all.
+		  It is very difficult to guess that x is an integer (var x =10;), g is a double (var g =10.12)
+		  it is clean and more redable, so i directly declare int x =10.
+		  
+		  When should we use the VAR keyword? Use the VAR keyword when we cannot guess what kind of data can 
+		  come from the right hand side, for example linq  var  x= (from i in emps select new());
+		  
+		  do not use var for primitive datatypes.
+		  do not use var keyword when you know the data type.
+		  Use when you do not know what kind of datatype can be formed from the data.
+		  var can be helpfull if you are writing linq query and you want to generate new anonymous type , 
+		  without defining custom type.
+		  
+		  Difference between Var and Dynamic
+		  var is statically typed (early bounded), Dynamic is late bounded or checked on runtime.
+		  var x "string"; int l = x.Length (type x. intelligence coming up, so it knew the data type)
+		  
+		  dynamic y "string"; int m = y.Length (type y. intelligence won't come up, bcaz it doesn't data type)
+		  when you run, the line of int l, it use reflection internally and tries to figure out 
+		  if that is a property called us length and then it tries to invoke it.
+		  
+		  yield - Yield keyword help us to do custom & stateful iteration over a collection.
+		  -----
+		  - write the filtering logic without using this temporary list, yield will help us
+		  - use of Yield, one is custom iteration without using temporary collection and second statefull iteration
+		  - yield break - to end the iteration.
+		static void Main(string[] args)
+		{
+		    List<int> l = new List<int>();
+		    l.Add(1);
+		    l.Add(2);
+		    l.Add(3);
+		    l.Add(4);
+		    l.Add(5);
+
+		    //foreach (int i in l) Console.WriteLine(i);
+		    //foreach (int i in FilterWithTemp(l)) Console.WriteLine(i);
+
+		    //custom iteration example
+		    //foreach (int i in FilterWithoutTemp(l)) Console.WriteLine(i);
+		    /*steps
+		     *calling  FilterWithoutTemp, i=1,2,3,4 check 4>3=true, back to main 
+		     *function, print 4, retun back to FilterWithoutTemp, start from 5.
+		    */
+		    //stateful iteration
+		    foreach (int i in RunningTotal(l)) Console.WriteLine(i);
+
+
+		    Console.ReadLine();
+		}
+
+		//filtering with out a temp collection
+		static IEnumerable<int> FilterWithTemp(List<int> l)
+		{
+		    List<int> t = new List<int>();
+		    foreach (int i in l) if (i > 3) t.Add(i);
+		    return t;
+		}
+
+		static IEnumerable<int> FilterWithoutTemp(List<int> l)
+		{
+		    foreach (int i in l)if (i > 3) yield return i;
+		}
+
+		static IEnumerable<int> RunningTotal(List<int> l)
+		{
+		    int t = 0; //this value has to be preserved
+		    foreach (int i in l)
+		    {
+			yield return t += i;
+		    }
+        	}
+		
+	Pointer types (Unsafe Codes)
+		- store the memory address of another type.
+		- char* cptr;
+		
+Type Conversion (Type Casting)
+----------------------------
+  - converting one type of data to another type, 2 forms
+  - Implicit type conversion
+  	- performed by in a type-safe
+  	- int i = 123456789;
+  	  long l = il
+  	- Derived d = new Derived();
+  	  Base b = d;
+  - Explicit type conversion
+  	- conversions are done explicitly  by users using the pre-defined functions. Explicit conversions require a cast operator. 
+  	- double d = 1234.67;
+  	  int i= (int)d; // 1234
+  - type coversion methods -   ToBolean, ToByte, ToChar, ToString()
+  	- int i = 75; i.ToString();  
+  	
+Nullables - a special data types, to which you can assign normal range of values as well as null values.  
+---------
+	int? num1 = null;
+	int? num2 = 45;
+	double? num3 = new double?();
+	double? num4 = 3.14157;
+
+	bool? boolval = new bool?();
+
+	Debug.WriteLine("Nullables at Show: {0}, {1}, {2}, {3}", num1, num2, num3, num4);
+	Deubg.WriteLine("A Nullable boolean value: {0}", boolval);
+	
+output
+Nullables at Show: , 45,  , 3.14157
+A Nullable boolean value:
+
+The Null Coalescing Operator (??) 
+--------------------------------
+	-If the value of the first operand is null, then the operator returns the value of the second operand, 
+	otherwise it returns the value of the first operand.
+
+	double? num1 = null;
+	double? num2 = 3.14157;
+	double num3;
+	num3 = num1 ?? 5.34;  //     5.34  
+	num3 = num2 ?? 5.34; //3.14157
+
+Namespace
+---------
+	- A namespace is designed for providing a way to keep one set of names separate from another. 
+	- The class names declared in one namespace does not conflict with the same class names declared in another.	
+	
+	using System;
+	namespace first_space
+	{
+	   class namespace_cl
+	   {
+	      public void func()
+	      {
+	         Console.WriteLine("Inside first_space");
+	      }
+	   }
+	}
+	
+	namespace second_space
+	{
+	   class namespace_cl
+	   {
+	      public void func()
+	      {
+	         Console.WriteLine("Inside second_space");
+	      }
+	   }
+	}
+	
+	class TestClass
+	{
+	   static void Main(string[] args)
+	   {
+	      first_space.namespace_cl fc = new first_space.namespace_cl();
+	      second_space.namespace_cl sc = new second_space.namespace_cl();
+	      fc.func(); //Inside first_space
+	      sc.func(); //Inside second_space
+	   }
+	}
+	
+	-using keyword
+	--------------
+	using System;
+	using first_space;
+	using second_space;
+	abc fc = new abc(); //avoid prepending of namespaces
+        efg sc = new efg();
+        
+        -Nested Namespaces - access members of nested namespace by using the dot (.) operator
+        ------------------
+        using System;
+	using first_space;
+	using first_space.second_space;
+	
+	namespace first_space
+	{
+	   class abc
+	   {
+	      public void func()
+	      {
+	         Console.WriteLine("Inside first_space");
+	      }
+	   }
+	   namespace second_space
+	   {
+	      class efg
+	      {
+	         public void func()
+	         {
+	            Console.WriteLine("Inside second_space");
+	         }
+	      }
+	   }   
+	}
+	 
+	class TestClass
+	{
+	   static void Main(string[] args)
+	   {
+	      abc fc = new abc();
+	      efg sc = new efg();
+	      fc.func();
+	      sc.func();
+	      Console.ReadKey();
+	   }
+        }
+        
+Preprocessor Directives
+-----------------------
+ - The preprocessor directives give instruction to the compiler to preprocess the information before actual compilation starts.
+ - All preprocessor directives begin with #.
+ - #define, #undef, #warning, #error, #if, #elif, #endif, #endregion
+      #define DEBUG 
+      #define MYTEST
+      //#define TRACE  
+      #undef TRACE  
+        
+      using System;  
+      public class TestDefine  
+      {  
+          static void Main()  
+          {  
+      		#if (DEBUG && !MYTEST)  
+		        Console.WriteLine("DEBUG is defined");  
+		        #warning DEBUG is defined
+		        #error DEBUG is defined 
+		#elif (!DEBUG && MYTEST)  
+		        Console.WriteLine("MYTEST is defined");  
+		#elif (DEBUG && MYTEST)  
+		        Console.WriteLine("DEBUG and MYTEST are defined");  
+		#else  
+		        Console.WriteLine("DEBUG and MYTEST are not defined");  
+		#endif  
+          }  
+      }  
+      // Output:  
+      // Debugging is enabled.  
+
+Exception Handling
+------------------
+Exception handling is built upon four keywords: try, catch, finally, and throw.
+
+try: block of codes.
+
+catch: it will catch an exception with an exception handler
+
+finally: The finally block is used to execute a given set of statements, whether an exception is thrown or not thrown. 
+         For example, if you open a file, it must be closed whether an exception is raised or not.
+
+throw: A program throws an exception when a problem shows up. This is done using a throw keyword.
+
+try
+{
+   // statements causing exception
+   
+}
+catch( ExceptionName e1 )
+{
+   // error handling code
+   Throw e1
+}
+catch( ExceptionName eN )
+{
+   // error handling code
+}
+finally
+{
+   // statements to be executed
+}
+
+try
+ {
+    result = num1 / num2;
+ }
+ catch (DivideByZeroException e)
+ {
+    Console.WriteLine("Exception caught: {0}", e);
+ }
+ finally
+ {
+    Console.WriteLine("Result: {0}", result);
+ }
+ 
+User-Defined Exceptions - you can create
+
+
+
+File I/O
+--------
+  BinaryReader, BinaryWriter	- Reads/Writes data from a binary stream.
+  StreamReader, StreamWriter	- Reads/Writes characters  from a byte stream.
+  StringReader, StringWriter	- Reads/Writes from a string  buffer.
+  Directory, DirectoryInfo, DriveInfo, File, FileInfo, FileStream, Path
+  
+ FileStream F = new FileStream("sample.txt", FileMode.Open, FileAccess.Read, FileShare.Read);
+ FileMode  Create, Open, Append (opens an existing file and puts cursor at the end of file, or creates the file, if the file does not exist.), Truncate (It opens an existing file and truncates its size to zero bytes.)
+ FileAccess - Read, ReadWrite, Write.
+ FileShare  - Inheritable, None, Read, ReadWrite, Write (It allows opening the file for writing)
+ 
+
+Modifiers 
+---------
+	Access Modifiers - see 'c#_2_oops.txt(230): Access modifiers'
+	abstract
+	async
+	const
+	event
+	extern
+	in
+	out
+	override
+	readonly
+	sealed
+	static
+	unsafe
+	virtual
+	volatile
+
+Difference between IEnumerable and IEnumerator
+----------------------------------------------
+	- both help's you to loop through collection
+	- IEnumerable syntax is short and minimize the code compare to IEnumerator
+	- IEnumerator, do move next & use the current element to access
+	- why do worry about IEnumerator?
+	- Actually IEnumerable uses internally IEnumerator interface, see //ie.GetEnumerator has IEnumerator function
+	    List<int> l = new List<int>();
+	    l.Add(20);
+	    l.Add(21);
+	    l.Add(22);
+	    l.Add(23);
+	    l.Add(24);
+	    l.Add(25);
+
+	    IEnumerable<int> ie = (IEnumerable<int>)l;
+	    //ie.GetEnumerator
+	    foreach (int i in ie)
+		Console.WriteLine(i);
+
+	    IEnumerator<int> ir = l.GetEnumerator();
+	    while(ir.MoveNext())
+		Console.WriteLine(ir.Current.ToString());
+	
+            Console.Read();
+	- the main difference between IEnumerable and IEnumerator is cursor states, 
+	- IEnumerable does not remember currently which row is currently rating through while IEnumerator does
+	- IEnumerator is good fit where you want to pass that enumerator from one function to other function
+	  and you want remember till at what position the current cursor is
+	 StartFirstRow(ir);
+	
+	static void StartFirstRow(IEnumerator<int> ir)
+	{
+	    while (ir.MoveNext())
+	    {
+		Console.WriteLine("FR " + ir.Current.ToString());
+		if (ir.Current > 22)
+		    RemainingRow(ir);
+	    }
+	}
+
+	static void RemainingRow(IEnumerator<int> ir)
+	{
+	    while (ir.MoveNext())
+	    {
+		Console.WriteLine("RR " + ir.Current.ToString());
+	    }
+        }
+        output
+        ------
+        FR 20
+        FR 21
+        FR 22
+        FR 23
+        RR 24
+        RR 25
+        
+        IEnumerable<int> ie = (IEnumerable<int>)l;
+	StartFirstRow(ie);
+
+	static void StartFirstRow(IEnumerable<int> ie)
+	{
+	    foreach (int i in ie)
+	    {
+		Console.WriteLine("FR " + i);
+		if (i > 22)
+		    RemainingRow(ie);
+	    }
+	}
+
+	static void RemainingRow(IEnumerable<int> ie)
+	{
+	    foreach (int i in ie)
+	    {
+		Console.WriteLine("RR* " + i);
+	    }
+        }
+        FR 20
+	FR 21
+	FR 22
+	FR 23
+	RR* 20
+	RR* 21
+	RR* 22
+	RR* 23
+	RR* 24
+	RR* 25
+	FR 24
+	RR* 20
+	RR* 21
+	RR* 22
+	RR* 23
+	RR* 24
+	RR* 25
+	....

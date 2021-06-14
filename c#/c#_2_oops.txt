@@ -1,0 +1,602 @@
+Polymorphism
+------------
+ - Polymorphism can be static or dynamic.	
+ - In static polymorphism, the response to a function is determined at the compile time (called early binding or static binding). 
+   it provides 2 techniques, Function &  Operator overloading
+     - Function overloading - multiple definitions for the same function name in the same scope, 
+       differ from data types and/or the nubmer of arguments
+	void print(int i)
+      {
+         Console.WriteLine("Printing int: {0}", i );
+      }
+
+      void print(double f)
+      {
+         Console.WriteLine("Printing float: {0}" , f);
+      }
+
+      void print(string s)
+      {
+         Console.WriteLine("Printing string: {0}", s);
+      }
+      static void Main(string[] args)
+      {
+         Printdata p = new Printdata();
+         
+         // Call print to print integer
+         p.print(5);
+         
+         // Call print to print float
+         p.print(500.263);
+         
+         // Call print to print string
+         p.print("Hello C++");
+         Console.ReadKey();
+      }       
+      - Operator Overloading
+         - define the keyword operator followed by the symbol for the operator
+      		 public class OpClass
+		    {
+		        public int num;
+		
+		        public static OpClass operator +(OpClass a, OpClass b)
+		        {
+			        OpClass opc = new OpClass();
+			        opc.num = a.num + b.num; //add 2 number and return new OpClass
+			        return opc;
+		        }
+		
+		        public static OpClass operator *(OpClass a, OpClass b)
+		        {
+		            OpClass opc = new OpClass();
+		            opc.num = a.num * b.num; //add 2 number and return new OpClass
+		            return opc;
+		        }
+		
+		        public static OpClass operator ++(OpClass w)
+		        {
+			        w.num++; // Increment
+			        return w;
+		        }
+		    }
+		
+		    [TestClass]
+		    public class Program
+		    {
+		        [TestMethod]
+		        public void Main()
+		        {
+			    OpClass w = new OpClass();
+			     w++; // 1
+		             w++; //2
+		            
+			    OpClass g = new OpClass();
+			    g++; //1
+		            
+			    OpClass t = w + g; //3
+		            
+		            OpClass t1 = w * g; //2
+		        }
+		
+    		}
+       
+ - In dynamic polymorphism, it is decided at run-time.
+     - Dynamic polymorphism is implemented by abstract classes and virtual functions.
+ 
+Method Overloading  - two or more methods with the same name but different signatures in the same scope.  
+
+class Person {
+    Person() { }
+    Person(String FirstName)  { }
+    Person(String FirstName, String LastName)  { }
+}
+
+Method Overriding -  different implementation of the same method in the inherited class. two methods would have the same signature, 
+but different implementation. 
+
+class Circle {
+
+    public double getArea()   {}
+}
+
+
+class Cylinder extends Circle {
+
+    public double getArea()  { }
+}
+
+---------------------------------------------------------
+
+Inheritance - a class can be derived from base class
+-----------
+
+Interface - like a class, but has no implementaion. Inherited classes or strcuts must provide an implementaion of interface member.       
+   interface IValue
+   {
+       int Count { get; set; } // Property interface.
+       string Name { get; set; } // Property interface.
+    } 
+    class Image : IValue // Implements interface.
+    {
+        public int Count // Property implementation.
+        {
+    	get;
+    	set;
+        }
+    
+        string _name;
+    
+        public string Name // Property implementation.
+        {
+    	get { return this._name; }
+    	set { this._name = value; }
+        }
+      }
+
+
+Multiple Inheritance /interface in c#
+
+Interfaces in C# are provided as a replacement of multiple inheritance. Because C# does not support multiple inheritance.
+
+namespace  MultipleInheritance {
+	class A {
+		publi void disp() {
+			Console.WriteLine("disp() method of Class A");
+		}
+	}
+	class B {
+		publi void display() {
+			Console.WriteLine("display() method of Class B");
+		}
+	}
+	class Z:A { }
+	class Program {
+		static void main(String[] args) {
+			Z obj = new Z();
+			obj.disp(); => disp() method of Class A
+		}
+	}
+}
+
+A Class cannot have multiple Base Classes
+	class Z:A,B { }    // can't be mulitple inheriance
+	class Program {
+		static void main(String[] args) {
+			Z obj = new Z();
+			obj.disp(); //obj always point only A not B.
+		}
+	}
+
+Multiple Interfaces can be implemented
+
+namespace  MultipleInheritance {
+	class A {
+		publi void disp() {
+			Console.WriteLine("disp() method of Class A");
+		}
+	}
+	interface B {
+		void display() {}
+	}
+	interface C {
+		void print() {}
+	}
+
+	class Z:A,B,C { 
+		publi void display() {
+			Console.WriteLine("display() method of interfave B");
+		}
+		publi void print() {
+			Console.WriteLine("print() interface C");
+		}
+	}
+	class Program {
+		static void main(String[] args) {
+			Z obj = new Z();
+			obj.disp(); => disp() method of Class A
+			obj.display();
+			obj.print();
+		}
+	}
+}
+---------------------------------------------------------
+
+Encapsulation - is used to hide its members from outside class or interface, whereas abstraction is used to show only essential features. 
+-------------
+
+using System;
+class BankAccountPrivate
+{
+    private string m_name;
+
+    public string CustomerName
+    {
+        get { return m_name; }
+        set { m_name = value; }
+    }
+}
+
+The name of the customer ( m_name) field is wrapped (encapsulated) with the CustomerName property. Because m_name is declared as private, code outside the BankAccountPrivate class can’t access it directly. They must use the public CustomerName property instead. For example, what if you wanted an ID of type int and the CustomerName property would do a search to find the name.
+
+In C# programming, Encapsulation uses five types of modifier to encapsulate data. These modifiers are public, private, internal, protected and protected internal. 
+
+Difference between Encapsulation & Abstraction
+----------------------------------------------
+Consider an example of mobile phone. Whenever you buy a mobile, you don’t see how circuit board works. You are also not interested to know how digital signal converts into analog signal and vice versa. These are the irrelevant information for the mobile user, that’s why it is encapsulated inside a cabinet.
+
+Abstraction is just opposite of Encapsulation. Abstraction is mechanism to show only relevant data to the user. Consider the same mobile example again. Whenever you buy a mobile phone, you see their different types of functionalities as camera, mp3 player, calling function, recording function, multimedia etc. It is abstraction, because you are seeing only relevant information instead of their internal engineering.
+-----------
+
+Access modifiers
+----------------
+public - The type or member can be accessed by any other code in the same assembly or another assembly that references it.
+Access is not restricted.
+class PublicTest {
+    public int x; public int y;
+}
+
+class MainPublic {
+    static void Main() {
+        PublicTest p = new PublicTest();
+        p.x = 10;         p.y = 15;         // Direct access to public members:
+    }
+}
+
+
+private -  The type or member can only be accessed by code in the same class or struct. Access is limited to the containing type.
+class Employee2 {
+    private string name = "FirstName, LastName";  private double salary = 100.0;
+
+    public string GetName() {  return name;  }
+
+    public double Salary  {
+        get { return salary; }
+    }
+}
+
+class PrivateTest {
+    static void Main() {
+        Employee2 e = new Employee2();
+
+        // The data members are inaccessible (private), so  they can't be accessed like this: 
+        //    string n = e.name;   //    double s = e.salary; 
+
+        string n = e.GetName();         // 'name' is indirectly accessed via method: 
+
+        double s = e.Salary;         // 'salary' is indirectly accessed via property 
+    }
+}
+
+protected - The type or member can only be accessed by code in the same class or struct, or in a derived class.
+Access is limited to the containing class or types derived from the containing class.
+class A {
+    protected int x = 123;
+}
+
+class B : A {
+    static void Main() {
+        A a = new A(); B b = new B();
+        // a.x = 10;   // Error CS1540, because x can only be accessed by   classes derived from A. 
+        b.x = 10;     // OK, because this class derives from A.
+    }
+}
+
+
+internal - The type or member can be accessed by any code in the same assembly, but not from another assembly.
+Access is limited to the current assembly.
+// Assembly1.cs
+internal class BaseClass  {
+   public static int intM = 0;
+}
+
+// Assembly1_a.cs
+// Compile with: /reference:Assembly1.dll
+class TestAccess  {
+   static void Main() {
+      BaseClass myBase = new BaseClass();   // CS0122
+   }
+}
+
+// Assembly2.cs
+public class BaseClass {
+   internal static int intM = 0;
+   public void print() { Debug.Write(intM);} //access the same assembly
+}
+
+// Assembly2_a.cs
+// Compile with: /reference:Assembly1.dll
+public class TestAccess  {
+   static void Main()  {
+      BaseClass myBase = new BaseClass();   // Ok.
+      BaseClass.intM = 444;    // CS0117
+      myBase.print();
+   }
+}
+
+
+protected internal - The type or member can be accessed by any code in the same assembly, or by any derived class in another assembly.
+Access is limited to the current assembly or types derived from the containing class.
+--Assembly name as ClassLibrary1
+namespace ClassLibrary1 {
+	public class Class1  {
+		protected internal void ProInt() {  }
+		protected void Pro() { }
+		internal void Inte(){ }
+	}
+	
+	public class Class3 : Class1{
+		public Class3() {
+			Console.WriteLine("class3");
+			Inte();
+			Pro();
+			ProInt();
+		}
+	}
+
+	public class class4 {
+		public static void Main() {
+			Class1 c3 = new Class1();
+			c3.ProInt();
+			c3.Inte();
+			//--Here we cant access Prtotected Method
+		}
+	}
+}
+
+-- Assembly name as ClassLibrary2
+namespace ClassLibrary2 {
+	public class Class5 :Class1 {
+		public void Main() {
+			ProInt();
+			Pro();
+			//--Here we cant access internal method
+		}
+	}
+}
+
+
+---------------------------------------------------------
+Abstract
+
+The abstract modifier can be used with classes, methods, properties, indexers, and events.
+
+Use the abstract modifier in a class declaration to indicate that a class is intended only to be a base class of other classes.
+
+Abstract classes have the following features:
+    An abstract class cannot be instantiated.
+    An abstract class may contain abstract methods and accessors.
+    When a class is declared sealed, it cannot be inherited, abstract classes cannot be declared sealed.
+    A non-abstract class derived from an abstract class must include actual implementations of all inherited abstract 
+    methods and accessors.
+
+Use the abstract modifier in a method or property declaration to indicate that the method or property does not contain implementation.
+
+Abstract methods have no implementations.
+Abstract methods have the following features:
+    An abstract method is implicitly a virtual method.
+    Abstract method declarations are only permitted in abstract classes.
+    Because an abstract method declaration provides no actual implementation, there is no method body; 
+    the method declaration simply ends with a semicolon and there are no braces ({ }) following the signature. For example:
+
+    public abstract void MyMethod();
+
+    The implementation is provided by an overriding method, which is a member of a non-abstract class.
+    It is an error to use the static or virtual modifiers in an abstract method declaration.
+
+Abstract properties behave like abstract methods, except for the differences in declaration and invocation syntax.
+    It is an error to use the abstract modifier on a static property.
+    An abstract inherited property can be overridden in a derived class by including a property declaration that 
+    uses the override modifier.
+
+An abstract class must provide implementation for all interface members.
+An abstract class that implements an interface might map the interface methods onto abstract methods. For example:
+
+interface I  {    void M(); }
+abstract class C: I  {    public abstract void M(); }
+
+Example
+abstract class MobilePhone {
+	public void Calling();
+	public void SendSMS();
+	public void Camera();
+}
+
+public class Nokia1400 : MobilePhone {}
+
+public class Nokia2700 : MobilePhone {
+	public void FMRadio();
+	public void MP3();
+}
+
+public class BlackBerry : MobilePhone {
+	public void FMRadio();
+	public void MP3();
+	public void Recoding();
+}
+
+Example
+In this example, the class MyDerivedC is derived from an abstract class MyBaseC. 
+The abstract class contains an abstract method, MyMethod(), and two abstract properties, GetX() and GetY().
+
+// Abstract Classes
+using System;
+abstract class MyBaseC  // Abstract Class {
+   protected int x = 100;  protected int y = 150;
+   public abstract void MyMethod();   // Abstract method
+
+	// Abstract property
+   public abstract int GetX  { get; 
+   public abstract int GetY   {      get;   }
+}
+
+class MyDerivedC: MyBaseC {
+   public override void MyMethod()   {  x++;  y++; }   
+
+  // overriding property
+   public override int GetX     {  get   { return x+10; }  }
+   public override int GetY     {  get   { return y+10; }  }
+   
+   public static void Main() {
+      MyDerivedC mC = new MyDerivedC();
+      mC.MyMethod();
+      Console.WriteLine("x = {0}, y = {1}", mC.GetX, mC.GetY);    
+   }
+}
+
+Output x = 111, y = 161
+
+In the preceding example, if you attempt to instantiate the abstract class by using a statement like this:
+
+MyBaseC mC1 = new MyBaseC();   // Error error message: Cannot create an instance of the abstract class 'MyBaseC'.
+
+Abstract Properties
+-------------------
+   public abstract class Person
+   {
+      public abstract string Name
+      {
+         get;
+         set;
+      }
+   }
+   
+   class Student : Person
+   {
+      private string name = "N.A";
+      
+      // Declare a Name property of type string:
+      public string Name
+      {
+         get
+         {
+            return code;
+         }
+         set
+         {
+            code = value;
+         }
+      }
+   }
+
+      
+---------------------------------------------------------
+The Differences between Abstraction and Encapsulation
+
+Abstraction							Encapsulation
+1. Abstraction solves the problem at the design level.		1. Encapsulation solves the problem in the implementation level.
+2. Abstraction hides unwanted data and provides relevant	2. Encapsulation means hiding the code and data into a single 
+   data.							   unit to protect the data from the outside world. 	
+3. Abstraction lets you focus on what the object does 		3. Encapsulation means hiding the internal details or mechanics 
+   instead of how it does it					   of how an object does something.
+4. Abstraction: Outer layout, used in terms of design.		4. Encapsulation- Inner layout, used in terms of implementation.
+   For example: An external of a Mobile Phone, like it 		   For example: the internal details of a Mobile Phone, how the 
+   has a display screen and keypad buttons to dial a number.	   keypad button  and display screen are connected with each other using circuits.	
+ 	
+
+virtual functions
+-----------------
+  - a function defined in a class that you want to be implemented in an inherited class(es), you use virtual functions. 
+  using System;
+namespace PolymorphismApplication
+{
+   class Shape 
+   {
+      protected int width, height;
+      public Shape( int a=0, int b=0)
+      {
+         width = a;
+         height = b;
+      }
+      public virtual int area()
+      {
+         Console.WriteLine("Parent class area :");
+         return 0;
+      }
+   }
+   class Rectangle: Shape
+   {
+      public Rectangle( int a=0, int b=0): base(a, b)
+      {
+
+      }
+      public override int area ()
+      {
+         Console.WriteLine("Rectangle class area :");
+         return (width * height); 
+      }
+   }
+   class Triangle: Shape
+   {
+      public Triangle(int a = 0, int b = 0): base(a, b)
+      {
+      
+      }
+      public override int area()
+      {
+         Console.WriteLine("Triangle class area :");
+         return (width * height / 2); 
+      }
+   }
+   class Caller
+   {
+      public void CallArea(Shape sh)
+      {
+         int a;
+         a = sh.area();
+         Console.WriteLine("Area: {0}", a);
+      }
+   }  
+   class Tester
+   {
+      
+      static void Main(string[] args)
+      {
+         Caller c = new Caller();
+         Rectangle r = new Rectangle(10, 7);
+         Triangle t = new Triangle(10, 5);
+         c.CallArea(r);
+         c.CallArea(t);
+         Console.ReadKey();
+      }
+   }
+}
+output
+------
+Rectangle class area:
+Area: 70
+Triangle class area:
+Area: 25   
+
+------------------------------------------
+Static 
+	-Static classes cannot have instance constructors
+	-only 1 instance of static class actually existing memory 
+	
+    //Prove that only 1 instance of the object is created for static classes?	
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            //invoke the method twice, but constructor will fire once
+            MyClass.Display();
+            MyClass.i++;
+            MyClass.i++;
+            MyClass.Display();
+            Console.WriteLine(MyClass.i); //2
+            Console.ReadLine();
+        }
+    }
+
+    static class MyClass
+    {
+        static public int i = 0;
+        //if only one instance of the object is created then this constructore should run only once
+        static MyClass()
+        {
+        }
+
+        public static void Display()
+        {
+        }
+    }	
+

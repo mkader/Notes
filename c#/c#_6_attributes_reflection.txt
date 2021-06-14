@@ -1,0 +1,269 @@
+Attributes 
+----------
+	- to attach declarative information to method, class, namespace, assembly
+	- Attributes are accessed at compile-time or runtime through the metadata.
+	- Obsolete or ObsoleteAttribute  is a readymade attribute
+	
+	public class AttributeClass
+	{
+		[Obsolete] //allow to compile
+		public void OldMethod() { }
+		public void NewMethod() { }
+		[Obsolete("Use NewMethod")]  //passing the message, so developers know it, allow to compile
+		public void OldMethod1() { }  
+		[Obsolete("Use NewMethod", true)]  //true, bit strict and do not want developers, not allow to compile
+		public void OldMethod2() { }  
+	}
+
+	public class Program
+	{
+		public void Main()
+		{
+		    AttributeClass a = new AttributeClass();
+		    //all will compile
+		    a.OldMethod(); //it will compile, there is green line under this method, 
+				   //if you put cursor on the method, you can see the below msg
+				    /*[deprecated] void 	 AttributeClass.OldMethod()
+
+				     Warning:
+				       'UnitTest.AttributeClass.OldMethod()' is Obsolete*/
+		    a.NewMethod();
+		    a.OldMethod1();  //it will compile, 'UnitTest.AttributeClass.OldMethod()' is Obsolete: 'Use NewMethod'
+
+
+		    a.OldMethod2() ; //there is red line under this method, if you put cursor on the method, you can see the below msg
+				     //it won't compile, if you compile you will error msg
+					'UnitTestVM.AttributeClass.OldMethod2()' is obsolete: 'Use NewMethod'
+		}
+	}	
+
+
+	Custom Attributes
+	-----------------
+		- To create a custom attributes you need to inherit from the attribute class
+	
+		class HelpAttribute : Attribute
+		{
+			public string HelpInfo { get; set; }
+			public int NameLength { get; set; }
+		}
+
+		[Help(HelpInfo="Custom Attribute Class information")]
+		class AttributeClass
+		{
+			private string _FirstName;
+
+			[Help(HelpInfo = "Custom Attribute Property information")]
+			public string Name
+			{
+				get { return _FirstName; }
+				set { _FirstName = value; }
+			}
+
+			[Help(HelpInfo = "Custom Attribute Method information")]
+			public void Create() {}
+		}
+
+	Retrict custom attribute
+	------------------------
+		- restrict to any level(method, class, namespace, assembly) using AttributeUsage
+		- AttributeTargets.All, .Assembly, .Class, Constructor, .Delegate, .Enum, .Event, .Field, .Method,
+		 .GenericParametet, .Interface, .Module, .Method, .Property, .Parameter, .ReturnValue, .Struct
+		 
+		[AttributeUsage(AttributeTargets.Method)]
+		class HelpAttribute : Attribute
+		{
+			public string HelpInfo { get; set; }
+			public int NameLength { get; set; }
+		}
+		
+		-compile, you will get error message
+		  Attribute 'Help' is not valid on this declaration type. It is only valid on 'method' declarations.
+		  
+		[AttributeUsage(AttributeTargets.Method | AttributeTargets.Property)] //allowed to declare both method and propery
+		class HelpAttribute : Attribute
+		{
+			public string HelpInfo { get; set; }
+			public int NameLength { get; set; }
+		}
+		class AttributeClass
+		{
+			private string _FirstName;
+		
+		        [Help(MaxLength = 10)]
+			public string Name
+		        {
+				get { return _FirstName; }
+				set { _FirstName = value; }
+		        } 
+		        
+		        [Help(HelpInfo = "Custom Attribute Method information")]
+        		public void Create() { }
+    		}
+    		
+	 -Querying the attributes of each property     		
+	 -------------------------------------------------------
+	    [TestClass]
+	    public class Program
+	    {
+		[TestMethod]
+		public void Main()
+		{
+		    AttributeClass ac = new AttributeClass();
+		    ac.Name = "Donald Duck";
+		    Type objtype = ac.GetType(); // get the type of object, we can browse properties, methods etc of the object. 
+		    foreach (PropertyInfo p in objtype.GetProperties()) //Loop through all properties
+		    {
+			foreach (Attribute a in p.GetCustomAttributes(false)) // for every property loop through all attributes
+			{
+			    HelpAttribute h = (HelpAttribute)a;
+			    if (p.Name == "Name")
+			    {
+				if (ac.Name.Length > h.NameLength)
+				    throw new Exception(" Max length issues ");
+			    }
+			}
+		    }
+		}	
+	    }
+
+	 Attributes get inherited
+	 ------------------------
+	 	- Yes, they get inherited in the child classes. 
+	 	- some attributes to be prevented from inheriting. 
+	 	- setInherited=false, this attributes will not be inherited in the child classes
+	 	   [AttributeUsage(AttributeTargets.Property,Inherited=false)]
+		   class Help : Attribute
+		   {
+		   	public string HelpInfo { get; set; }
+		    	public int MaxLength { get; set; }
+		   }
+		   
+	Attribute to be used only once in a program ,set ,AllowMultiple=false
+	------------------------------------------
+		[AttributeUsage(AttributeTargets.Method,AllowMultiple=false)]
+		class Help : Attribute
+		{
+			public string HelpInfo { get; set; }
+		}
+		
+		class AttributeClass
+		{
+		        [Help(HelpInfo = "Custom Attribute Method information1")]
+		        [Help(HelpInfo = "Custom Attribute Method information")] //"Duplicate 'Help' attribute"
+		        public void Create() { }
+    		}
+    		
+    		//it won't compile, throw error  "Duplicate 'Help' attribute"
+    		
+    		- ,AllowMultiple=true, mulitple declaration [Help(HelpInfo is allowed.
+    		
+-------------------------------------------------------------------------------------
+
+What is Reflection
+------------------
+    For example look at your Visual Studio editor intellisense, 
+    when you type “.” (dot) before any object, it gives you all the members of the object. 
+    This is possible because of Reflection.
+    DataSet ds;
+    ds.get
+        GetChanges
+        GetHashCode
+        GetObjectData
+        GetService
+        GetType
+    
+
+
+System.Reflection
+  Reflection objects are used for obtaining type information (attribute, assembly, late binding methods & properties  at runtime. 
+
+namespace UnitTestVM
+{
+    [TestClass]
+    public class ReflectionClass
+    {
+        public static int Id;
+        public static string Name;
+
+        public static void ReflectionMethod()
+        {
+            Type type = typeof(ReflectionClass); // type pointer
+            Debug.WriteLine("Fields Info");
+            FieldInfo[] fields = type.GetFields(); // Obtain all fields
+            foreach (var field in fields) // Loop through fields
+            {
+                string name = field.Name; // attribute name
+                object obj = field.GetValue(null); // attribute value
+                System.Type typ = obj.GetType();  //attribute type
+                Debug.WriteLine(name + " = " + obj + ", " + typ );
+            }
+
+            Debug.WriteLine("Assembly Info");
+            System.Reflection.Assembly info = typeof(System.Int32).Assembly;
+            Debug.WriteLine(info); //get assembly information
+
+            Debug.WriteLine("Custom Attributes");
+            System.Reflection.MemberInfo member = typeof(ReflectionClass);
+            object[] att = member.GetCustomAttributes(true);
+            for (int i = 0; i < att.Length; i++) Debug.WriteLine(att[i]);
+            
+            Debug.WriteLine("Method Info");
+            MethodInfo[] mi = type.GetMethods();
+            for (int i = 0; i < mi.Length; i++) Debug.WriteLine(mi[i]);
+            
+            Debug.WriteLine("Member Info");
+            MemberInfo[] memi = type.GetMembers();
+            for (int i = 0; i < memi.Length; i++) Debug.WriteLine(memi[i]);
+            
+            Debug.WriteLine("Property Info");
+            PropertyInfo[] pi = type.GetProperties();
+            for (int i = 0; i < pi.Length; i++) Debug.WriteLine(pi[i]);
+        }
+    }
+
+  
+    [TestClass]
+    public class SOAPTest
+    {
+        [TestMethod]
+        public void ReflectionTestMethod()
+        {
+            ReflectionClass.Id = 123;
+            ReflectionClass.Name = "C#";
+            ReflectionClass.ReflectionMethod(); // Invoke reflection methods
+
+        }
+    }
+}    
+
+Fields Info
+	Id = 123, System.Int32
+	Name = C#, System.String
+Assembly Info
+	mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
+Custom Attributes
+	Microsoft.VisualStudio.TestTools.UnitTesting.TestClassAttribute
+Method Info
+	Void ReflectionMethod()
+	System.String ToString()
+	Boolean Equals(System.Object)
+	Int32 GetHashCode()
+	System.Type GetType()
+Member Info
+	Void ReflectionMethod()
+	System.String ToString()
+	Boolean Equals(System.Object)
+	Int32 GetHashCode()
+	System.Type GetType()
+	Void .ctor()
+	Int32 Id
+	System.String Name
+Property Info
+    		
+ 			Reflection	Dynamic (introduced in .net 4.0)
+Inspect (meta-data) 	Yes 		No 
+Invoke public members	Yes		Yes
+Invoke private members	Yes		No
+Caching			No		Yes
+Static class  		Yes 		No     		

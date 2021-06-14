@@ -1,0 +1,958 @@
+Indexers 
+--------
+	- it simplify the way we access a collection from a class
+	- Indexer is defined by using "this" keyword 
+	- Indexers is a proprty, so we need to define set and get for the same.
+	- An indexer allows an object to be indexed such as an array.
+	- When you define an indexer for a class, this class behaves similar to a virtual array.
+
+namespace UnitTestVM
+{
+    class Indexerclass
+    {
+        /*private double[] amt = new double[10];
+
+        public double this[int n]
+        {
+            get { return amt[n]; }
+            set { amt[n] = value; }
+        }*/
+
+        private List<Contact> contacts = new List<Contact>(); //aggregated or composed collections
+
+        public Indexerclass()
+        {
+            contacts.Add(new Contact { Id = 1, Name = "test1" });
+            contacts.Add(new Contact { Id = 2, Name = "test2" });
+        }
+
+        //without indexer accesing 
+        /*public Contact getContact(int id)
+        {
+            foreach (Contact a in contacts)
+            {
+                if (a.Id == id) return a;
+            }
+            return null;
+        }
+
+        public Contact getContact(string name)
+        {
+            foreach (Contact a in contacts)
+            {
+                if (a.Name == name) return a;
+            }
+            return null;
+        }*/
+
+        //Creating indexers, indeser is defined by using "this" keyword 
+	//from this current object, fetch the contact collection object
+        public Contact this[int id]
+        {
+            get
+            {
+                foreach (Contact a in contacts)
+                {
+                    if (a.Id == id) return a;
+                }
+                return null;
+            }
+        }
+
+        public Contact this[string name]
+        {
+            get
+            {
+                foreach (Contact a in contacts)
+                {
+                    if (a.Name == name) return a;
+                }
+                return null;
+            }
+           
+        }
+    }
+
+    class Contact
+    {
+        public int Id{ get; set;}
+        public string Name { get; set; }
+    }
+
+    [TestClass]
+    public class Program
+    {
+        [TestMethod]
+        public void Main()
+        {
+
+            Indexerclass n = new Indexerclass();
+            //simple index example
+            /*n[5] = 123.56;
+            n[3] = 56.23;
+            Debug.WriteLine(n[5]);*/
+
+            Contact c;
+            //withour indexer to access
+            //c = n.getContact(1);
+            //c1 = n.getContact("test2");
+
+            //indexer example
+            c= n[1];
+            c = n["test2"];
+            
+            List<String> x;
+	    x[ - it is indexer
+        }	
+    }
+}    
+
+----------------------------------------------------------------------
+Delegate
+--------
+	- it is a pointer to a function. 
+	- delegate is a type-safe function pointer
+		- because the signature of the function to which the delegate points to should match the signature of the 
+		  delegate otherwise we'll have a compiler error,  example new Thread(new ThreadStart(Number.Print));	
+		- Look ThreadStart delegate syntax, it returns void & doesn't take any parameters (
+			namespace System.Threading
+			{
+			    // Summary:
+			    //     Represents the method that executes on a System.Threading.Thread.
+			    [ComVisible(true)]
+			    public delegate void ThreadStart();)
+			}    
+	    	  and the function (Number.Print), its signature returns void and doesn't take any parametres
+	    	  so the signature of this function matches the signature of this delegate 
+	    	  that's why delegates at types of function pointers, class Number{ public static void Print(){} }
+	    	  see ThreadSafe
+		
+	- simple english delegate, representative, like usa delegate went to india (means communicating between usa and india).
+	- in c#, communication between 2 things.
+	- Delegates are used for implementing events and the call-back methods. 
+	- All delegates are implicitly derived from the System.Delegate class.
+	- A delegate is a reference type variable that holds the reference to a method. 
+	- The reference can be changed at runtime.
+	- A delegate is a type that safely encapsulates a method. 
+	- Delegates without parameters or with parameter list.
+
+	public delegate void Del(string message);
+	public delegate int mydelegate(int delvar1,int delvar2)
+
+	class DelegateClass
+	{
+		public delegate void PrintPtr();
+		public void Print()
+		{
+		    Debug.WriteLine("test");
+		}
+
+		//Real time example, without delegate
+		public void LoadData()
+		{
+		    for (int i = 0; i <= 10000; i++)
+		    {
+			//do something
+		    }
+		}
+
+		//Real time example, with delegate
+		public delegate void Callback(int i);
+		public void LoadData(Callback cb)
+		{
+		    for (int i = 0; i <= 10000; i++)
+		    {
+			//do something
+			cb(i);
+		    }
+		}
+
+		static public void Display(int i)
+		{
+		    Debug.WriteLine(i);
+		}
+
+	    }
+
+
+	    [TestClass]
+	    public class ProgramClass
+	    {
+		[TestMethod]
+		public void Main()
+		{
+		    DelegateClass dc = new DelegateClass();
+		    //dc.Print(); //call without delegate
+
+		    //callint print function using delegate
+		    //DelegateClass.PrintPtr pr = new DelegateClass.PrintPtr(dc.Print);
+		    //pr.Invoke();
+
+		    //dc.LoadData(); //call without delegate
+		    //ProgramClass <-updates<- DelegateClass 
+
+		    //call with delegate
+		    dc.LoadData(DelegateClass.Display); 
+		    dc.LoadData(Display); //OR
+		}
+
+		static void Display(int i)
+		{
+		    Debug.WriteLine(i);
+		}
+
+	    }
+	}
+
+	using System;
+	public delegate string StringOperation(string s);
+	class DelegateClass {
+	    static public string Replace(string s)
+	    {
+		return s.Replace(" ", "");
+	    }
+
+	    static public string Reverse(string s)
+	    {
+		char[] a = s.ToCharArray();
+		Array.Reverse(a);
+		return new string(a);
+       	    }
+
+	    public static void Main() {
+		StringOperation sp = new StringOperation(DelegateClass.Reverse); 
+		string s  ="This is test";
+		s = sp(s);
+		sp = new StringOperation(DelegateClass.Replace);
+		s = sp(s);
+	    }
+	}
+
+	What is Multicast Delegate?
+	--------------------------
+	- It is a delegate which holds the reference of more than one method.
+	- Multicast delegates must contain only methods that return void, else there is a run-time exception. 
+	
+	StringOperation so;
+	StringOperation soRev = new StringOperation(DelegateClass.Reverse);
+	StringOperation soRep = new StringOperation(DelegateClass.Replace); 
+	string s  ="This is test";
+	so = soRev;
+	so += soRep;
+	s = so(s);
+
+	Anonymous Method
+	---------------
+		- are very much connected to delegates
+		- AM helps you to avoid the overhead of creating the method for simple lines of code
+		- AM increase perfomance 
+		- Anonymous methods are the methods without a name, just the body.
+		
+	    using System.Diagnostics;			
+            //delegate				 
+	    delegate int AddPtr(int x, int y);
+	    public class AnonymousMethodClass
+	    {
+		public void main()
+		{
+		    Stopwatch sw = new Stopwatch();
+		    for (int i = 0; i < 10; i++)
+		    {
+			sw.Reset();
+			sw.Start();
+			for (int j = 0; j < 1000; j++)
+			{
+			    AddPtr a = Sum;
+			    int x = a.Invoke(2, 2);
+			}
+			sw.Stop();
+			Debug.WriteLine(sw.ElapsedTicks);
+		    }
+		}
+
+		int Sum(int x, int y)
+		{
+		    return x + y;
+		}
+	    }
+	    821, 276, 216, 192, 201, 178, 178, 180, 194, 192 
+
+	    //replace to Anonymous function inline		
+	    delegate int AddPtr(int x, int y);
+	    public class AnonymousMethodClass
+	    {
+		public void main()
+		{
+		    Stopwatch sw = new Stopwatch();
+		    for (int i = 0; i < 10; i++)
+		    {
+			sw.Reset();
+			sw.Start();
+			for (int j = 0; j < 1000; j++)
+			{
+			    AddPtr a = delegate(int x, int y)
+			    {
+				return x + y;
+			    };
+			    int x1 = a.Invoke(2, 2);
+			}
+			sw.Stop();
+			Debug.WriteLine(sw.ElapsedTicks);
+		    }
+		}
+	    }
+            444, 49, 48, 49, 48, 49, 49, 379, 48, 48 - performance increased		
+	
+---------------------------------------------------------
+
+Generics 
+--------
+
+Boxing - Boxing is used to store value types in the garbage-collected heap. A referece type is allocated on the heap. 
+	int i = 123;
+	object o = i; //implicit conversion of a value type to the reference type (object).
+	
+	stack		heap
+	
+	i
+	-----
+	| 23 |
+	-----
+	int i=123;
+	
+	o	
+	---	        -----
+	|  |--------->  |int |
+	---	        |----|
+	object o =i;	|123 |
+			-----
+	
+Unboxing -  an explicit conversion from the reference type(object) to a value type. A value type is allocated on the stack
+	int j = int(o);	
+
+	j
+	-----
+	| 23 |
+	-----   
+	int j =(int)o;
+
+Generics 
+	- C# is a strongly type language, when using C# you should declare a type prior to storing data in it.
+	- Generics types to eliminate redundant code, type safety, code re-usability and performance.
+	- create generic interfaces, classes, methods, events and delegates.
+	- Generic can be defined by putting the <T> sign after the class or method name. instead of "T" you can use any word.
+	- Generic data type obtained at run-time by using reflection.
+	- Generics allow you to write a class or method that can work with any data type.
+	- System.Collection.Generic namespace contains Collection<T>, Dictionary<TKey, TValue>, List<T>, Queue<T>, Stack<T>
+	- Generics is concept and Generic collections in one of the implementation of that concept.
+	
+	
+Type Safety Example
+	ArrayList obj = new ArrayList();
+	obj.Add(50);
+	obj.Add("Dog");
+	obj.Add(new TestClass());
+
+	foreach(int i in obj) Console.WriteLine(i);  
+	//the code will compile, but run time iteration will through 'InvalidCastException' occurred when it print "Dog", bcz it 	is not integer, the code will print 50.
+
+	GenericClass<int> intObj = new GenericClass<int>();
+	intObj.setItem(0, 50);
+	intObj.setItem(1, "Dog"); //compiler error, the compiler doesn't compile the code.
+
+Performance
+	Generics are faster than other collections such as ArrayList. In non-generic colloection, boxing and unboxing overhead when a value type is converted to reference type and vice-versa.
+	
+	ArrayList  obj = new ArrayList(); 
+	obj.Add(50);    //boxing- convert value type to reference type
+	int x= (int)obj[0]; //unboxing
+
+	GenericClass<int>, an int type is generated dynamically from the compiler, boxing and unboxing no longer occurs.
+
+	GenericClass<int> obj = new GenericClass<int>();
+	obj.Add(50);    //No boxing
+	int x= obj[0]; // No unboxing
+
+Binary Code reuse - A Generic class can be defined once and can be instantiated with many different types.
+	GenericClass<int> intObj = new GenericClass<int>(); 
+	GenericClass<char> charObj = new GenericClass<char>();          
+
+Generic Class Example
+---------------------
+
+using System;
+using System.Collections.Generic;
+
+namespace GenericClassApplication
+{
+   class Compare<AnyDataType> 
+   {
+   	public bool Check(AnyDataType data1, AnyDataType data2){
+   	}
+   }
+   public class GenericClass<T>
+   {
+      private T[] obj = new T[5]; // define an Array of Generic type with length 5
+      
+      public T getItem(int index)
+      {
+         return obj[index];
+      }
+      
+      public void setItem(int index, T value)
+      {
+         obj[index] = value;
+      }
+   }
+   
+   class Program
+   {
+      static void Main(string[] args)
+      {
+         Compare<String> i;
+         i.Check();
+         
+	 //instantiate generic with int
+         GenericClass<int> intObj = new GenericClass<int>(); 
+         for (int i = 0; i < 5; i++) intObj.setItem(i, i*2); 
+         for (int i = 0; i < 5; i++) Console.WriteLine(intObj.getItem(i)); //0 2 4 6 8
+         
+         //instantiate generic with char
+         GenericClass<char> charObj = new GenericClass<char>();         
+         for (int i = 0; i < 5; i++) charObj.setItem(i, (char)(i*2)); 
+         for (int i = 0; i < 5; i++) Console.WriteLine(charObj.getItem(i)); 
+      }
+   }
+}
+
+
+Generic Methods Example
+--------------------------
+using System;
+using System.Collections.Generic;
+
+namespace GenericMethodApplication
+{
+   class Program
+   {
+      static void Swap<T>(ref T a, ref T b)
+      {
+         T temp;
+         temp = a;
+         a = b;
+         b = temp;
+      }
+      
+      static void Main(string[] args)
+      {
+         int a=10, b=20; //a = 10, b = 20
+	 Swap<int>(ref a, ref b); //a = 20, b = 10
+
+         char i = 'I', j ='J';
+         Swap<char>(ref i, ref j); //i = 'J', j = 'I'
+      }
+   }
+}
+
+Generic Delegates Exanple
+---------------------------
+using System;
+using System.Collections.Generic;
+
+delegate T GenericDelegate<T>(T n);
+namespace GenericDelegateApplication
+{
+   class DelegateClass
+   {
+      static int n = 10;
+      public static int Sum(int i)
+      {
+         n += i;
+         return n;
+      }
+      
+      public static int Times(int i)
+      {
+         n *= i;
+         return n;
+      }
+      public static int getValue()
+      {
+         return n;
+      }
+      
+      static void Main(string[] args)
+      {
+         //create delegate instances
+         GenericDelegate<int> gd1 = new GenericDelegate<int>(Sum);
+         GenericDelegate<int> gd2 = new GenericDelegate<int>(Times);
+         
+         gd1(5); //calling the methods using the delegate objects,
+         getValue(); //15
+         
+         gd2(2); 
+         getValue(); //30
+      }
+   }
+}
+
+Events
+-------
+	- Events are user actions such as key press, clicks, mouse movements, or system generated notifications.
+	- Events are declared and raised in a class and associated with the event handlers 
+	  using delegates within the same class or some other class.The class containing the event is used to publish the event. 
+	  This is called the publisher class.
+	- Some other class that accepts this event is called the subscriber class. Events use the publisher-subscriber model.	  
+	- A publisher is an object that contains the definition of the event and the delegate. 
+	  The event-delegate association is also defined in this object. 
+	  A publisher class object invokes the event and it is notified to other objects.
+	- A subscriber is an object that accepts the event and provides an event handler. 
+	  The delegate in the publisher class invokes the method (event handler) of the subscriber class.
+	- Declaring Events, first a delegate and event
+		public delegate string MyDel(string str);
+		event MyDel MyEvent;
+		
+	- User Control (Publisher)
+	  	[Declare a Delegate
+	  	Declare an Event based on the Delegate
+	  	Fire the Event]
+	  	|
+	  	|
+	  	|
+	  	V
+	 -Application 1(subscriber)
+	 	[Subscribed Event] Fires the Eventhandler [Event Handler]
+		
+	    //define a delegate names LogHandler
+	    public delegate string LogHandler(String s); 
+
+	    //publicher of the event
+	    [TestClass]
+	    public class EventClass
+	    {
+		//Define an Event based on the above Delegate
+		event LogHandler Log;
+
+		// Subscribe the Functions Info
+		public EventClass()
+		{
+		    this.Log += new LogHandler(Info);
+		}
+
+		public string Info(String s)
+		{
+		    return s + " this is test";
+		}
+
+		/* ========= Subscriber of the Event ============== */
+		[TestMethod]
+		public void main()
+		{
+		    EventClass cs = new EventClass();
+		    // The Event will now be triggered in the Log() Method
+		    string s = cs.Log("evnet calling");
+		    Debug.WriteLine(s);
+		}
+	    }
+
+Collectins
+----------
+	- Collection classes are specialized classes for data storage and retrieval. 
+	- These classes provide support for stacks, queues, lists, and hash tables. 
+	- Most collection classes implement the same interfaces.
+	- ArrayList
+            ArrayList al = new ArrayList();
+            al.Add(2);
+            al.Add(5);
+            al.Add(1);
+            Debug.WriteLine(al.Count);
+            foreach(int i in al){
+                Debug.WriteLine(i);
+            }
+            al.Sort();
+	- Hashtable ,SortedList
+    	    Hashtable ht = new Hashtable(); // SortedList ht = new SortedList();
+	    ht.Add(1, "Test1");
+	    ht.Add(3, "Test3");
+	    ht.Add(2, "Test2");
+	    Debug.WriteLine(ht.ContainsKey(2));
+	    Debug.WriteLine(ht.ContainsValue("Test5"));
+	    IEnumerable ie = ht.Keys;
+	    foreach(int i in ie){
+		Debug.WriteLine(ht[i]);
+            }
+	- Stack - //last-in, first out  LIFO
+       	    Stack s = new Stack(); 
+	    s.Push(1);
+	    s.Push(5);
+	    s.Push(3);
+	    s.Push(8);
+	    foreach (int i in s)
+		Debug.WriteLine(i); // 8 3 5 1
+
+	    s.Push(10);
+	    s.Push(7);
+	    Debug.WriteLine(s.Peek()); // last value 7
+	    int i1 = (int)s.Pop(); //7 remove
+	    s.Pop(); //10 remove
+	-Queue - Firs in First out
+	    System.Collections.Queue q = new System.Collections.Queue();
+	    q.Enqueue('A');
+	    q.Enqueue('E');
+	    q.Enqueue('C');
+	    foreach (char c in q) Debug.WriteLine(c); - //A E C
+	    q.Enqueue('F');  //A E C F B
+	    q.Enqueue('B');
+	    char c1 = (char)q.Dequeue(); //A
+	    q.Dequeue(); //E
+	    foreach (char c in q) Debug.WriteLine(c); // C F B
+	-BitArray -  bit values of True(1) or False(0)	 
+	    BitArray ba1 = new BitArray(8); //creating bit array of size 8
+	    BitArray ba2 = new BitArray(8);
+	    byte[] b1 = {65};  
+	    byte[] b2 = { 13 };
+	    ba1 = new BitArray(b1); // 01000001 - False-True-False...-true
+	    ba2 = new BitArray(b2); // 00001101 - False-False-False...-true
+	    foreach (bool ba in ba1)
+		Debug.Write(ba + " "); //True False, False,...
+	    BitArray ba3 = new BitArray(8);
+	    ba3 = ba1.And(ba2); // 00000001 - False-True-False...-true
+            ba3 = ba1.Or(ba2);
+
+Unsafe Codes or unmanaged code
+-----------------------------
+	- The unsafe code or the unmanaged code is a pointer variable,i.e.,the direct address of the memory location.
+	- pointer declaration 	int    *ip;    /* pointer to an integer */
+	- compiling unsafe code, open project properties->Build -> check 'Allow unsafe code' or command line '/unsafe prog.cs'
+	- fixed - to create an unmovable memory block
+	- use the following situation, other situation is not recommended.
+		.Dealing with existing structures on disk
+		.Advanced COM or Platform Invoke scenarios that involve structures with pointers in them
+		.Performance-critical code	
+
+	public unsafe void main()
+	{
+	    int i = 10;
+	    int* p = &i;
+	    Debug.WriteLine(i);
+	    Debug.WriteLine((int)p);
+	    Debug.WriteLine(p->ToString());
+	}
+	OR
+	public void main()
+	{
+	    unsafe {
+		int i = 10;
+		int* p = &i;
+		Debug.WriteLine(i); //10
+		Debug.WriteLine((int)p); //105827464
+		Debug.WriteLine(p->ToString()); //10 Retrieving the Data Value Using a Pointer
+	    }
+        }
+	
+	public void main()
+	{
+	    display(); /calling managed code to unmanaged code.
+	}
+
+	public void display() //public unsafe void display()
+	{
+		unsage {
+		    int i = 10;
+		    int* p = &i;
+		    Debug.WriteLine(i); //10
+		    Debug.WriteLine((int)p); //105827464
+		    Debug.WriteLine(p->ToString()); //10 Retrieving the Data Value Using a Pointer
+		}
+	}
+
+	function 
+	---------
+	public void main()
+	{
+	    unsafe {
+		int i = 10;
+		int j = 20;
+		int* x = &i;
+		int* y = &j;
+
+		Debug.WriteLine(i + " " + j);
+		swap(x, y);
+		Debug.WriteLine(i + " " + j);
+	    }
+	}
+
+	public unsafe void swap(int* x, int* y)
+	{
+	    int t = *x;
+	    *x = *y;
+	    *y = t;
+        }
+        
+        Array
+        -----
+	public void main()
+        {
+            unsafe {
+                int[] a = new int[5];
+                for(int i=0;i<5;i++) 
+                    a[i]=i*i;
+                /*for(int i=0;i<5;i++) 
+                    Debug.Write(a[i] + " " ); //0 1 4 9 16
+                */
+
+                //pointer, compile error, In C# int* and in[] are not treated the same. 
+                //Operator '+' cannot be applied to operands of type 'int[]' and 'int'
+                //*(a + i) => a[i]
+                /*for (int i = 0; i < 5; i++)
+                    Debug.Write(*(a + i)); //0 1 4 9 16 
+                */
+
+                //compile error, Operator '++' cannot be applied to operand of type 'int[]'
+                //a++; 
+                //array is fixed in memory, so we can't increment
+
+                //compile and run
+                int* p = (int*)0; //p 0x00000000
+                p++; //0x00000004, 4.
+                //pointer can increment, bcaz it is not fixed in memory
+
+                //fixed
+                fixed(int* pa = a)
+
+                for (int i = 0; i < 5; i++) Debug.Write(*(pa + i) + " "); 
+                //access beyond the array limit then it will print garbage.
+                //for (int i = 0; i < 6; i++) Debug.Write(*(pa + i) + " "); //0 1 4 9 16 0
+           }
+        }        
+        
+        struct
+        ------
+        struct Point
+	{
+	  public int x;
+	  public int y;
+	}
+
+	public void main()
+	{
+	    unsafe {
+		Point rf = new Point();
+		rf.x = 10;
+		rf.y = 20;
+		Point* ptr = &rf;
+		Debug.WriteLine(ptr->y + " " + (*ptr).x);
+	    }
+        }
+        
+------------------------------------------------------------
+What is Lambda expressions , Action , Func and Predicate ?
+
+	- Lambda expressions , Action , Func and Predicate - make your delegate code more simple and shorter
+	- Lambda expressions helps to create expression trees.
+	  the implementation of expression trees in LINQ & (BL)business languages
+	  
+	//delegate example
+	delegate double SquarRoorPtr(int i);
+	static SquarRoorPtr sr = SquareRoot;
+	static void Main(string[] args)
+	{
+	    double d = sr(5);
+	}
+
+	static double SquareRoot(int i)
+	{
+	    return Math.Sqrt(i);
+        }
+        
+       	//replacing the above delegate code to inline code(Anonymous methods), avoid the function.
+   	delegate double SquareRootPtr(int i);
+        static void Main(string[] args)
+	{
+	    SquareRootPtr sr = new SquareRootPtr(delegate(int i) { return Math.Sqrt(i); }); 
+	    double d = sr(5);
+	}
+
+	//replacing the above Anonymous methods to Lambda expressions.         
+        delegate double SquareRootPtr(int i); 
+	static void Main(string[] args)
+	{
+	    SquareRootPtr sr = i => Math.Sqrt(i); 
+	    double d = sr(5);
+	}
+	- Lambda expressions is a simple inline code which points towards an inline code
+	- This inline code can be pointed on using delegate
+	- Lambda expression is divided in two parts,  1st whatever is after '=>', that is the line of the code
+	  and whatever is before '=>' that indicates the input parameters
+	- Lambda expressions understand the variable types by looking at the calculation part, 
+	  The input i variable can be integer and the return type can be a double.
+	  
+	- Func is a generic delegate, it's a ready made delegate, it define inputs and outputs of different datatypes
+	  ----
+	//replacing the above Lambda expressions to Lambda expressions + func (generic delegate).         	  
+	Func<int, double> sr = i => Math.Sqrt(i);
+	double d = sr(5);
+	
+	Func<int, int, double> sr = (j,i) => j*Math.Sqrt(i); //2 i/p
+        Func<double> sr1 = ()  => Math.Sqrt(6); // no i/p
+        double d1 = sr1();
+        
+        for (int i = 0; i <= 100000000; i++) f(i); //Func<int, int> f = (i) => i; //2690662, performance is slow
+        for (int i = 0; i <= 100000000; i++) Test(i); //2686795
+        
+        for (int i = 0; i <= 100000000; i++) f(i); //Func<int, int> f = (i) => Test(i); //6021492 , performance is vey slow
+        for (int i = 0; i <= 100000000; i++) Test(i); //2653701
+        
+	- Action has inputs but no outputs (no return values. like a void method). It is a ready made delegate
+	  ------
+	Action<int> a1 = i => Console.WriteLine(i);
+	Action<int, string> a2 = (i,x) => Console.WriteLine(i + " " + x);
+	a1(5);
+	a2(5, "tesT");
+
+	-Performance is not good using Action, compare to calling simple method and compare to action method
+	Action<int> a = i => Test(i);
+
+	Stopwatch sw1 = new Stopwatch();
+	sw1.Start();
+	for (int i = 0; i <= 100000000; i++) a(i);
+	sw1.Stop();
+	Console.WriteLine(sw1.ElapsedTicks); //2632701
+	Stopwatch sw = new Stopwatch();
+	sw.Start();
+	for (int i = 0; i <= 100000000; i++) Test(i);
+	sw.Stop();
+	Console.WriteLine(sw.ElapsedTicks); //2682056
+        Console.ReadLine();
+        
+        static void Test(int i)
+	{
+		int y =i;
+        }
+
+	- predicate is a ready made generic delegate, only for checking purpose, onlu one input & returns true or false only.
+	  ---------
+	Predicate<string> p = (i) => i.Length>5; // p("test") //false , p("testtst") //true
+	Predicate<string> p1 = (i) => Test(i);
+	
+	for (int i = 0; i <= 100000000; i++) Test(i.ToString()); //31006739 
+	for (int i = 0; i <= 100000000; i++) p(i.ToString()); //31327509 //performance is slow
+	for (int i = 0; i <= 100000000; i++) p1(i.ToString()); //34775589 //performance is very slow
+	
+	- why we would like to use lambda expressions and these generic delegates?
+	List<string> l = new List<string>();
+	l.Add("test");
+	l.Add("testtest");
+	l.Add("tes");
+	l.Add("testtt");
+
+	string s = l.Find(p); //output testtest
+	- very useful, .NET classes are heavily using a delegate, like example the list, l.Any using func delegate
+	
+	-Lambda expressions is Expression trees
+	------------------
+	 whatever the user has passed, we can construct expression tree and evaluate the expression tree and run it.
+	 for exmple (10+20)-(5+3)
+	 [Subtract] (top node)     |
+	    / \			   |	
+	   /   \		   | expression trees	
+	 [Add]	[Add] (sub node)   |	
+	  /\	 /\                |
+	 5  3	10 20              |
+	 if i can construct such kind of expression tree dynamically, If i have a facility where we can take this expression tree
+	 and create a delegate out of it then execute it, that things make more dynamically, it is possible by using Expression tress.
+	 It will execute all the expression tree rom the bottom.
+	 	 
+	BinaryExpression b1 = Expression.MakeBinary(ExpressionType.Add, Expression.Constant(5),Expression.Constant(3));
+	BinaryExpression b2 = Expression.MakeBinary(ExpressionType.Add, Expression.Constant(10), Expression.Constant(20));
+	BinaryExpression b = Expression.MakeBinary(ExpressionType.Subtract, b2, b1);
+	
+	//this statment will create a delegate, by parsing the expression tree, invoke the node, evaluate each node, give output
+	int r = Expression.Lambda<Func<int>>(b).Compile()(); 
+	Console.WriteLine(b); //(10+20)-(5+3)
+	Console.WriteLine(r); //22
+	 
+	- Expression tree is not a delegate, Expression tree we can construct dynamically and create a delegate out of it
+	- The most important use of expression tree is when we create End user languages
+	  Where the end user type some commands in simple english, Using that English will build expression trees, 
+	  This expression tree will create a code which can be in a form of delegate , a function or a class.
+	  
+	  	 english      o
+	Enduser----------->   /\   -----> code - delegate  or function or class.	  	
+	  		     o  o
+	  		    /\  /\
+	  		    expression tree
+	  
+	-example, sql (select * from tablename), The SQL server takes that SQL language, creates a tree and execute on a database.
+	- LINQ, using lambda expression. LINQ is one of the places where this expression tree is used heavily
+	- In LINQ when we write any query it builds up an expression tree, 
+	  This expression tree evaluated and it can be converted into SQL or any other data source language
+	
+	DataContext dc = new DataContext();
+	var x = (from c in d.customerTable where i.id =12 select i);
+	//linq is translated to sql using tree expression select * from cusomter where id = 12
+	{select [t0].[name], t[0].dob from [dbo].[customertable] as [t0] where [t0].[id]=@p0}
+	
+---------------------------------------------------------------------------------
+Extension Methods - helps you to add new methods to exiting types withour modifying the original code, inheriting or aggergating.
+	- create another class library, it wrap maths.dll, and it will have a subtract function
+	- can achieve by inheritance or aggregation or composition, but it will end up with a complicated class object
+	- Extension method must be static, other wise compile error
+
+namespace Maths
+{
+    public class MathCls //static added for extension methods
+    {
+        public int Add(int x, int y) //static added for extension methods
+        {
+            return x + y;
+        }
+    }
+}
+
+namespace MathExtension
+{
+    public static class ExtensionCls //static added for extension methods
+    {
+        //complicated class object
+        /*public MathCls mc = new MathCls();
+        public int Subtract(int i, int j)
+        {
+            return i - j;
+        }*/
+
+        //extension methods , if not static 'Extension method must be static'
+        public static int Subtract(this MathCls mc, int i, int j)
+        {
+            return i - j;
+        }
+    }
+}
+
+using Maths;
+using MathExtension;
+namespace ConApp
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            MathCls mc = new MathCls();
+            mc.Add(2,5);
+            //mc.Subtract()  //there is no method in the MathCls class
+
+            //it is complicated class object.
+            /*ExtensionCls ec = new ExtensionCls();
+            ec.mc.Add(1, 4);
+            ec.Subtract(5,6);*/
+
+            //extension methods
+            MathCls em = new MathCls();
+            em.Add(1, 2);
+            em.Subtract(5, 6); //intelligence will show green and down arrow means extension methods
+
+            Console.ReadLine();
+        }
+
+    }
+}

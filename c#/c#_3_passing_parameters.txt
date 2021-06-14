@@ -1,0 +1,137 @@
+Parameters by Value - when a method is called, a new storage location is created for each value parameter.
+-------------------------
+
+Parameters by Reference
+-------------------------------
+A reference parameter is a reference to a same memory location of the actual variable. 
+When you pass parameters by reference, unlike value parameters, a new storage location is not created for these parameters.
+The reference value must be inititated.
+
+Parameters by Output
+------------------------------
+A return statement can be used for returning only one value from a function. 
+However, using output parameters, you can return two values from a function. 
+Output parameters are similar to reference parameters, except that they transfer data out of the method rather than into it.
+The output parameter need not be assigned a value
+
+using System;
+namespace PassingParaApplication {
+   class PassingParaClass {
+      public void ParaValue(int x, int y) {
+         int temp;
+         temp = x;
+         x = y;   
+         y = temp; 
+      }
+      
+      public void ParaReference(ref int x, ref int y) {
+	int temp;
+	temp = x; 
+	x = y;    
+	y = temp; 
+      }
+      
+      public void ParaOut(out int x, out int y) {
+      	int i = 10;
+      	x = i;
+      	y = 25;
+      }
+      
+      static void Main(string[] args)
+      {
+         PassingParaClass n = new PassingParaClass();
+         int a = 10;
+         int b = 20;
+         Console.WriteLine("Before a, b = " + a + "," + b);
+         n.ParaValue(a, b);
+         Console.WriteLine("After a, b = " + a + "," + b);
+         
+         int c = 10;
+	 int d = 20;
+	 Console.WriteLine("Before c, d = " + c + "," + d);
+	 n.ParaReference(ref c, ref d);
+         Console.WriteLine("After c, d = " + c + "," + d);
+         
+	int e = 20;
+	int f;
+	Console.WriteLine("Before e,f = " + e);
+	n.ParaOut(out e, out f);
+	Console.WriteLine("After e,f = " + e + ","+ f);
+      }
+   }
+}
+output
+Before a,b = 10, 20
+After a,b = 10, 20 //no change in the values
+
+Before c,d = 10, 20
+After c,d = 20, 10 //the values have changed inside the swap funciton and it reflects main function 
+
+Before e,f = 20
+After e,f = 10,25
+
+
+Parameters by params - slower than regular array method 
+--------------------
+void UseParams(params int[] list)
+{
+    Debug.WriteLine(String.Join(" ", list));
+}
+
+void UseParams2(params object[] list)
+{
+    Debug.WriteLine(String.Join(" ", list));
+}
+UseParams(1, 2, 3, 4); //1 2 3 4
+UseParams2(1, 'a', "test"); // 1 s test
+UseParams2(); //blank
+int[] myIntArray = { 5, 6, 7, 8, 9 };
+UseParams(myIntArray); //5 6 7 8 9
+UseParams2(myIntArray); //it won't throw error, display System.Int32[]
+
+Option Parameters - no performance effect.
+-----------------
+Named Parameter - performance, slow, should be avoided in most C# , alternative is overload
+---------------
+
+void Main()
+{
+	OptionMethod(); // Omit the optional parameters.
+	OptionMethod(4); // Omit second optional parameter.
+	// Method("Dot"); // You can't omit the first but keep the second.
+	OptionMethod(4, "Dot");
+	OptionMethod(name: "Sam");// Specify one named parameter.
+	OptionMethod(value: 5, name: "Allen"); // Specify both named parameters.
+	OptionMethod(name: "Test", value: 6); 
+	
+	NameMethod(7, "A7");
+	NameMethod(value: 8, name: "A8"); // Specify both named parameters.
+	NameMethod(name: "A9", value: 9); 
+	
+}
+
+void OptionMethod(int value = 1, string name = "Perl")
+{
+	Debug.WriteLine("value = {0}, name = {1}", value, name);
+}
+
+void NameMethod(int value = 1, string name = "Perl")
+{
+	Debug.WriteLine("value = {0}, name = {1}", value, name);
+}
+
+
+Output
+-------
+value = 1, name = Perl
+value = 4, name = Perl
+value = 4, name = Dot
+value = 1, name = Sam
+value = 5, name = Allen
+value = 6, name = Test
+
+value = 7, name = A7
+value = 8, name = A8
+value = 9, name = A9
+
+
