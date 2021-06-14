@@ -1,0 +1,215 @@
+https://www.cockroachlabs.com/pricing/
+System Design : Distributed Database System Key Value Store - https://www.youtube.com/watch?v=rnZmdmlR-2M
+===============================================================
+	- 1. characteristics of the database 
+		- so the database we designed today is going to be more highly consistent rather than highly available 
+		- Different from a database like Cassandra which relies a lot on eventual consistency and stresses for higher availability rather than consistency
+	- 2. basic operations - which the database can support 
+	- 3. overall architecture of the database 
+	- 4. metadata manager - where and how the metadata of the database is stored 
+	- 5. replication group 
+	- 6. data plane 
+	- 7. control plane 
+	- 8. edge cases
+	- 9. scale numbers - how much this database can scale given certain conditions 
+	so next let's jump into the
+1. characteristics of the database 
+----------------------------------
+	- when designing a database these characteristics have to be considered in this order 
+		- [Durability, Availabilty & Performance, security]
+		- [Durability] - if you lose customer data you would not be in the business of database system
+		- [Availability] over performance so you would rather return data in a slow manner than not returning data at all 
+		- [performance], [security] - the client will do their own encryption before sending data to database systems
+	- [consistency model] ->  [what a strongly consistent] - the read after the most recent successful write
+		- our database is not support [ACID]
+			- no atomcity - you cannot send like five requests to a database and assume that all of them should be executed together or none should be together 
+			- no isolation - no locking at a table level or low level or row level
+2. basic operations - which the database can support 
+----------------------------------------------------
+	- our database-> tables -> table will have a very simple key and value record and a sequencer
+	- these are the operations you can perform on the database 
+		- creating a table 
+		- putting a key and value in a given table - put(table,key,value)
+		- getting a key in a given table and getting its value - get(table,key)->value
+		- deleting a key in a given table  - delete(table,key)
+		- listing the keys in a table in a sorted form - list(keys in table in sort form)
+		- delete table (optional)
+	- sequencer - increasing and unique number - 16 byte
+		- unique number combination - made up of these three parts
+			- timestamp in nanoseconds - 8 byte 
+				+ 
+			  unique number per load - 4 byte - it will keep increase as soon as it reaches the end of the 4-byte it will again circle back from zero and start again
+				+
+			  unique node ID - 4 byte - we raise  to 2 power of 32 nodes which is about 4 billion number
+	- example -> 1.create stocks, 2.put(stocks, b 100), 3.put(stocks, a, 120), 4.put(stocks, c, 135), 5.get(stocks, a), 6.list(stocks)
+	 	- stocks 1.
+	 	--------------
+	 	Name	price	seq
+	 	a	120	seq2  -  3.
+	 	b	100	seq1  -  2.
+	 	c 	135	seq3  -  4.
+	 	- 6.list(stocks) - if table is large or big, implement some sort of pagination to return some number of Records at a time
+	- sequencer explain - put (d, 140) and put (d, 160) - client does 2 puts on this top d at about same time, 
+		this is a distributed system and also we are not running any locking, to find out which one is the last put, using the higher sequence number
+- 3. overall architecture of the database  (Distributed Database System_1)
+------------------------------------------
+	- distributed database system, all these components are running inside our data center 
+			---------------------------|
+			|    Load Balancer   	   |1
+			---------------------------|
+
+			|---------------| |--| |--|
+			|Request Manager| |RM| |RM|2 -4
+			|---------------| |--| |--|
+							|--------|
+	|-----------|					|Metadata|		
+	|Controller |					|Manager |	3
+	|-----------|					|--------|
+	
+	| pool of |		5
+	| availble|   ------------		------------ 	------------
+	| nodes	  |  (	Leader6 )	(   Leader )	(   Leader )
+		     (	 []    )	(    []    )	(    []    )	
+		     {	[] []  )	{   [] []  )	{   [] []  ) 
+		     -------------	-------------	-------------
+		     Replication group	RG		RG
+		   
+	- 1the load balancer receives a request, 2sends to one of the requests managers, 3RM consults the metadata manager to figure out who owns the table, 
+	- 4the RM after consulting with the MM, sends a request to the one of the replication groups who is the owner of that for the table, 
+	- 5RG consists of three or five nodes for redundancy purposes and in each RG what we have one leader, 6RG will talk to the leader and it will do get/put/list operation
+	- controller is keeping an eye on all these RG, if it too big or hot some other factor,
+	  then the controller is going to start splitting that table into smaller tables and start spreading over to multiple or create new RG
+	- drwan different boxes, it's possible that one actual physical host could be playing multiple rows it could be a RM or RG or MM
+- 4. metadata manager - where and how the metadata of the database is stored 
+---------------------------------------------------------------------------	
+	- MM is going to hold small amount of data which has to be highly consistent and which has lots of reads and fewer writes
+	- responsibility for the metadata manager
+		- leader election in a RG from bunch redundant nodes
+		- Keep the mapping of table part to RG
+			- table has billions of records so we want to split the stocks table into smaller parts and have different RG for each part
+			- for example, stocks[a-c] -> rg1 (c not including), stocks[c-l] -> rg2, stocks[l-z] -> rg3 ,
+		- bunch of options for using mm - zookeeper or etcd or redis
+		- you could write your own Paxos or raft algorithm - consensus deriving algorithms 
+		- data stored in the metadata manager is not always going to be consistence because of network split 
+			- so we'll add more predictions at the RG level so that we are not in an incorrect state
+		- Keep all data of MM in memory of RM, so that RM does not have to talk to MM for every request but instead it can consult in memory data and talk directly to the RG
+			- if the data on the MM changes then it can propagate that information to all the RM and they can change their in-memory view
+		- The data stored by MM is extremely critical so we need to back it up as frequently as possible whenever the state of the MM changes
+- 5. replication group 
+----------------------					Table1 |--->Part1 -->RG1
+		3 node					       |--->Part2 -->RG2	
+	   ------------		------------ 	        Table2 --> RG1        
+	   (	Leader   )	(   Leader  )	        Table3 --> RG1
+	   (	 []      )	(    []     )		Table4 --> RG2
+	   {	[] []    )	{   [] [  ]-)-----> append only log
+	   (  2 followers)      (      [  ]-)-----> b+tree, lsm tree
+	   -------------	-------------	
+	   RG1			RG2		
+	- RG consists of bunch of nodes, preferably an odd number of nodes,  so that it's easy to do majority or quorum 
+	- in this case, we have three node RG, every record will be stored in three different replicas and at max we will lose two replicas and still have them data 
+		- if you want more redundancy that you can have five node RG
+	- inside every RG there will be only one leader and every request(get, put, delete, list) will go through that leader and that's why our system is [strongly consistent]
+	- followers try to stay in sync with this leader, whenever put happens, that majority of nodes including the leader always applied this put before we respond okay to the user 
+		- if a leader ever went down then there is at least one other host which has the exact same data and then that node can take the position of the leader
+	- what's inside the node? it has basically two big parts 
+		- 1) append only log -  so there is a log in which we are in a appending data in a hard drive, because sequential writes are extremely cheap 
+		     so whenever put comes in for first thing we appended to the append only log 
+		- 2) Indexing purposes we use B+tree or lsm tree - since the data is securely stored in a hard drive in an append-only log we can keep some data in memory
+		     and do not have to flush our B+/lsm tree into the hard drive
+	- Read Heavy system - use a B+ tree, write Heavy system - use lsm tree
+	- Newer distributed databases seem to be preferring lsm tree over b+tree
+	- so when a put comes in -> it go to leader -> leader will apply that put to its append-only log and at the same time send the message to both the followers
+	  -> the followers will try to apply that put into their append only log -> as soon as one of the followers respond back to the leader -> the leader reply okay to the user
+	     because majority of the notes including the leader has the data and in case the leader went down that other node can take its position 
+	- For example, 4 tables,  table1 has 2 parts part1 and part2 because it's a really big table -> part 1 is stroing RG1 and part 2 is stroing RG2
+	  table 2 3 & 4 are small, they can be stored in a single RG, table 2 & 3 are storing RG1 and table4 is storing RG2
+- 6. data plane  (2_Data_Pane.png)
+----------------
+			---------------------------|
+			|    Load Balancer   	   |1
+			---------------------------|
+
+			|---------------| |--| |--|
+			|Request Manager| |RM| |RM|2 -4
+			|---------------| |--| |--|
+							|--------|
+							|Metadata|		
+							|Manager |	3
+							|--------|
+	
+			5
+	           -------------	------------ 	
+		   (	Leader6 )	(   Leader  )	
+		   (	 [a]    )	(    [d]    )		
+		   {	[b] [c] )	{   [e] [f] )	 
+		   -------------	-------------	
+		   RG1			RG2		
+	- Stocks[A-L] -> RG1 -> a,b,c. Stocks[L-Z] -> RG2 -> d,e,f (***)	
+	- Put(Stocks,G,100), put(stocks, y,100), get(stocks,y), list(stocks)	
+	- Put(Stocks,G,100) - > Request from LB -> RM -> if it have data in memory (that's (***)), if not talk to MM -> RG1 -> 'a' Leader -> put G with value 100 into its database
+	  -> 'a' will apply this data into its append-only log and eventually into its B+/lsm tree -> tell both the nodes to apply it in their hard drives 
+	  -> if one of them is says ok they have applied -> reply ok to the RM -> Load balancer -> ok to the end user
+	- RM will also generate the sequencer
+	- list(stocks) operation -> RM knows that this table is going to 2 parts -> start scanning data from here Stocks[A-L] and start streaming that data back to the user 
+	  and once that data is done streaming -> start streaming data from Stocks[L-Z]. 
+		- if the list operation takes a lot of time we could split into multiple requests or fetch like 500 requests and then client sends that particular key back 
+		  and then the RM starts that request from that particular key and so on
+- 7. control plane  (3_control plane.png)
+------------------
+	- job is 1)ladder managment, 2)follwers falling behind 3)split hot tables
+	- 1)ladder managment
+		- if a table gets really hot or big how do we split them into multiple parts
+		- all the notes in the RG are constantly heart beating with the MM and that's how MM knows the nodes are still alive 
+		- if for any reason leader stops heart beating with the MM for certain amount of time (one second) ->  then the MM is going to assume that the leader is lost 
+		  and then it will try to elect a new leader.
+		- problem 1 , a scenario where the old leader could still be alive and a new leader is there so we have what we call split brains
+		- problem 2, a second where a RG is unavailable so all the reads writes for that RG won't work, so this is a situation 
+		  where we are preferring strong consistency or availability. Cap theorem can achieve either consistency or availability given partition tolerance
+		- Cassandra where you could pick availability or consistency
+	2)follower starts falling behind the leader so let's suppose in this
+		- some node is not sync with the leader, some malfunctioning hardware on that node 
+		- so the controller monitoring all RG and it realizes that this one node is not able to stay in sync with the leader, 
+		  so it takes a one of pool available nodes and replaces that into this RG and update to MM 
+		  and make sure that that node stays in sync with the leader and then Flags this node for further inspection
+	3)the most complicated control plane job is splitting hot tables (growing size or iOS is very high)
+		- for example stocks table is growing really big, really big so first thing controller will figure out at what point it should split this table
+		- we do not want to split the table in the middle because that will involve a lot of work about copying and that might turn out to be counter productive
+		- let's split like 30%,  so first it finds our RG which will be handling this table, if not, then it can create a new RG based on the available pool of nodes
+		- PUT - if existing RG2 which is going to handle some part of this stock table, first tell RG2 prepare for some range of stock table, then updates the MM
+		  and at the same time tell the RG1, do not take any rights for stocks in certain range, so if it does get a put it RG1, will redirect that to the RG2
+		- GET -  dual request, one from RG1 and another from RG2 becaused of middle of split, if the data is present in both the places, 
+		  use a sequence number to compare and see which one of the higher sequence number
+		- list also same like get, get all data from both place, merge based on the sequence number
+- 8. edge cases
+----------------
+	- majority means if 5 or 7, 3 or 5 in one group, remaining 2 or 3 in miniority group
+	- the situation where we have two leaders in a RG, how we protect against to later or split brains when a new leader is elected by the MM 
+	  the first thing is going to talk to the majority other application notes and make sure that majority of them accept this guy is a new leader 
+		- the old leader is still thinking i am leader, but accidentally put land up on the old leader because of metadata information, 
+	  	try to put/get/list at that time those nodes, node will not accpet and tell you're not my leader, same time new leader will send put 
+	  	and all nodes will be accept, so there is no [consistency problem]
+	- next is no leader situation, MM will not elect a new leader and for that duration of time the entire RG is unavailable 
+	  so again this is a availability problem, neither the durability problem nor the consistency problem
+		- to improve, first is we can be more aggressive in between leader and MM so instead of one second, let's say if leader does not heartbeat in 500 millisecond 
+		  then the MM tries to elect a new leader
+		- controller keeping a deep check on the leader and making sure that all the stats about this leaders host or loads is is up to date, good health so 
+		  we do have a bad leader let's say once in a 15 days and we have an outage of one second in one RG, it's an acceptable situation
+		  	- what is not acceptable is a failure every hour or every two hours in a RG
+		- first we append the data to append-only logs and then apply that into the B+/lsm tree, but nodes goes down before apply to tree, 
+		  then it's okay because we can replay the logs from the append-only logs because the append-only logs has flushed that data into the hard drive guaranteed 
+	- multiple node failures - rare coniditon
+- 9. scale numbers - how much this database can scale given certain conditions 
+	- how much data or database can handle 
+	- we can assume that every node in a RG has a 5 terabyte capacity where we can run five or six disks of one terabyte
+	- Run 1000 RG that's like storing 5 petabytes of data  (large data)
+		- if this is not enough that you can run 10,000 RG = 50 petabytes of data
+	- limit on key value you should always limit 1 megabyte (MB)
+		- more than 1 mb consider blob storage
+		- most of average cases, key value size of 100 200 300 bytes or even 1 kilobyte and not one megabyte or had poor key value should be about 30 bytes
+	- where 16 bytes was a sequencer and then we can have some 20 30 bytes for storing index data analysis 
+	- I/O part application group could be up to 2,000 per second 
+	- metadata overhead per application group could be up to 30 bytes 
+		- where we store for which the application group what are the nodes and who is a leader and all that information
+	- metadata overhead per table could be also to 30 points 
+	- RAM on RM can be 16 gigabytes and 4 gigabyte for storing metadata information 
+		- so given 4 gigabytes you can try to figure out how many requests RGs and table information can be held in memory of a RM

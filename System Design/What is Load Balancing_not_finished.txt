@@ -1,0 +1,428 @@
+What is Load Balancing?
+			 --------|
+	o[Cl]--Request-->|Algo	 |it's first     
+	n[ie]		 |rithm	 |server is something which serves requests
+	e[nt]<-Resoponse-|running|sends back response
+	service		 --------|		N Servers
+			 --------|		[Load]
+	2[Cl]--Request-->|Algo	 |it's 2nd 
+	n[ie]		 |rithm	 |server	
+	d[nt]<-Resoponse-|running|
+	service		 --------|
+	
+	- thousands and thousands of requests coming in, your computer cannot handle this anymore, so add another computer, one problem where do you send the requests
+	- [load balancing] -> take these requests and evenly balance the load on all of our n servers
+	- the concept of [consistent hashing] will help us do that
+	
+	h(10)=>3->| |-->[s0] X/n -> 1/n, n 4 serves
+	h(2-)=>3->| |	[s1] h(r1) -> m%n, request id (r1) -> 0 to M-1, M mobile client 
+	h(35)=>0--|-|	[s2] 
+		  |---->[s3]	
+	- you will get a request ID ( uniformly random) in each request, when the mobile client sends you a request it randomly generates a number from 0 to M(obile)-1
+	- take this request ID (call r1), hash it, then you get a particular number (m1) h(r1) -> m1, this number (m1) can be mapped to a particular server 
+		- how because you have n servers,take the remainder, whatever index you get, send that to the respective server, h(r1) -> m1 % n |---> [S0] Server  
+																	         |---> [S1]
+																	         |---> [S2]
+																	         |---> [S4]
+	- [A Example] 1) r1 =10, h(10)->3->3%4->3, it goes to server 3. example 2) r1 =15, h(20)->15->15%4->3, it goes to s3. example 3) r1 =35, h(35)->12->12%4->0, it goes to s0.
+	- so if they're X request, n load and the load factor is 1 by n => X/n -> 1/n
+
+	h(10)=>3->|  |->[s0] X/n -> 1/n, now  n is 5 servers
+	h(2-)=>3--|->|	[s1] h(r1) -> m%n, request id (r1) -> 0 to M-1, M mobile client 
+	h(35)=>0--|---->[s2] 
+		  |---->[s3]	
+		        [s4]
+	- what happens if you add more servers s4 but now there's a problem the requests which are being served here are completely bamboozled
+	- [B Example] 1) r1 =10, h(10)->3->3%5->3, it goes to s3. example 2) r1 =15, h(20)->15->15%5->0, it goes to s0. example 3) r1 =35, h(35)->12->12%5->2, it goes to s2.
+	- pie diagram - (X) - 25% every server, so total 4 server. 
+		- when the 5th server added, s0 lose [5%], s1 gains [5%] from s1 & lose [10%], s3 gains [10%] from s2 lose [15%], s4 gains [15%] from s2 lose [20%], s5 gains [20]%  
+					     25=>25-5=20   5+25=>30-10=20                      10+25=>35-20=15			  15+25=>40-20=20
+		- [-5%]+[+5%]+[-10%]+[+10%]+[-15%]+[+15%]+[-20%]+[+20%]=> 100% ,  cost of the operations
+	- What is the big deal?
+		- in practice the request ID is never random or rarely random. The request ID usually encapsulate some of the user information, 
+		- for example the user ID( hadh(kader), is going to give me this same result again, again and again because the hash function(h(r1) is constant 
+		- if i'm getting the same result (m1%n), it means it's going to send me to the same server again and again and again
+		- why not store it in the local cache (smart way), instead of fetching a profile from a database again and again.
+			- depending on the user ID (r1), send to specific servers and once they're sent there you can store relevant information in the cache for those servers 
+		- but this policy [A Example], the entire system changes all users are now happily sent to different places and all the useful cache information 
+		  you had [A Example] is just dumped it's useless, because the numbers that you are serving completely changed
+	- what you want to avoid is a huge change, see new pie chart
+		- take 5% (little) from each (25%) server
+    	- why the old standard way of hashing doesn't work in this case we need more advanced approaches and that's where [consistent hashing] comes in
+-What is Consistent Hashing and Where is it used?
+	- so the problem is not actually load-balancing, the problem is adding and removing servers
+	- like we saw that
+00:09
+completely changes the local data that
+00:11
+we have in each server right and to
+00:14
+avoid that we are going to be using this
+00:16
+concept where we are still going to be
+00:19
+hashing all the requests according to
+00:23
+their IDs right request ID is still
+00:26
+there we still have requests IDs so
+00:29
+what's different
+00:31
+well what I'm drawing is a ring and now
+00:35
+I want you to imagine that instead of an
+00:37
+array which can map this hash function
+00:41
+value from 0 to M minus 1 this is a ring
+00:46
+which contains the positions 0 1 2 3 so
+00:52
+on and so forth up to M minus 1 right it
+00:55
+goes all the way round and I minus 1
+00:58
+sticks to 0 so it's a ring of hash fine
+01:02
+so of course this thing can be mapped
+01:04
+into a point over here let's say that
+01:07
+point is over here so this request is
+01:15
+pointed over here we are going to have
+01:17
+multiple requests so these are whether
+01:23
+requests are
+01:31
+now what we can do is we can take the
+01:34
+servers and we actually need to send
+01:38
+these requests to those servers
+01:40
+so the servers themselves have IDs which
+01:43
+are from 0 1 2 3 4 right first we had
+01:47
+just four sours so these are the server
+01:51
+IDs what I can do is hash these server
+01:57
+IDs also using the same hash function
+02:00
+right or a different hash function it
+02:04
+doesn't really matter what I want to do
+02:06
+is then take the remainder with the
+02:09
+search space which is M so I take the
+02:14
+remainder with M and as an example if I
+02:20
+hash 0 mod M is 30 then let's say H of 0
+02:28
+is 49 mod 30 gives you 19
+02:33
+so server one will be hash to position
+02:37
+19 so let's say that is over here right
+02:42
+s 1 similarly let's say s 2 is hashed
+02:45
+here we have s 3 here and s 4 here
+03:00
+now whenever a request comes in to this
+03:03
+ring that we have what we do is we go
+03:08
+clockwise we go clockwise and find the
+03:12
+nearest server this server is going to
+03:16
+be serving this request that's it
+03:18
+simple algorithm this one is going to be
+03:21
+served by s2 this one is going to be
+03:23
+served by s3 or rather this one is going
+03:25
+to be served by s for this by s2 this by
+03:28
+s3 this by s1 in fact it goes over here
+03:36
+to s1 okay so s1 has load of two
+03:42
+requests this has load of one load of
+03:45
+one and a load of one right so why is
+03:51
+this the architecture we are choosing
+03:52
+because the hashes are uniformly random
+03:55
+you can expect the distance between them
+03:58
+to be also uniform in which case because
+04:02
+the distance is uniform the load is
+04:03
+uniform the requests are uniform of
+04:06
+course so they're being mapped to the
+04:07
+right places so the load factor turns
+04:10
+out to be on average expected one by n
+04:18
+that's the smart bit but you already had
+04:21
+that earlier that's not the problem the
+04:24
+special thing is now if I lose a server
+04:27
+let's say s1 or let's first add a server
+04:31
+in fact so I have a fifth server right
+04:37
+which is mapped on to this point
+04:42
+why should I add it over here yeah this
+04:47
+is s4 then any requests which come in
+04:54
+here are going to be served by as four
+05:00
+so initially these two requests would be
+05:03
+served by s3 which would have a load
+05:05
+factor of let's say three but because of
+05:09
+s4 these two requests find the nearest
+05:12
+clockwise server which gives s for the
+05:16
+load factor of 2 and s 3 comes down to 1
+05:19
+now what you are seeing is that the
+05:22
+change in each of these servers loads is
+05:25
+going to be much lesser than what was
+05:28
+there previously s 1 is not affected s 4
+05:31
+is not affected s 2 is not affected only
+05:34
+s 3 is affected okay now let us say s 1
+05:39
+goes down for some reason there was a
+05:43
+crash this this thing lost its power
+05:45
+cord so we lose this and good news all
+05:52
+of these requests are now going to be
+05:55
+served by us 4 and as far as a happy guy
+06:00
+not really the problem with this
+06:04
+architecture is that although
+06:07
+theoretically the load should be 1 by n
+06:10
+practically you can have skewed
+06:13
+distributions over here and why is that
+06:15
+because you know you do not have enough
+06:18
+servers if you had a lot of servers the
+06:20
+chance of this happening was really low
+06:22
+you would have a lot of red points and
+06:23
+it would be evenly distributed but you
+06:25
+just have for now and that's why you
+06:28
+have about half of the load on a single
+06:30
+server which is terrible so we know how
+06:37
+to add servers and you know map requests
+06:40
+to them we know how to be more servers
+06:41
+and add requests to them we also know
+06:43
+that theoretically it's going to be the
+06:46
+minimum change but practically how do we
+06:51
+make this work and this is the place
+06:53
+where system design actually engineers
+06:55
+actually solve problems right take your
+06:58
+time
+06:58
+try to think of a solution ok what you
+07:05
+can do is you can start making virtual
+07:08
+servers when I say what's your servers
+07:11
+it doesn't mean that you have virtual
+07:14
+boxes or you start buying more servers
+07:16
+because those are expensive what you can
+07:19
+do instead is use multiple hash
+07:22
+functions this is H why not make an h1
+07:26
+for all of these guys and then have
+07:29
+another hash function H - through which
+07:33
+you pass the server IDs and get
+07:35
+different numbers so if you have K hash
+07:39
+functions from which you pass east each
+07:46
+of the server IDs then it so will have K
+07:49
+points so let's say s 3 maps to two
+07:52
+other points one is this s 3 one is this
+07:58
+s 3 is right here s 4 is mapped to this
+08:07
+point and to this point and what are you
+08:12
+are effectively seeing is if K is equal
+08:13
+to 3 then you will have instead of just
+08:16
+four points you have 12 points and the
+08:18
+likelihood of one server getting a lot
+08:21
+of the load is much much lesser if you
+08:24
+choose the K value appropriately for
+08:26
+example let's say log in or log M you
+08:33
+can almost entirely remove the chance of
+08:36
+a skewed load on one of the servers
+08:40
+right so now if a server is removed you
+08:46
+need to remove K points from it and
+08:48
+clockwise assign to the nearest servers
+08:50
+but in this case you can see that the
+08:53
+chance of the load being skewed is
+08:57
+really really low and it is efficient so
+09:00
+if you had a PI now it's more likely
+09:05
+that you are going to just take some
+09:06
+load from this server some load from
+09:08
+this server some load from this server
+09:10
+and some load from this server right the
+09:13
+reason for that is because there
+09:15
+multiple points where they exist
+09:17
+multiple places are going to get removed
+09:19
+if you remove one server and those
+09:22
+places will hit multiple regions so
+09:24
+their loads will increase uniformly
+09:27
+expected uniformly similarly if you add
+09:30
+a server again the same things won't
+09:32
+happen you are going to have expected
+09:34
+minimum change in the numbers that
+09:38
+deserve
+09:40
+so if you are wondering where this can
+09:42
+be used it's used in many many places
+09:45
+load balancing is a concept which is
+09:47
+used in distributed systems extensively
+09:49
+right you have this being used by web
+09:52
+caches you have this being used by
+09:54
+databases consistent hashing is
+09:56
+something that gives you flexibility and
+09:59
+gives you load balancing in a very very
+10:03
+clear and efficient way all right so you
+10:08
+should definitely know about this and
+10:09
+you can have a look in the description
+10:11
+below for relevant links I'll be sharing
+10:14
+the code for this in the description
+10:15
+below again and if you have any doubts
+10:18
+then you can leave them in the comments
+10:19
+below we have any suggestions for
+10:21
+computer programming or system design
+10:24
+videos you can leave them in the
+10:25
+comments below I'll be happy to have a
+10:26
+look at them best of luck and this is
+10:30
+what you want to avoid you don't want to
+10:32
+avoid this because when you have
+10:34
+requests to different servers what you
+10:38
+don't want to happen is that if one
+10:40
+request depends on the response from
+10:42
+this server you don't want to

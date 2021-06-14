@@ -1,0 +1,40 @@
+- what happens if there's a power loss?
+	- you cannot afford to have your service go down because there's lots of people using
+	- you should host your services on the cloud
+- what's the difference between a desktop and a cloud?
+	- the cloud is a set of computers that somebody provides to you for money
+	- the reason, because the configuration, the settings, the reliability can be taken care of to a large extent by the solution providers
+- where the code that you have running on the machine is not able to handle all of these connections
+- what do you do? 2 solutions
+	- 1) buy a bigger machine [vertical scaling] - It means that your computer is going to be larger and therefore it can process the requests faster 
+	- 2) buy more machines [horizontal scaling] - It means that the request can fall on any one of these machines and it will be processed 
+	     but because the requests can be randomly distributed among the machines. 
+- The ability to handle more requests by buying more machines [vertical scaling] or buying bigger machines [horizontal scaling] is called [scalability]
+- Pros and Cons
+	horizontal scaling						vertical scaling	
+	-------------------------------------------------------------------------------
+	[1] [2] [3] [4] [5]						[huge box]	
+     1)	Load Balancing							N/A, if you have a single machine there's no load to balance
+     2) Resilient - with lots of machines if one of the machine 	Single point of failure
+        fails you can redirect the request to the other ones.		
+     3) Network calls (RPC) between services, Slow			Inter process communication, fast  
+	All the communication between the servers will be over the 
+	network and network calls are slow, its IO
+     4) Data consistency is real issue					Consistent- just one system on which all the data resides	
+        For example, a transaction where 3rd sends some data to 4th
+        and then 4th -> 5th and then 5th -> 1st, here you see that 
+        the data is complicated to maintain. If there is a transaction, 
+        where the operation has to be atomic, what could happen? we 
+        have to lock all the using dbs server's, which is impractical. 
+        so we have some sort of lose transactional guarantee
+     5)	Scales well, As users increase					Hardware limitations, because we cannot make the computer bigger and bigger and solve the problem
+        The amount of servers that you throw at the problem is 
+        almost linear in terms of how many users are added 
+- what do you think is used in the real world?
+	- both have some of the good qualities of 
+		- VS which is really fast inter process communication, the data(cache) being consistent, no dirty reads and writes
+		- HS which is scales well, resilient
+- Hybrid solution is essentially HS only where take each machine has a big box as possible as, pick up a solution
+- Initially you can VS as much as you like later go for HS
+- Major considerations designing a system - is it scalable? is it resilient? and is it consistent?
+

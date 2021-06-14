@@ -1,0 +1,375 @@
+What are Microservices and how are they different from Monoliths? - Microservices_Monoliths_1.png 
+	- https://www.youtube.com/watch?v=qYhRvH9tJKw&list=PLMCXHnjXnTnvo6alSjVkgxV-VH6EPyvoX&index=6
+	- [common misconception] - most people think
+		- Monolith architectures(MSA) are huge systems. It's just one machine, which is running the entire System. All of the clients connected to the single machine 
+		- Micro services are tiny service, just have one function running on one machine and tiny db with each of them connected 
+		  all the clients are connected to different micro services 
+	- [MSA] doesn't need to be single, running it on multiple machines, clients can connect to them (machines) & can connect to one/more databases. so you can horizontally scale
+		- So the concept that a monolith is a huge machine, which is running the entire system is not true
+	- [micro services]. There's nothing micro about a micro service
+		- Micro service is a single business unit, all data all functions Which are relevant to a service are put into one service 
+		- if you can separate a single service into pieces So that's what a micro service is. 
+		- It's not tiny machines which interact with each other all the time
+		- There might be just three micro services in your entire architecture depending on what your system is and they themselves talk to their own dedicated dbs
+		- The client may not be talking to the micro service it might be talking to a gateway and this gateway is talking to these micro services internally
+	- MSA, exampe stack overflow
+		- when put under a lot of load the MSA scales out, just like here you have multiple servers 
+		 CL1--->[MS1] 
+		 CL2/	[MS2]  [DB]
+		 Cl3/-->[MS3]
+		- advantages,  
+			- 1)[Good for small teams]A small team, You may not be able to afford the time and the interactions required to break this into a micro service, go for a MSA 
+			- 2)they're less of moving parts (less complex) around this MSA, you don't need to wonder about how do I break this into pieces and once they are broken 
+			    into pieces? how do I actually maintain different servers at different times? so deployments are easy because everything is the same
+			- 3)you might have some code which are for setting up tests, setting up connections, setting up various other things in your in your system, 
+			    all that code need not be duplicated for every service that you create. It's all the same. It's all in one service
+			- 4)[procedure call is faster]this is faster, because you're not making any calls over the network(not an RPC call). It's actually in the same box,
+			    So all that logic/code is in the same box. So it's going to run faster, You just need to make a local call
+		- Disadvantages
+			- 1) if there's a new member in the team, they need to have a lot of context on what they are developing, if you give them a Monolith 
+			     which contains all the logic, they have to go through and understand the whole system So they're to put everything in their mind in the context
+			- 2)deployments are complicated, because any change in the code, requires a new deployment, deployed very frequently
+			    and it has to be monitored every time it is deployed, So that it's working properly
+			- 3) In the tests are more complicated, because everything is touching everything this it's not really decoupled
+			- 4) [single point failure]Too much responsibility on each server, if there's a mistake because of which the server crashes, 
+			     all of this servers will crash and the whole system will collapse
+				- one service is connected profiles server and anohter servicer connected to data server, if profiles failed, data would have succeeded,
+				  partial success in the system, need to restart profiels instead all
+	- micro-services - google, facebook, twitter, amazon, uber
+		
+			Gateway
+			| |   \--------| 		
+		 Profiler Analytics	Chat  ----- services,context
+	         |	   |		| 
+	         DB	   DB		DB 
+		- advantage
+			- it's easier to scale, because you can look at this entire system as a set of services, each concerned with only its data and interacting with each other. 
+			  So it's easier to design the system in that way
+			- [easier for new team memebers]a new developer coming into the team, you can assign them a task which concerns with a particular service 
+			  (chat) so they just need to know the context of this service instead of the entire monolith
+			- [working in parallel] parallel development is easy, because there is lesser dependency for the chat developers on the analytics developers, 
+			   now because they can develop at the same time,  
+				- in the monolith maybe one function is calling the other function, there's a lot of tight coupling not just in code, but also in the developer time
+			- [easier to reason about] there are lesser parts which are hidden, When you are actually deploying this chat service, 
+			  if you're seeing there's a lot of load on the chat server, You can easily scale that out. You can put more machines for that chat code
+				- with the monolith, it's more difficult to save what is being used a lot and what is being used less.
+		- Disadvantages
+			- they are not easy to design, So maybe the chat will be broken into far more parts which are not required
+			- [Needs skilled architects] to architect well for a micro service architect
+
+
+Monolithic vs Microservices in a Nutshell
+			Monolithic							Microservice
+Size			Single self-contained unit					Very small function-oriented independent services
+Granularity		Tightly coupled with low cohesion				Loosely coupled with high cohesion
+Ease of Deployment	Requires recreating and redeploying entire application		Each service can be built and deployed independently
+Remote Call Overhead	Low/None							High communication overhead due to increase in remote calls
+Speed of Deployment	Very slow deployment speeds					Rapid and continuous deployment
+Persistence		All services in a monolithic application share data storage	Each service is free to choose its own data storage
+Ease of On-Boarding	Can be difficult to on-board new developers			Easy to on-board new developers
+Polyglot Programming	Utilize a single technology stack				Can utilize a different technology stack per service
+Communication Method	Language-level or procedure calls				Communicates via API layer with lightweight protocols like REST
+Scalability		Horizontally scalable, can be very challenging to		Vertically and horizontally scalable through use of containers and the cloud 
+			scale as application becomes larger	
+			
+https://www.bmc.com/blogs/microservices-architecture/ - aws micro service images
+
+Microservice - 
+	"service-oriented | Services communicate with each other
+	 architecure  	  | over the network
+	 		   
+	 composed of      | you can update the services independently;
+	 loosely couple   | updating one service doesn't require 
+	 elements         | changing any other services
+	 
+	 that have 	  | Self-contained; you can update the code without
+	 bounded contexts"| knowing anything about the internals of other microservices
+
+A Modern Data Architecure for Microervices (AWS)
+==========================================
+Microserice Challenges
+	- Distributed computing is hard
+	- Transaction - mutliple databases across multiple services
+	- Eventual Consistency
+	- Lots of moving parts
+	- Service discovery
+	- Increase coordination
+	- Increase message routing
+	
+Monolithic VS SOA vs Microservices
+	Microsevices						SOA
+	Many very small components				Fewer more sophisticated componets
+	Business logic lives inside of single service domain	Business logic can live across domains
+	Simple wire protocol(HTTP with XML/JSON)		Enterprise Service Bus like layers between services
+	API driven with SDKs/Clients				Middleware
+
+
+Key Elements of Microservices
+	- Some Core concepts are common to all services
+		- Service registation, discovery, wiring, administation
+		- State management
+		- Service metadata
+		- Service verioning
+		- Caching
+	- Low Friction Deployment
+	- Automated Management and Monitoring
+	- Eliminates any logn-term commitment to a technology stack
+	- Polyglot ecosystem
+	- Polyglot persistence
+		- Decomposes Databases
+		- Databases per microservice pattern
+	- Allows easy use of Canary and Blue-Green deployments
+	- Each micorservice is
+		- Elastic: scales up or down independenlty of other services
+		- Resilient: services provide fault isoloation boundaries
+		- Composable: uniform APIs for each service
+		- Minimal: hightly cohesive set of entities
+		- Complete: loosely coupled with other services
+Microservice Benefits
+	- Fast to develop
+	- Rapid deployment
+	- Parallel developemnt & deployment
+	- Closely integrated with DevOps (Now DevSecOps)
+	- Improved scablability, availiabity & fault tolerance
+	- More closely aligned to business domain
+	
+Challenge 1 
+	- Centralized Database => it's Anti-pattern [X]
+		- Application often have a monolithic data store
+			- Difficult to make schema changes
+			- Technology lock-in
+			- Vertical scaling
+			- Single point of failure
+			[user svc] [cart-svc] [account-svc]
+			 |		|	|
+			 V		V	V
+			 ------------------------
+				  V
+				 [DB] 	
+	- Decentralized Database
+		- Polyglot Persisetence
+		- Each service chooses it's data store technology
+		- Low impact schema changes
+		- Independent scalability
+		- Data is gated
+		[user sv]	[Cart svc]	[account -svc]
+		    /\		   |			|
+		   /  \		   V			V			
+	ElasticCache  RDS	[DynamoDB]	       [RDS]
+	DB	      DB	
+
+Challenge 2
+	- Transactional Integrity
+		- Polyglot persistenace generally translates into eventual consistency
+		- Asynchronous calls allow non-blocking, but returns need to be handled properly
+		- How about Transactional Integrity?
+			- Event-sourcing- Capture changes as sequence of events
+			- Staged commit
+			- Rollback of failure
+			
+			|
+			V
+			[]State?
+			[]Rollback?
+			/ \  
+		       /   \
+		      [TS]   [Tick Symbol]
+		      /\
+		     /  \ Error
+		    [TS]  [X Symbol]							correlation id
+- Best practice: Use Corrleation IDs						"uuis-123"
+											 --------->[payment-svc]	
+	------>[ui-svc]--------------->[catalog-svc]------------------>[Checkout-svc]---/
+	request	     	correlation id			correlation id			\--------->[shipping-svc]
+		"uuis-123"			"uuis-123"			correlation id "uuis-123"
+
+	- 09-02-2019 15:03:24 ui-svc INFO [uuid-123] ...
+	- 09-02-2019 15:03:24 catalog-svc INFO [uuid-123] ...
+	- 09-02-2019 15:03:24 checkout-svc ERROR [uuid-123] ...
+	- 09-02-2019 15:03:24 payment-svc INFO [uuid-123] ...
+	- 09-02-2019 15:03:24 shipping-svc INFO [uuid-123] ...
+	
+- Best practice: Microservice owns Rollback
+	- Every microservice should expose it's own "rollback" method
+	- This method could just rollback changes, or trigger subsequent actions
+		- Could send a notification
+	- If you implement staged commit, also expose a commit function
+	Microservice
+	------------|
+	 []	    |	
+	 | 	    |--Function 1
+	 |	    |	
+	 V	    |--Rollback	
+	 [db]	    |
+	 	    |--Commit(optional)	
+-Challenge: Reporting and Analytics
+	- Data is now spead across a number of isolated polyglot data stores
+	- Consolidation and aggragation required
+	- Solution : Pull data from requried microservices, push data to data aggregation service, use pub/sub, or use a composite service (anti-pattern)
+- Aggregation
+	- Pull model
+		Data Aggeration Application
+		---------------------
+		 /    | pull  	  \
+		/     |		   \	
+	[usr svc]  [account svc]  [cart svc] 	
+	
+	- Push model
+	[user svc]--------->*
+	[account svc]-push->#-->Data Aggeration Application
+	[cart svc]--------->@
+	
+	- Pub/Sub
+	[user svc]--------->*
+	[account svc]-pub-->#-sub->Data Aggeration Application
+	[cart svc]--------->@
+	
+	- Composite
+	
+		Composite Data Service
+			---------------------
+			 /    |  	  \
+			/     |		   \	
+		[usr db]  [account db]  [cart db] 	
+	
+An Overview of Designing Microservices Based Applications on AWS
+=================================================================
+-Chanllenges with monolithic software
+	- Difficult to scale
+	- Long build/test/relaase cycles (who broke the build?)
+	- Operations is a nightmare (modul X is failing, who' the ownner?)
+	- Architecure is hard to maintain and evolve
+	- New relases take months
+	- Long time to add new feature
+	- Lack of agility
+	- Lack of innovation
+	- Frustrated customers
+- Ecosystem of microservices
+
+	-------------		-------------
+	|Payments    |--------->|Restaurant  |	
+	|micro-serice|<-|	|micro-serice|
+	--------------  |----->	--------------
+	  |		|	  ^  ^
+	  |    /------->|>--------|  |
+	  V   /         |            |
+	-------------	|	-------------
+	|Drivers     |  |       |Ordering  |	
+	|micro-serice|	|	|micro-serice|
+	--------------	|	--------------
+	           |    | 
+	           V    |
+	             Location 
+	             micro-serice
+- Amazon web site
+  1000s of teams 
+  X micorserivice architecure
+  X Continuous delivery
+  X Multiple enviornments
+  ---------------------------
+  = 50 million deployments a year
+   (5708 per hour, or every 0.63 second)
+   
+-Micorservice Architecure
+								  ----------------------------------------------	
+								  |	     Account Service	
+								/>| Load  --->Account Service---> Account Database
+				StoreFront UI		       /  |Balancer  Account Service 	 
+	Browser--->Load    ---->StoreFront UI---> API Gateway /	   -------------------------------------------------
+		   Balancer     StoreFront UI  		      -------            Cart Service	   Inventory Database
+							      \
+							       \
+								\		  Shopping Service
+
+- Micro-service Design in AWS
+	- Approach 1 EC2
+		Elastic Load Balancer     AWS
+		|        |   |   |        Elastic
+		EC2	EC2  EC2 EC2      Beanstalk
+		|       |    |    |
+		[Blue box image?   ]
+		
+		- your Code ------------> focus on building your application
+		  ----------------------|
+		  Http Server		|Elastic Beanstalk configures each EC2
+		  ----------------------|instance in your enviornment with the 
+		  Application Server |  |
+		  Language Interpreter  |component neccssary to run applications
+		  ------------------	|for the selected platform. No more worrying 
+		  			|about logging into instanaces to install and
+		  	        	|configures your application host.
+		  OS			|	
+		  ------------------	|
+		  Host			|provided and managed by Elastic Beanstack
+		
+   	- Apporach 2 - Containers Using ECS
+   		- Amazone EC2 Container Service (ECS) is the cluster management system to run your Docker containers
+   		- Cluster Management Made Easy
+   			- Nothing to run
+   			- Complete State
+   			- Control and monitoring
+   			- Scale
+   		- Flexible Scheduling
+   			- Applications
+   			- Batch jobs
+   			- Multiple schedulers
+   			
+   	- Apporach 3 - API Gateway + Lambda
+   		- AWS Lambda lets  you run code without managing servers
+   			- Upload your code
+   			- Set up your code to trigger from other AWS services, webservice calls or app activity
+   			- Lambda automatically scales
+   			- Pay for only the compute time you use (sub-second metering)
+   		- AWA API Gateway is the easiet way to deploy micro-services
+   			- Create a unified API frontend for multiple micro-services
+   			- Authenticate and authorize requests
+   			- Handles DDos protection API throttling
+   			- Monitoring, logging, rollbacks, client SDK generation
+   		
+   
+ - Principle of Microservices 
+	- Rely only on each other's public API
+   		- Hide your data
+   			   MS A->DB -------> MS B->DB
+			     |                     ^(wrong)
+			     |---------------------|           					        
+      		- Document your APIs
+   		- Define a versioning strategy
+   			- version 1.0.0
+   				StoreAccount(id, name, state)
+   			- version 1.1.0
+   				StoreAccount(id, name, state)
+   				StoreAccount(id, name, arbitrary_metadata)
+   				AddUser(accountid, userid, status)
+   			- version 2.0.0
+				StoreAccount(id, name, arbitrary_metadata)
+   				AddUser(accountid, userid, status)
+   	- User the right tool for the job
+   		- Polyglot persistrance (data layer)
+   		- Polyglot frameworks (app layer)
+   	- Secure your services
+   		- Defense-in-depth
+   			- Network level
+   			- Server/container level
+   			- App-level
+   			- IAM policies
+   		- Gateway
+   		- API Throttling
+   		- Autentication/Authroization
+   			- Client-to-service, as well as service-to-service
+   			- APi Gateway:custom lambda authorizers
+   			- IAM-based authentication
+   			- Token-based auth (JWT tokens, OAuth 2.0)
+   		-Secrets management
+   			- S3 bukcet policies
+   			- Open-source tools (Vault, Keywhiz)
+   	- Be a good ctitizen within the ecosystem
+   		- HAVE SLAs
+   		- Distributed monotoring, logging, tracing
+   		- Shared metics
+   		- User-experience metrics
+   	- More than just technologe transformation
+   		- Embrace organizational change
+   		- Favot small focused dev terms
+   	- Automate everything
+   		- Adopt Devops

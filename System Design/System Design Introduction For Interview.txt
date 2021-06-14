@@ -1,0 +1,178 @@
+- ABCD of system design - https://www.youtube.com/watch?v=UzLMhqg3_Wc
+	[A]sk good questions 
+		- Define the Minimum Viable Product for the system design problem, problem could have many features 
+		- you reponsibility to work with interviewer, figure out which features he cares/not
+		- remember you're working under a very strict time frame so make sure that your feature set is small and you go deep into this feature set 
+		- the 2nd thing to ask about is how much the system should scale, so for example how much data you needs to store in the database 
+		  or how many requests per second needs to be handled or what kind of latency is expected from the system 
+	- Don't use [b]uzzwords 
+		- today you read about this "consistent hashing" for 10 minutes, tmr in the interview, don't start showing those words, 
+		- it might work sometimes but it does not work most of the times, in fact it backfires. 
+		- whatever technologies/concepts mentioning in the interview, get some sort of in-depth knowledge. 
+	- [C]lear and organized thinking
+		- before jumping into the minor details of the problem, 1st try to define the 50,000 feet view of the problem, 
+		- make sure you have defined all the ApIs, draw the right boxes, understand who are the actors for this for the system, 
+		- once you have defined all those things then go deeper into the details working with the interviewer 
+	- [D]rive discussions
+		- Very simple 80-20 rule, you should be talking 80% of the time, an interviewer talking 20%, so make sure you lead the discussion
+- you can improve on them by 3 aspects
+	- 1st is your personal experience, if you are working on high scale system it's much easier to improve/solve on those things on a whiteboard
+	- 2nd is through practice, so if you so come up with a system design question and work with your friends/peers and brain strom those ideas
+		- and see what technologies you can use to solve this problem
+	- 3rd is gaining knowledge through reading blogs/videos
+- Basic features which is required in a system design problem-solving 
+	- 1) Features - work with the interviewer is on the features, this goes back to defining the minimum viable product by asking good questions that interviewer
+		- for example if interviewer asks, design a FB Messenger, include some features like, one-to-one chat, receives/write the message
+		- exclude some features like, group chat/security, so work with the interviewer to figure out what he cares/not cares about.
+	- 2) Defining APs for your features service - who is going to call this ApS, how are they going to call those ApS
+	- 3) Availability - for example if a host went down is the service still going to be available or if the entire datacenter went down would the service still be available
+		- and you have to discuss with interviewer to figure out how much availability he cares about in that system
+	- 4) Latency performance -  if it's a background job, do not care too much about the latency 
+		- if it's a customer facing request then your system to be super fast and based on the requirements add a cache and other things to improve your latency
+	- 5) Scalability - a service it works for 10 users and the question is is equal to work for 1000/million user, 
+		- is it going to scale as we add more users/requests? is it continue to have the good latency performance? & to be available as we add more and more users? 
+	- 6) Durability - might be important for some interviews, might not be important for some other interviews
+		- durability is the fact that data can be stored in a database securely, data is not lost, data is not compromised
+		- so sometimes it's okay to say that, I'll use this database, that database will do all the job for me,  
+		- on the other hand, where you are designing the db, where durability plays a central role and you need to make sure that your system is durable enough 
+	- 7) Class diagrams
+		- sometimes qns like design a parking lot/an elevator system and interviewer is interested in knowing design the class,object oriented principles to solving problems
+	- 8) security and privacy
+		- most of interviewer not care about, suppose the question abt designing an authentication system and it will play a central role
+	- 9) Cost effective
+		- whatever solution you suggested is it a cost-effective solution, is that an alternate solution which would be more cost effective
+		- so you have to discuss some pros and cons of different solution
+- the concepts and topics which we care about which you should know for before going into a design interview 
+	- 1) vertical vs horizontal scaling
+		- VS which means that you add more memory CPU/hard drive to an existing host or HS which is to keep one host small but instead add another host
+		- VS can be expensive and also there is a limitation of how much memory/CPU you can add to a single host but it does not have distributed systems problem
+		- HS can infinitely keep adding more hosts but with the distributed system. HS is more preferred than VS
+	- 2) CAP theorem - Consistency, Availability, Partition Tolerance - CAP theorem is that you can only achieve only 2 of 3 things
+		- Consistency, your read has the most recent write
+		- Availability, you will get a response back it might be/not be the most recent write 
+		- Partition tolerance,  is that between two nodes you could be dropping network packets
+		- RDBMS SQL databases they choose consistency over availability which means that they could be less available but their data is always Consistency
+		- NOSQL databases they prep for availability over consistency if you choose to configure it that the way
+	- 3) ACID Vs BASE - ACID -> Atomicity, Consistency, Isolation and Durability. BASE -> basically available soft state eventual consistency
+		- Acid is used RDBMS, BASE is used NOSQL
+	- 4) Partitioning/Sharding of data
+		- let's suppose you have trillions of Records, and no way you can store in one node of a db, to store them in many different nodes of a db 
+		- and that's where sharding comes into, how do you shard/split this data to every node of a db is responsible for some parts of those trillions of records
+		- one technique used heavily is [consistent hashing]
+	- 5) optimistic vs pessimistic locking 
+		- a db transaction, OL, not acquire any logs but when it ready to commit your transaction, at that point you check if no other transaction updated the record
+		- PL, you acquire all the locks before hand and then you commit your transaction 
+		- both of them have their advantages and disadvantages, need to understand when to use which which of this locking in what scenario
+	- 6) strong vs eventual consistency 
+		- strong consistency means that your reads will always see the latest write
+		- eventual consistency means that your reads will see some write and eventually it will see the latest write
+		- strong consistency is used in RDBMS and in NoSQL to decide if you want strong vs the eventual consistency 
+		- the benefit the eventual consistency is provides higher availability and this all goes back to the cap theorem
+	- 7) RDBMS vs NoSQL - these days I see that most of the people prefer to use NOSQL and that's fine but do not discard RDBMS
+		- RDBMS provides all this nice acid properties, but NOSql scales a little bit better and has higher availability
+		- so depending on the situation depending on the problem try to see which one of the two fits better
+	- 8) types of NoSQL dbs
+		- 1) key value dbs - it's simplest, it stores this key value pair into the database
+		- 2) white column db - means row can have many different formats, many different kinds of columns and it can also have many many columns
+		- 3) document base db - if you have store  a semi structured, XML,JSON data
+		- 4) graph based(GB)-suppose you have entities, edges or relationship between those entities, basically if you have a graph, the GB NoSQL db is used to hold that graph 
+	-9) caching is used to speed up your request 
+		- if you know that some data is going to be accessed more frequently then store it in the cache, so that it can be accessed quickly 
+		- caching are of two types 1) if every node does its own caching so the cache data is not shared between notes 
+			- 2) called the spirit cache where the cache data is shared between different nodes 
+		- if you're in caching you have to consider, 1)cache cannot be the source of truth, 
+			- 2)cache data has to be pretty small because cache tends to keep all the data in memory
+			- 3)you have to consider some of the eviction policies around cache
+	- 10) data centers racks and host, aware how the data center is architected or how data center is arranged today
+		- so data centers have racks and racks have host, so you have to understand that what is the latency between talking a cross racks/host/DC
+		- or what are the worst-case can happen if a rack/entire data center goes down
+ 	- 11) CPU/ memory/ hard drive/network bandwidth
+		- all of these are limited resources so when you design your system you need to consider how do you work around these limitations 
+		- and how do you improve the throughput latencies and scale your system along these limited resources 
+	- 12) random vs sequential read and write on the disk - reading or write on a disk is usually slow, 
+		- but sequential reads and writes are actually amazing for the disk, so you should design your system around sequential reads and writes 
+		- try to avoid random reads and writes which are order of magnitude slower than sequential reads and writes
+	- 13) HTTP vs HTTP 2 vs WebSocket
+		- HTTP is the request reply kind of architecture between client and server pretty much the entire web runs on HTTP 
+		- HTTP 2 does some of the improvements on the deficiencies of HTTP like it can do multiple requests over a single connection
+		- WebSocket which is fully bi-directional connect communication between client and server 
+		- good to know some of the differences between them and some of the inner workings 
+	- 14) tcp/ip model, there are four layers of tcp/ip model and it's good to know what each layer does
+	- 15) ipv4 vs ipv6, ipv4 has 32-bit addresses (running out) and ipv6 has 128-bit addresses 
+		- good to know some of the details around that and also how does the IP routing works
+	- 16) TCP vs UDP, TCP is connection oriented reliable connection, UDP is unreliable connection, 
+		- sending some documents, use TCP. a streaming of video, use UDP, bcaz it's superfast
+	- 17) DNS lookup - domain name server lookup, type www.abc.com, if the request goes to the DNS, which does a translation of this address into an IP address, 
+		- so it's good to know how those things work, what is the hierarchy around them, how do they do caching
+	- 18) HTTPs and TLS. TLS is transport layer security so it is used to secure communication between client and server, both in terms of privacy and data integrity
+	- 19) public key infrastructure & certificate authority (CA)
+		- public key infrastructure is used to manage your public key, digital certificates. CA is a trusted entity which tells if the public key is from the correct party 
+		- type www.dns.com, going over HTTP, get a public key back and CA is tells the key is definitely from dns.com and not from a third party who had between you and dns.com
+	- 20) symmetric vs asymmetric encryption. ASE is computationally more expensive,send small amount of data. ASE is public private key encryption. SE is AES
+	- 21) load balancers sit in the front of a service in delegate the client requests to one of the nodes behind the service. 
+		- This delegation could be based on round-robin basis or the load average on the nodes behind that service. 
+		- LB can operate at L4 or L7. These are the levels for OSI model. Most of the LBs operate at L7
+			- L4 considers both client and destination IP addresses and port numbers to do the routing. L7 which is an HTTP level it uses HTTP URI to do the routing.
+	- 22) CDN(content delivery network) and edge
+		- watching Netflix from CL, so Netflix will put the movies in a CDN close to you from CL, so the movie can be streamed right there from the CDN close to you 
+		  instead of all the way from the data center and this helps both in performance and latency for the end user 
+		- Edge is also a very similar concept where you do processing close to the end user
+			- Advantage edge has a dedicated network from the edge to all the way to the data center, your request could be routed through this dedicated 
+			  network instead of going over the general internet
+	- 23) Bloom filters and Count-Min sketch - are space efficient probabilistic based data structure
+		- Bloom filters is used to decide if an element is a member of set or not. Bloom filters can have false positives but it will never have false negative 
+			- so if your design can tolerate false positive you should consider using Bloom filters because it's very space efficient 
+		- Count-Min sketch is a similar data structure but it's used to count the frequency of events.
+			- let's suppose you have millions of events and you want to keep the track of top k events, then you can consider using CMS instead of giving 
+			  the count of all the events, so for a fraction of space it will give it an answer which will be close enough to the actual answer with some error rate 
+	- 24)Paxos - which is used to derive consensus or distributed host, before Paxos came along finding consensus was a very hard problem 
+		- an example of consensus is doing a leader election among a distributed host, good to know some of the use cases which Paxos  solves
+	- 25) Design patterns and Object-oriented design
+		- DPD things like factory methods and Singleton's are good to know
+		- OOD things like abstractions and inheritance are good to knowing
+	- 26) Virtual machines and containers
+		- VMs are a way of giving you an OS on top of a shared resource, such that you feel like you are the exclusive owner of this hardware 
+		  while in reality that hardware is shared between different isolated OS
+		- containers is a way of running your applications and its dependencies in an isolated environments. 
+		  containers have become extremely important and they run a lot in the production environment these days 
+	- 27) Pub-sub or queue architecture - publisher publishes a message to a queue, a subscriber receives that message from queue. Very important in the system design these days. 
+		- one thing to remember is that customer facing requests should not be directly exposed to a pub sub system
+	- 28) MapReduce - which is used to do distributed and parallel processing of big data. Map is filtering and sorting the data and reduce is summarizing the data
+	- 29) Multithreading, concurrency, locks, synchronization, CAS(compare and set)
+- the actual implementations of the above concepts
+	-  1) Cassandra is a white column highly scalable database, use cases like simple key/value storage, for storing time series data, more traditional rows with many columns 
+	      It can provide both eventual/strong consistency. It uses consistent hashing to shard your data and gossiping to keep all the nodes informed about the cluster
+	- 2) MongoDB/Couchbase - a JSON like structure and if you want to persist. It provide acid properties add a document level and they also scale pretty well 
+	- 3) MySQL - more traditional use case with many tables and relationships, full set of acid properties. MySQL has master slave architecture so it also scales up pretty well
+	- 4) Memcached/Redis - are distributed cache and they hold the data a in memory. 
+		- Memcached is simple fast key value storage. Redis also do key value storage but it also does lot of other things. 
+		- Redis can also be set up as a cluster so you can provide things like more availability and data application. Redis can also flush data on the hard drive.
+		- 2 things remember when using distributed cache 1)they should never be the source of truth 
+			- and they can only hold a limited amount of data which is limited by the amount of memory on the host
+	- 5) zookeeper is a centralized configuration management tool. It is also used for things like leader election and distributed locking. 
+		- It scales very well for the reads but not writes. It keeps all data in memory so you cannot store way too much data in the zookeeper.
+		- want to store small amount of data which would be highly available and tons of read then zookeeper is what you should be using 
+	- 6) Kafka is a fault tolerant highly available queue using publisher subscriber or streaming application
+		- depending on your use case it can deliver message exactly once and also it keeps all the message ordered inside of partition alpha topping 
+	- 7) nginx/HAProxy - are load balancers and very efficient. example nginx can manage thousands/ 10 of thousands of connection from a client from a single instance 
+	- 8) solar/Elasticsearch - are fault tolerant search platform, highly available, very scalable and they do provide full-text search
+	- 9) blobstore like Amazon S3 - a big picture/file, want to store it somewhere on the cloud 	
+	- 10) docker - is a software platform for in containers inside which you can develop and run your distributed applications 
+		- this containers can run on your laptop or the data center or even on the cloud 
+		- Kubernates/Mesos - are software tools used to manage and coordinate this containers 
+	- 11) Hadoop it has many things, one of the things is MapReduce
+		- if you want a faster version of that then you use spark which is which does all the MapReduce in-memory 
+		- HDFS is a Java based file system which is distributed and fault tolerant and Hadoop relies on HDFS for doing all its processing
+		
+		
+		
+AWS
+Determine Non-Functional Requirements
+use Non-Functional Requirements to help identify the right data store(s) for each microservice
+Latency		>1s		200 ms-1s	20 ms - 200 ms	< 20 ms
+Durability	99.99		99.999		99.9999		>99.9999
+Storage Scale	<256 GB		256 GB - 1 TB	1 TB -16 TB	> 16 TB
+Availability	99		99.99		99.95		> 99.95
+Data Class	Public		Internal	Important	Secret
+Recoverability	12 - 24 hours	1 - 12 hours	5 mins - 1 hour	<5 mins
+Skills		None		Average		Good		Expert	
