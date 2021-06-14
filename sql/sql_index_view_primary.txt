@@ -1,0 +1,98 @@
+index, how does it increaase faster?
+
+Only purpose of index is to make a search faster, By creating some things called B-tree or Balanced tree structure internally.
+
+Creating an index on a field in a table creates another data structure which holds the field value, and pointer to the record it relates to. This index structure is then sorted, allowing Binary Searches to be performed on it.
+
+The downside is that these indexes require additional space on the disk, since the indexes are stored together in a table.
+
+how data is searched when there are no indexed? 1,2,3,4,5,6,7,8,9,10,........50
+SQl server called this kind of seaching as 'Table Scan'
+it searchs Sequentially, one by one, until it reached 50, (almost it browse 49 records)
+
+when you index, what happens it create b-tree structure internally, data is divided into root node, non-leaf nodes, leaf nodes.
+
+   30 -    50
+ 10-30    40-50 
+10 20 30  40 50
+1  11 21  31 41 
+...............			
+10 20 30  40 50
+
+SQL server called as Index seek or scan
+
+for example - order doesn't have any kind of index, it use table scan means searching sequentially
+enable estiamted execution paln, you can see Table Scan, set statistics is on, Logical reads 3 for table scan
+
+Now enable index for OrderId field, choose Type - index, Created As clustered or non-clusterd? choose clusteered index
+now run the query, you can see clustered index seek, now run with,  set statistics io on,Logical reads 2 
+
+------------------------------------------------------------------------------------------
+When should you use database indexes? Why is it needed?
+
+When data is stored on disk based storage devices, it is stored as blocks of data. For example searching on a field that isn’t sorted requires a Linear Search which requires N/2 block accesses (on average), where N is the number of blocks that the table spans. If that field is a non-key field (i.e. doesn’t contain unique entries) then the entire table space must be searched at N block accesses.
+
+Whereas with a sorted field, a Binary Search may be used, this has log2 N block accesses. Also since the data is sorted given a non-key field, the rest of the table doesn’t need to be searched for duplicate values, once a higher value is found. Thus the performance increase is substantial.
+
+How does it work?
+
+Firstly, let’s outline a sample database table schema;
+
+Field name       	Data type      		Size on disk
+id (Primary key) 	INT   4 bytes
+first, last, email	varchar(50)+(50)+(100)	50+50+100 bytes
+
+Let's take, the db contains five million rows(r) of a fixed size length of (R)204 bytes, is unindexed & the default block size(B) 1,024 bytes. 
+The performance of several queries will now be analyzed. These are a query using the id (a sorted key field) and one using the firstName (a non-key unsorted field).
+
+The blocking factor of the table would be bfr = (B/R) = 1024/204 = 5 records per disk block. 
+The total number of blocks required to hold the table is N = (r/bfr) = 5000000/5 = 1,000,000 blocks.
+
+A linear search on the id field would require an average of N/2 = 500,000 block accesses to find a value. 
+But the id is sorted field, a binary search can be conducted requiring an average of log2 1000000 = 19.93 = 20 block accesses. Instantly we can see this is a drastic improvement.
+
+Now the firstName field is neither sorted, so a binary search is impossible, nor are the values unique, and thus the table will require searching to the end for an exact N = 1,000,000 block accesses.
+
+--------------------------------------------------------------------------------------------------
+When should it be used?
+
+creating an index requires additional disk space (1,000,000 blocks extra from the above example), and that too many indexes can cause issues arising from the file systems size limit.
+
+Since indexes are only used to speed up the searching, so it used only for output,otherwise it would be simply a waste of disk space and processing time when doing an insert or delete operation, and thus should be avoided. 
+
+--------------------------------------------------------------------------------------------------
+a column index in SQL: CREATE INDEX name_index ON Employee (Employee_Name)
+
+multi-column index in SQL: CREATE INDEX name_index ON Employee (Employee_Name, Employee_Age)
+--------------------------------------------------------------------------------------------------
+Why can’t a table have two clustered indexes?
+
+Only one clustered index per table (usually the primary key). When you define a clustered index on a table, the db sorts all the rows in the table, in asc or desc order. it means data is stored in the order of the clustered index
+
+Example, The Sales table - order ID, item ID, qty, order date column. Create a clustered index based on the OrderID and itemID columns  -> CREATE UNIQUE CLUSTERED INDEX ix_orider_itemid ON dbo.Sales(OrderID, itemID); 
+
+When you run the statement, all rows in the table are physically sorted, first by the OrderID column and then by the itemID column, but the data itself remains a single logical unit, which is the table. For this reason, you cannot create two clustered indexes. There can be only one table and that table can be sorted in only one order.
+
+Non Clustered index (called heap, max 999 per table) - data stores in an unspecified order, hard to predict how the data will be ordered.  Heaps can help improve performance in certain situations. if the table that has a lot of insert activity, but few updates and deletes. For example, a table that stores log data is likely restricted mostly to insert operations, until perhaps the data is archived.
+
+--------------------------------------------------------------------------------------------------
+Can you create a clustered index on a column with duplicate values?
+Yes and no. Yes, you can create a clustered index on key columns that contain duplicate values. No, the key columns cannot remain in a non-unique state.
+
+For example, create a clustered index on the LastName column. The column includes the values Hancock, Washington, and Smith. You then insert the values Adams, Smith, and Smith. Because the values in the key column must be unique, the db engine will modify the duplicates so that the values look something like this: Adams, Hancock, Washington, Smith, Smith1, and Smith2.
+
+--------------------------------------------------------------------------------------------------
+What is the relationship between unique and primary key constraints and a table’s indexes?
+
+Primary key and unique constraints ensure that the values in the key columns are unique. You can define only one primary key on a table and it cannot contain null values. You can create multiple unique constraints on a table and each one can contain a single null value.
+
+When you create a primary key constraint, the db engine also creates a unique clustered index, if it doesn’t already exist. If a clustered index does exist when you create the primary key, the database engine creates a unique nonclustered index.
+
+When you create a unique constraint, the db engine creates a unique nonclustered index. For all practical purposes, a unique constraint and unique index are one in the same.
+
+--------------------------------------------------------------------------------------------------
+If you index a view is it still a view?
+
+A view is a virtual table made up a data from one or more other tables. You can improve a view’s performance by creating clustered and nonclustered indexes on that view, just like you create indexes on a table.
+
+Before you can create an index on a view, it must meet a number of restrictions. For example, the view can reference only base tables, not other views, and those tables must be within the same database.

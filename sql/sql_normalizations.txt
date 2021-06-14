@@ -1,0 +1,39 @@
+Database Normalization
+Database normalization is the process of efficiently organizing data in a database. There are two reasons of the normalization process:
+
+Eliminating redundant data (it improve performance of query), for example, storing the same data in more than one tables.
+
+Ensuring data dependencies make sense.
+
+Normalizatiion reduce the amount of space a database consumes and ensure that data is logically stored. 
+
+It's sql dba choice to take it further and go to fourth normal form, fifth normal form, and so on, but generally speaking, third normal form is enough.
+
+
+First Normal Form (1NF) - basic rules are: 
+Define the data items required, because they become the columns in a table. Place related data items in a table.
+Ensure that there are no repeating groups of data.
+Ensure that there is a primary key.
+
+Second Normal Form (2NF) - it should meet all the rules for 1NF and there must be no partial dependences of any of the columns on the primary key:
+
+Consider a customer-order relation and you want to store customer ID, customer name, order ID and order detail, and date of purchase:
+
+CREATE TABLE CUSTOMERS(
+       CUST_ID    INT              NOT NULL,
+       CUST_NAME VARCHAR (20)      NOT NULL,
+       ORDER_ID   INT              NOT NULL,
+       ORDER_DETAIL VARCHAR (20)  NOT NULL,
+       SALE_DATE  DATETIME,
+       PRIMARY KEY (CUST_ID, ORDER_ID)
+);
+customer, order and customerorder table
+
+Third Normal Form (3NF) - the following conditions are met: It is in second normal form. All nonprimary fields are dependent on the primary key.
+
+for example customer table contains address information.
+
+
+De-normalization
+
+The process of adding redundant data to get rid of complex join, in order to optimize database performance. This is done to speed up database access by moving from higher to lower form of normalization.

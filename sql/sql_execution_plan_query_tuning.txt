@@ -1,0 +1,76 @@
+An execution plan is a visual representation of the operations performed by the database engine in order to return the data required by your query.
+
+The execution plan for a query is your view into the SQL Server query optimizer and query engine. It will reveal which objects a query uses, within the database, and how it uses them. It will show you which tables and indexes were accessed, in which order, how they were accessed (seek or scan), what types of joins were used, how much data was retrieved initially, and at what point filtering and sorting occurred. It will show how aggregations were performed, how calculated columns were derived, how and where foreign keys were accessed, and so on
+
+
+Query Tuning
+
+Poorly Designed Queries
+
+Search Conditions with Functions - Placing a function on a column in the WHERE, ON or HAVING clause (e.g. WHERE SomeFunction(Column) = @Value ) can lead to very poor performance, which means that SQL Server cannot use it in an index seek operation
+
+Nesting Views or Nesting Functions - Having a view that calls to other views or has JOIN operations to other views can lead to very poor performance. 
+
+Incorrect Data Type Use - Queries can use parameters and variables in comparisons, within ON, HAVING and WHERE clauses. Unfortunately, SQL Server can only compare values of the type. For example, if you wish to compare the values in a string column (VARCHAR) to the values in a DATE or DATETIME column, then you must first explicitly convert one type to match the other. If you don't, SQL Server will perform the implicit conversion for you. When the query is executed, the query processor converts all the values of lower precedence data type, in this case the VARCHAR, to the higher precedence data type before applying the filter or join condition.
+
+Of course, to do this it must apply the conversion function to the column, in the ON, HAVING or WHERE clause and we are back in the situation of having a non-SARGable predicate, leading to scans where you should see seeks. You may also see a warning indicating an implicit conversion is occurring.
+
+Poor Indexing
+
+Misunderstanding Code Reuse in the Database
+
+Poor performance due to database misconfiguration
+
+Lack of Database Constraints - for example, WHERE   p.Name = 'Water Bottle - 30 oz.' AND sod.UnitPrice < $0.0;, returns 0 records.
+ALTER TABLE Sales.SalesOrderDetail  WITH CHECK   ADD  CONSTRAINT CK_SalesOrderDetail_UnitPrice CHECK  ((UnitPrice>=(0.00)));
+
+
+SET NOCOUNT ON;
+SELECT Distinct 
+	c.ContactId, c.OwnerId, vd.ContactOutId DeathId, vd.NewRecord, vd.Name, vd.DOB
+FROM 
+	Contact c with (nolock)
+	INNER JOIN ContactOut vd with (nolock) on
+		( 
+			vd.FName = c.FName and vd.LName = c.LName
+			and (
+				left(vd.MName,1) = left(c.MName,1) 
+				or left(vd.MName,1) = '' or left(c.MName,1) = '' 
+				or c.MName is null or vd.MName is null
+			)
+		)
+		and c.DOB = vd.DOB
+WHERE
+	vd.Match = 1 and c.StatusCode <> 757580012
+order by
+	vd.ContactOutId
+
+index by c.StatusCode, but index will work equals not for not equal and other index for other fields
+
+Contact table contains 5,508,236 records, ContactOut table contains 1,491,759 
+The above qry produces the 2871 records for 2:04 minutes.
+
+I re write the query to bring the results just 0 seconds.
+i removed 'order by', removed 'and status code', 'distinct',  and added temp table.
+SET NOCOUNT ON;
+SELECT 	
+	c.ContactId, c.OwnerId, vd.ContactOutId DeathId, vd.NewRecord, vd.Name, vd.DOB
+INTO 
+	#DeathVoterMatch
+FROM 
+	Contact c with (nolock)
+	INNER JOIN ContactOut vd with (nolock) on
+		( 
+			vd.FName = c.FName and vd.LName = c.LName
+			and (
+				left(vd.MName,1) = left(c.MName,1) 
+				or left(vd.MName,1) = '' or left(c.MName,1) = '' 
+				or c.MName is null or vd.MName is null
+			)
+		)
+		and c.DOB = vd.DOB
+WHERE
+	vd.Match = 1
+
+select DISTINCT ContactId, OwnerId, DeathId, NewRecord, Name, DOB 
+from #DeathVoterMatch where StatusCode <> 757580012 order by DeathId

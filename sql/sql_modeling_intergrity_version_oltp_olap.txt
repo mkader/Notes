@@ -1,0 +1,118 @@
+Feature			Conceptual	Logical	Physical
+Entity Names		y		y
+Entity Relationships	y		y	
+Attributes	 			y	y
+Primary Keys	 			y	y
+Foreign Keys	 			y	y
+Table Names	 	 			y
+Column Names	 	 			y
+Column Data Types	 	 		y
+
+-------------------------------------------------------------------------------------------
+Conceptual Data Model - identifies the highest-level relationships between the different entities. 
+Features of conceptual data model: Includes the important entities and the relationships among them.
+No attribute/primary key  is specified
+
+Customer	Product
+|	
+|	Sales
+|-------
+
+-------------------------------------------------------------------------------------------
+
+Logical Data Model - describes the data in as much detail as possible, without regard to how they will be physical implemented in the database. Features of a logical data model include:
+
+Includes all entities and relationships among them.
+All attributes,primary key,Foreign keys for each entity are specified.
+Normalization occurs at this level.
+
+The steps for designing the logical data model are as follows:
+
+Specify primary keys for all entities.
+Find the relationships between different entities.
+Find all attributes for each entity.
+Resolve many-to-many relationships.
+Normalization.
+
+Customer		Product
+-------------		-----------
+Customer_ID		Product_ID
+----------------	------------------
+Customer_Desc		Prod_Desc
+|	
+|	Sales
+|	-----
+|	Sales_ID
+|	Product_ID(FK)
+|-------Customer_ID(FK)
+	------------------
+	Sales_Desc
+
+-------------------------------------------------------------------------------------------
+Physical Data Model - represents how the model will be built in the database. A physical database model shows all table structures, including column name, column data type, column constraints, primary key, foreign key, and relationships between tables. 
+
+Features of a physical data model include:
+
+Specification all tables and columns.
+Foreign keys are used to identify relationships between tables.
+Denormalization may occur based on user requirements.
+Physical considerations may cause the physical data model to be quite different from the logical data model.
+
+The steps for physical data model design are as follows:
+
+Convert entities into tables.
+Convert relationships into foreign keys.
+Convert attributes into columns.
+Modify the physical data model based on physical constraints / requirements.
+The figure below is an example of a physical data model.
+
+Customer		Product
+-------------		-----------
+Customer_ID:Integer	Product_ID:Integer
+----------------	------------------
+Customer_Desc:Varchar	Prod_Desc:varchar
+|	
+|	Sales
+|	-----
+|	Sales_ID:Integer
+|	Product_ID:Integer
+|-------Customer_ID:Integer
+	------------------
+	Sales_Desc:Varchar
+
+-------------------------------------------------------------------------------------------
+
+Data Integrity	- refers to the validity of data, meaning data is consistent and correct.
+
+Referential integrity - The relationship between the primary key of one table and the foreign key of another table must always be maintained. For example, a primary key cannot be deleted if there is still a foreign key that refers to this primary key.
+
+Primary key / Unique constraint - Primary keys and the UNIQUE constraint are used to make sure every row in a table can be uniquely identified.
+
+Not NULL vs. NULL-able - For columns identified as NOT NULL, they may not have a NULL value.
+
+Valid Values - Only allowed values are permitted in the database. For example, if a column can only have positive integers, a value of '-1' cannot be allowed.
+
+-------------------------------------------------------------------------------------------
+How version controlling is done in a data model?
+Data Model changes can be tracked. weekly or monthly changed can be sent to the project team by email.
+Data model can be compared with the data base and data models can be brought in sync with database.
+changes can be easily rolled back.
+Particular version of the data model can be worked by projec team.
+
+-------------------------------------------------------------------------------------------
+Enterprise data modeling - data elements and their relationships across the enterprise, like different departments or divisons (some times called global business model). 
+
+-------------------------------------------------------------------------------------------
+Relational data model is the primary data model, which is used for data storage and processing. This model is simple and have all the properties and capabilities required to process data with storage efficiency. Tables, Tuple (A single row of a table, which contains a single record for that relation is called a tuple.), Relation, Attribute, Constraints
+
+
+-------------------------------------------------------------------------------------------
+OLTP (On-line Transaction Processing) is a large number of short on-line transactions (INSERT, UPDATE, DELETE). The main emphasis for OLTP systems is put on very fast query processing, maintaining data integrity in multi-access environments and an effectiveness measured by number of transactions per second. In OLTP database there is detailed and current data, and schema used to store transactional databases is the entity model (usually 3NF).
+
+-------------------------------------------------------------------------------------------
+OLAP (On-line Analytical Processing) is relatively low volume of transactions. Queries are often very complex and involve aggregations. For OLAP systems a response time is an effectiveness measure. OLAP applications are widely used by Data Mining techniques. In OLAP database there is aggregated, historical data, stored in multi-dimensional schemas .
+OLAP Operations: Roll-up, Drill-down, Slice and dice, Pivot (rotate)
+
+-------------------------------------------------------------------------------------------
+Dimensional Data Modeling - comprises of one or more dimension tables and fact tables. Good examples of dimensions are location, product, time, promotion, organization etc. Dimension tables store records related to that particular dimension and no facts(measures) are stored in these tables.
+For example, Product dimension table will store information about products(Product Category, Product Sub Category, Product and Product Features) and location dimension table will store information about location( country, state, county, city, zip. A fact(measure) table contains measures(sales gross value, total units sold) and dimension columns. These dimension columns are actually foreign keys from the respective dimension tables.

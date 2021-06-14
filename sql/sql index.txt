@@ -1,0 +1,57 @@
+index, how does it increaase faster?
+
+only purpose of index is to make a search faster
+By creating some things called B-tree or Balanced tree structure internally.
+
+how data is searched when there are no indexed?
+1,2,3,4,5,6,7,8,9,10,........50
+SQl server called this kind of seaching as 'Table Scan'
+
+
+it searchs Sequentially, one by one, until it reached 50, (almost it browse 49 records)
+
+when you index data or column, what happens it create b-tree structure internally, data is divided into root node, non-leaf nodes, lead nodes.
+
+   30 -    50
+ 10-30    40-50 
+10 20 30  40 50
+1  11 21  31 41 
+...............			
+10 20 30  40 50
+
+SQL server called as Index seek or scan
+
+example
+
+order doesn't have any kind of index, it use table scan means searching sequentially
+select * from orders where orderid = 10345
+
+
+enable estiamted execution paln, you can see Table Scan
+
+set statistics io on
+ 
+Logical reads 3 for table scan
+
+Now enable index for OrderId field
+
+choose Type -index
+Created As clustered or non-clusterd?
+choose clusteered index
+
+now run the query, you can see clustered index seek 
+now run with,  set statistics io on
+Logical reads 2 
+
+
+clustered index
+data is stored in the order of the clustered  index
+only 1 clustered index per table
+usually the primary key
+no clustered  index = heap
+
+non clustered index
+data is not stored in the order of the non clustered  index
+up to  999 per table
+
+

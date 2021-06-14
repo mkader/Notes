@@ -1,0 +1,50 @@
+adopting an agile methodology allows us to:
+
+Communicate with users very efficiently, so that we can quickly understand what our users want, and we do not waste our time developing things nobody wants.
+Develop well designed solutions that are relatively easy to change.
+Develop low maintenance solutions, so that our development is rarely interrupted by maintenance tasks.
+
+As a result, we can deliver working and useful solutions, quickly.
+
+Agile development encourages teams to "deliver working software frequently, from a couple of weeks to a couple of months, with a preference to the shorter timescale." In fact, our team sometimes delivers a working product or feature in a day or two, and then we iterate until we reach the best solution for the users.
+
+Each time we deliver, we get direct feedback from the users and this feedback that drives the next iteration that is each iteration, we produce a solution that is more efficient to work with than the previous version.
+
+Establish Efficient Communication - The most efficient and effective method of conveying information to and within a development team is face-to-face conversation. I use scrum to encourage developers and users to get together and talk to each other. The main reason is simple: to avoid misunderstand requirements and waste precious time developing wrong functionality.
+
+Iterate and Simplify - Big Design Up Front (BDUF) approach does not always work in real life. - As i mentioned, try to deliver solutions quickly and then iterate frequently, based on direct end user feedback, until i arrive at the most effective solution for our end users.
+
+High Quality Design and Implementation - Systems must be highly adaptable to change and only well-designed and low maintenance systems can change quickly.
+
+Self-Organizing Teams - Of course, many will argue, correctly, that this leads to redundancy. 
+The best architectures, requirements, and designs emerge from self-organizing teams.
+
+Build projects around motivated individuals. Give them the environment and support they need, and trust them to get the job done.
+
+
+Impact of Agile Principles on Database Development
+Automated Database Testing
+
+I created library for unit testing T-SQL had many features, including separate checks for the following conditions:
+
+How many rows are there in a result set?
+How many result sets are returned?
+Is the result set ordered by some columns?
+Which value is in some particular cell of some particular result set?
+Exactly which tables and rows were touched by a modification?
+
+Besides unit tests, we use other kinds of automated tests extensively:
+
+A comprehensive suite of integration tests verifies that individual modules correctly fit together. Our integration tests do not mock databases; we use the real thing
+Stress tests verify that our modifications work correctly under high concurrency
+Performance tests verify that performance meets users' expectations.
+
+Integration tests
+Set up a sandbox database, and pre-load some test data into it
+Get the source data for the ETL
+Run the ETL
+Make sure the results are exactly as expected.
+
+Assert.AreEqual(1.23, actualResults.Rows[0].Columns[0]);
+
+In our framework, i store the expected and actual results as text (XML) files, so i use diff tool (VSS), to see all the differences.

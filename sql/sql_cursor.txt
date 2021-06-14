@@ -1,0 +1,167 @@
+Shrinking Database is bad practice for performance as it increases fragmentation
+
+
+Simple Example of Cursor using AdventureWorks Database is listed here.
+
+USE AdventureWorks
+GO
+DECLARE @ProductID INT
+DECLARE @getProductID CURSOR
+SET @getProductID = CURSOR FOR
+SELECT ProductID
+FROM Production.Product
+OPEN @getProductID
+FETCH NEXT
+FROM @getProductID INTO @ProductID
+WHILE @@FETCH_STATUS = 0
+BEGIN
+PRINT @ProductID
+FETCH NEXT
+FROM @getProductID INTO @ProductID
+END
+CLOSE @getProductID
+DEALLOCATE @getProductID
+GO
+
+
+Try Catch
+BEGIN TRY
+	INSERT INTO SampleTable (Col)
+	SELECT 'FourthRow'
+	UNION ALL
+	SELECT 'FifthRow---------'
+END TRY
+BEGIN CATCH
+	SELECT ERROR_NUMBER() AS ErrorNumber,ERROR_MESSAGE() AS ErrorMessage;
+END CATCH
+GO
+
+
+How to Validate Syntax and Not Execute Statement – SET NOEXEC ON/OFF;
+
+What is the Default Size of the Database? - The default size of the user database is based on system database model.
+
+Difference between TRUNCATE, DELETE and DROP commands
+The DELETE command is used to remove rows from a table. Use COMMIT or ROLLBACK the transaction to make the change permanent or to undo it.  DELETE triggers will be fire. DML is a command
+
+TRUNCATE removes all rows from a table. The operation cannot be rolled back and no triggers will be fired. As such, TRUCATE is faster and doesn't use as much undo space as a DELETE.it is DDL command , TRUNCATE TABLE emp;
+
+The DROP command removes a table from the database. All the tables' rows, indexes and privileges will also be removed. No DML triggers will be fired. The operation cannot be rolled back.it is DDL command DROP Table emp;
+
+WHERE and HAVING
+HAVING specifies a search condition for a group or an aggregate function used in SELECT statement.
+
+-Apart from SELECT queries, you can use WHERE clause with UPDATE and DELETE clause but HAVING clause can only be used with SELECT query
+
+-WHERE clause is used for filtering rows and it applies on each and every row, while HAVING clause is used to filter groups in SQL.
+
+-WHERE is used before GROUP BY clause, HAVING is used after GROUP BY clause.
+
+-When WHERE and HAVING clause are used together in a SELECT query with aggregate function,  WHERE clause is applied first on individual rows. Once group is created, HAVING clause is used to filter groups based upon condition specified.
+
+
+Types of Table Relationships
+One-to-Many Relationship - a row in table A can have many matching rows in table B, but a row in table B can have only one matching row in table A.
+Many-to-Many Relationships -  a row in table A can have many matching rows in table B, and vice versa. Create such a relationship by defining a third table, called a junction table, whose primary key consists of the foreign keys from both table A and table B. customer, orders, custorder
+One-to-One Relationships - a row in table A can have no more than one matching row in table B, and vice versa. it is not common, for example Divide a table with many columns.
+
+SQL - Transactions
+
+A transaction is a unit of work that is performed against a database. Transactions are units or sequences of work accomplished in a logical order, whether in a manual by a user or automatically by some sort of a database program.
+
+For example, performing transaction on the table for creating/updating/deleting a record, 
+
+Properties of Transactions: ACID:
+
+Atomicity: ensures that all operations within the work unit are completed successfully; otherwise, the transaction is aborted at the point of failure, and previous operations are rolled back to their former state.
+
+Consistency: ensures that the database properly changes states upon a successfully committed transaction.
+
+Isolation: enables transactions to operate independently of and transparent to each other.
+
+Durability: ensures that the result or effect of a committed transaction persists in case of a system failure.
+
+Transaction Control:
+There are following commands used to control transactions:
+
+COMMIT: to save the changes. COMMIT;
+
+ROLLBACK: to rollback(undo) the changes that have not already been saved to the database. ROLLBACK;
+
+SAVEPOINT: A SAVEPOINT is a point in a transaction when you can roll the transaction back to a certain point without rolling back the entire transaction.
+
+SET TRANSACTION: Places a name on a transaction.
+
+Transactional control commands are only used with the DML commands INSERT, UPDATE and DELETE only. 
+
+SAVEPOINT SAVEPOINT_NAME;
+ROLLBACK TO SAVEPOINT_NAME;
+
++----+----------+-----+-----------+----------+
+| ID | NAME     | AGE | ADDRESS   | SALARY   |
++----+----------+-----+-----------+----------+
+|  1 | Ramesh   |  32 | Ahmedabad |  2000.00 |
+|  2 | Khilan   |  25 | Delhi     |  1500.00 |
+|  3 | kaushik  |  23 | Kota      |  2000.00 |
+|  4 | Chaitali |  25 | Mumbai    |  6500.00 |
+|  5 | Hardik   |  27 | Bhopal    |  8500.00 |
+|  6 | Komal    |  22 | MP        |  4500.00 |
+|  7 | Muffy    |  24 | Indore    | 10000.00 |
++----+----------+-----+-----------+----------+
+Now, here is the series of operations:
+
+SQL> SAVEPOINT SP1;
+Savepoint created.
+SQL> DELETE FROM CUSTOMERS WHERE ID=1;
+1 row deleted.
+SQL> SAVEPOINT SP2;
+Savepoint created.
+SQL> DELETE FROM CUSTOMERS WHERE ID=2;
+1 row deleted.
+SQL> SAVEPOINT SP3;
+Savepoint created.
+SQL> DELETE FROM CUSTOMERS WHERE ID=3;
+1 row deleted.
+Now that the three deletions have taken place, say you have changed your mind and decided to ROLLBACK to the SAVEPOINT that you identified as SP2. Because SP2 was created after the first deletion, the last two deletions are undone:
+
+SQL> ROLLBACK TO SP2;
+Rollback complete.
+Notice that only the first deletion took place since you rolled back to SP2:
+
+SQL> SELECT * FROM CUSTOMERS;
++----+----------+-----+-----------+----------+
+| ID | NAME     | AGE | ADDRESS   | SALARY   |
++----+----------+-----+-----------+----------+
+|  2 | Khilan   |  25 | Delhi     |  1500.00 |
+|  3 | kaushik  |  23 | Kota      |  2000.00 |
+|  4 | Chaitali |  25 | Mumbai    |  6500.00 |
+|  5 | Hardik   |  27 | Bhopal    |  8500.00 |
+|  6 | Komal    |  22 | MP        |  4500.00 |
+|  7 | Muffy    |  24 | Indore    | 10000.00 |
++----+----------+-----+-----------+----------+
+6 rows selected.
+The RELEASE SAVEPOINT Command:
+The RELEASE SAVEPOINT command is used to remove a SAVEPOINT that you have created.
+
+The syntax for RELEASE SAVEPOINT is as follows:
+
+RELEASE SAVEPOINT SAVEPOINT_NAME;
+Once a SAVEPOINT has been released, you can no longer use the ROLLBACK command to undo transactions performed since the SAVEPOINT.
+
+The SET TRANSACTION Command:
+The SET TRANSACTION command can be used to initiate a database transaction. This command is used to specify characteristics for the transaction that follows.
+
+For example, you can specify a transaction to be read only, or read write.
+
+The syntax for SET TRANSACTION is as follows:
+
+SET TRANSACTION [ READ WRITE | READ ONLY ];
+
+
+Imagine a scenario where your website's database can only handle 1,000 queries every second, and your traffic has grown enough to product 1,500 queries per second at peak times
+-Add Load balancer
+-Improve hardware processor
+-PROFILING
+-Indexing table
+-Optimizing table
+-Reducing The Number Of Queries By Using JOINs

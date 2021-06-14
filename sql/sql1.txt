@@ -1,0 +1,319 @@
+--TSQL Row Constructors (also knows as TABLE Values Constructors)
+DECLARE @Employees TABLE(
+	EmpID int,
+	Name varchar(200),
+	Email varchar(250),
+	Wage dec(10,2)
+)
+
+--INSERT INTO @Employees(EmpID, Name, Email) VALUES(1, 'Noor', 'noor@email.com')
+--INSERT INTO @Employees(EmpID, Name, Email) VALUES(2, 'Kader', 'kader@email.com')
+
+-- Using Row Constructors
+INSERT INTO @Employees(EmpID, Name, Email, wage) 
+VALUES(1, 'Noor', 'noor@email.com', 100), (2, 'Kader', 'kader@email.com',200)
+
+--pseudo table
+SELECT * 
+FROM (VALUES(1, 'Noor', 'noor@email.com', 100), (2, 'Kader', 'kader@email.com', 200))
+Employees(EmpID, Name, Email, wage) 
+
+--sub query expression
+INSERT INTO @Employees(EmpID, Name, Email, wage) 
+VALUES((SELECT 1+MAX(EmpID) FROM @Employees), 'Hassan', 'hassan@email.com',75)
+
+--Statment variable declaration/assignment
+DECLARE @id int = 5, @bookname varchar(100) =N'SQL SERVER';
+DECLARE @minwage dec(20,2) = (SELECT min(wage) FROM @Employees);
+
+select @minwage
+
+--compound assignment operators - +=, -=, *=, /=, %=, &=, !=, ^=
+set @minwage=@minwage*10 
+set @minwage*=10
+select @minwage
+
+UPDATE @Employees SET wage*=10
+
+SELECT * FROM @Employees
+
+
+Insert Over DML 
+
+DROP TABLE Stocks
+DROP TABLE DailyTradeUpdates
+DROP TABLE StockPriceEvolution
+
+CREATE TABLE Stocks(StocksName varchar(100), Qty int, Price dec(10,2))
+GO
+CREATE TABLE DailyTradeUpdates(StocksName varchar(100), Delta int, Price dec(10,2))
+GO
+CREATE TABLE StockPriceEvolution(StocksName varchar(100), Price dec(10,2), TradingDate date)
+GO
+
+INSERT Stocks VALUES('MSFT',100, 36.67), ('SUN',100, 26.67)
+
+INSERT DailyTradeUpdates  VALUES('MSFT',20, 35.67), ('SUN',10, -6.67), ('GOO',100, 66.67)
+
+SELECT * FROM Stocks
+
+StocksName	Qty	Price
+MSFT		100	36.67
+SUN		100	26.67
+
+SELECT * FROM DailyTradeUpdates
+
+StocksName	Delta	Price
+MSFT		20	35.67
+SUN		10	-6.67
+GOO		100	66.67
+
+MERGE Stocks AS s
+USING DailyTradeUpdates AS d ON s.StocksName = d.StocksName and Qty!=0
+WHEN MATCHED THEN
+	--DELETE
+	UPDATE SET Price = d.Price, Qty+=d.Delta
+WHEN NOT MATCHED THEN
+	INSERT VALUES(d.StocksName, d.Price, d.Delta)
+	--INSERT (StocksName, Price, Qty) VALUES (d.StocksName, d.Price, d.Delta)
+OUTPUT $action, d.StocksName, d.Price;
+
+SELECT * FROM Stocks
+StocksName	Qty	Price
+MSFT		120	35.67
+SUN		110	-6.67
+GOO		66	100.00
+
+
+INSERT INTO StockPriceEvolution(StocksName, Price, TradingDate)
+SELECT StocksName, Price, CONVERT(DATE, SYSDATETIME())
+FROM
+(
+MERGE Stocks AS s
+USING DailyTradeUpdates AS d ON s.StocksName = d.StocksName and Qty!=0
+WHEN MATCHED THEN
+	UPDATE SET Price = d.Price, Qty+=d.Delta
+WHEN NOT MATCHED THEN
+	INSERT VALUES(d.StocksName, d.Price, d.Delta)
+OUTPUT $action, d.StocksName, d.Price
+) Updates(Action, StocksName, Price)
+WHERE Action='UPDATE' OR Action='INSERT'
+
+StockPriceEvolution
+StocksName	Price	TradingDate
+GOO		66.67	2015-02-11
+MSFT		35.67	2015-02-11
+SUN		-6.67	2015-02-11
+
+https://msdn.microsoft.com/en-us/library/bb510625.aspx
+https://msdn.microsoft.com/en-us/library/ms177564.aspx
+
+Table-valued parameters - allows you to use multiple rows of data in T-SQL statments or send a table as a parameter to 
+functions and stored procedures. It benefits such as flexibility, better performance than other methods of passing list
+of parameters adn reduce round trips to the server.The user-defined table type used for the table-valued parameters.
+(Programmability->Types->User-Defined Table Types->dbo.StocksType)
+
+DROP TABLE Stocks
+
+CREATE TABLE Stocks(StocksName varchar(100), Qty int, Price dec(10,2))
+GO
+CREATE TYPE StocksType AS TABLE(StocksName varchar(100), Qty int, Price dec(10,2))
+GO
+
+CREATE PROCEDURE uspStocks
+	@tvp StocksType READONLY
+AS
+BEGIN
+	SET NOCOUNT ON
+	INSERT INTO Stocks(StocksName, QTY, Price)
+	SELECT StocksName, QTY, Price FROM @tvp
+END;
+GO
+
+DECLARE @v as StocksType
+INSERT INTO @v(StocksName, QTY, Price) VALUES('MSFT',100, 36.67), ('SUN',100, 26.67)
+
+EXEC uspStocks @v;
+GO
+
+SELECT * FROM Stocks
+
+
+DataTable dt = new DataTable("Stocks");
+
+dt.Columns.Add("StocksName", typeof(string));
+dt.Columns.Add("Qty", typeof(int));
+dt.Columns.Add("Price", typeof(decimal));
+
+dt.Rows.Add("GOO", 100, 45.78);
+dt.Rows.Add("APP", 50, 35.78);
+
+SqlConnection conn= new SqlConnection("Data Source=dbwmad0d0707.svrs.wistate.acc,1193;Initial Catalog=master;Integrated Security=True");
+conn.Open();
+SqlCommand cmd = new SqlCommand("uspStocks", conn);
+cmd.CommandType = CommandType.StoredProcedure;
+SqlParameter param = new SqlParameter("tvp", SqlDbType.Structured);
+param.Value = dt;
+cmd.Parameters.Add(param);
+cmd.ExecuteNonQuery();
+conn.Close();
+
+
+
+https://msdn.microsoft.com/en-us/library/bb675163%28v=vs.110%29.aspx
+
+GROUPING SETS, GROUPING_ID(), CUBE, ROLLUP, 
+GROUP BY 
+	a new operator - the GROUPING SETS operator
+	a new function - the GROUPING_ID() function
+
+select 
+	t.[Group], t.CountryRegionCode, SUM(h.TotalDue)
+from 
+	sales.SalesTerritory t
+	inner join sales.SalesOrderHeader h on t.TerritoryID= h.TerritoryID
+GROUP BY
+	t.[Group], t.CountryRegionCode
+UNION ALL
+select t.[Group], NULL, SUM(h.TotalDue) from ... GROUP BY t.[Group]
+UNION ALL
+select 	NULL, NULL, SUM(h.TotalDue) from  ...
+
+
+Group		CountryRegionCode	(No column name)
+Pacific		AU			11814376.0952
+North America	CA			18398929.188
+Europe		DE			5479819.5755
+Europe		FR			8119749.346
+Europe		GB			8574048.7082
+North America	US			70829863.203
+Europe		NULL			22173617.6297
+North America	NULL			89228792.391
+Pacific		NULL			11814376.0952
+NULL		NULL			123216786.1159
+
+select 
+	t.[Group], t.CountryRegionCode, SUM(h.TotalDue),GROUPING_ID(t.[Group]),
+	GROUPING_ID(t.CountryRegionCode), GROUPING_ID(t.[Group], t.CountryRegionCode)
+from 
+	sales.SalesTerritory t
+	inner join sales.SalesOrderHeader h on t.TerritoryID= h.TerritoryID
+GROUP BY GROUPING SETS
+	((t.[Group], t.CountryRegionCode),(t.[Group]),())
+
+Group		CountryRegionCode	Total			GID	GID	GID
+Europe		DE			5479819.5755		0	0	0
+Europe		FR			8119749.346		0	0	0
+Europe		GB			8574048.7082		0	0	0
+Europe		NULL			22173617.6297		0	1	1
+North America	CA			18398929.188		0	0	0
+North America	US			70829863.203		0	0	0
+North America	NULL			89228792.391		0	1	1
+Pacific		AU			11814376.0952		0	0	0
+Pacific		NULL			11814376.0952		0	1	1
+NULL		NULL			123216786.1159		1	1	3
+
+
+Group			CountryRegionCode
+			AU	CA	DE	FR	GB US		Total
+Pacific			GROUP BY(Group, CountryRegionCode)		GROUP BY([Group])
+North America
+Europe
+ALL			GROUP BY(CountryRegionCode)			GROUP BY()
+
+GROUP BY GROUPING SETS((t.[Group], t.CountryRegionCode),(t.CountryRegionCode),(t.[Group]),())
+Equivalent to 
+CUBE => GROUP BY CUBE (t.[Group], t.CountryRegionCode) OR
+		 GROUP BY t.[Group], t.CountryRegionCode WITH CUBE
+Generates the GROUP BY aggregate, sub total of group by aggregate, aggregate of group by and total row.
+
+Group		CountryRegionCode	(No column name)
+Pacific		AU			11814376.0952
+NULL		AU			11814376.0952
+North America	CA			18398929.188
+NULL		CA			18398929.188
+Europe		DE			5479819.5755
+NULL		DE			5479819.5755
+Europe		FR			8119749.346
+NULL		FR			8119749.346
+Europe		GB			8574048.7082
+NULL		GB			8574048.7082
+North America	US			70829863.203
+NULL		US			70829863.203
+NULL		NULL			123216786.1159
+Europe		NULL			22173617.6297
+North America	NULL			89228792.391
+Pacific		NULL			11814376.0952		 
+
+ROLLUP => GROUP BY ROLLUP (t.[Group], t.CountryRegionCode) OR GROUP BY t.[Group], t.CountryRegionCode WITH ROLLUP 
+Generates the GROUP BY aggregate, aggregate of group by and total row.
+
+Group		CountryRegionCode	(No column name)
+Europe		DE			5479819.5755
+Europe		FR			8119749.346
+Europe		GB			8574048.7082
+Europe		NULL			22173617.6297
+North America	CA			18398929.188
+North America	US			70829863.203
+North America	NULL			89228792.391
+Pacific		AU			11814376.0952
+Pacific		NULL			11814376.0952
+NULL		NULL			123216786.1159
+
+HierarchyID Data type - enables a tree structure, modeling an organizational structure, representing of a file system, representing a set of tasks in a project, modeling a graph of links between web pages.
+
+Methods
+child.GetAncestors(n) - returns a hierarchyid representing the nth ancestors
+parent.GetDescendant(child1, child2) - returns a child node
+node.GetLevel() - returns an integer value representing the depth of the node in the tree.
+HierarchyID::GetRoot() - returns the root of the herarchy
+parent.IsDescendant(child) - is used to find out if a node is descendant of another node
+HierarchyID::Parse(input) - converts a string representation of a herarchyid to a herarchyid value
+node.Reparent(oldRoot, newRoot)
+node.ToString()
+
+
+create table tblFolders(OrgNode HierarchyID, FolderName VARCHAR(MAX))
+
+--insert root
+INSERT INTO tblFolders(OrgNode, FolderName) VALUES(HierarchyID::GetRoot(),'C:\')
+
+--insert second row-child of root folder
+DECLARE @Root HierarchyID;
+SELECT @Root = HierarchyID::GetRoot() FROM tblFolders;
+INSERT INTO tblFolders(OrgNode, FolderName) VALUES(@Root.GetDescendant(NULL, NULL),'C:\Program Files')
+
+--insert third row-child of root folder
+INSERT INTO tblFolders(OrgNode, FolderName) VALUES(@Root.GetDescendant(CAST('/1/' AS HierarchyID), NULL),'C:\windows')
+
+--insert a child for the 'C:\Program Files' folder
+DECLARE @Parent HierarchyID;
+SELECT @Parent = CAST('/1/' AS HierarchyID)
+INSERT INTO tblFolders(OrgNode, FolderName) VALUES(@Parent.GetDescendant(NULL, NULL),'C:\Program Files\Microsoft SQL Server')
+
+select OrgNode.ToString(), * from tblFolders
+
+/		C:\
+/1/	0x58	C:\Program Files
+/2/	0x68	C:\windows
+/1/1/	0x5AC0	C:\Program Files\Microsoft SQL Server
+
+CREATE TABLE SimpleDemo (Level hierarchyid NOT NULL, Location nvarchar(30) NOT NULL, LocationType nvarchar(9) NULL);
+
+INSERT SimpleDemo
+VALUES ('/1/', 'Europe', 'Continent'), ('/2/', 'South America', 'Continent'), ('/1/1/', 'France', 'Country'),
+('/1/1/1/', 'Paris', 'City'), ('/1/2/1/', 'Madrid', 'City'), ('/1/2/', 'Spain', 'Country'), 
+('/3/', 'Antarctica', 'Continent'), ('/2/1/', 'Brazil', 'Country'), ('/2/1/1/', 'Brasilia', 'City'),
+('/2/1/2/', 'Bahia', 'State'), ('/2/1/2/1/', 'Salvador', 'City'), ('/3/1/', 'McMurdo Station', 'City');
+
+SELECT CAST(Level AS nvarchar(100)) AS [Converted Level], * FROM SimpleDemo ORDER BY Level;
+
+INSERT SimpleDemo VALUES ('/1/3/1/', 'Kyoto', 'City'), ('/1/3/1/', 'London', 'City');
+SELECT CAST(Level AS nvarchar(100)) AS [Converted Level], * FROM SimpleDemo ORDER BY Level;
+
+INSERT SimpleDemo
+VALUES ('/', 'Earth', 'Planet');
+
+
+exec sp_spaceused 'Sales.Customer'
+exec sp_spaceused 'Sales.Store'

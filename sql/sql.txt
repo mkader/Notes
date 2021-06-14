@@ -1,0 +1,244 @@
+using System.Data.SqlClient;
+
+private SqlConnection conn = new SqlConnection();
+private SqlCommand cmd = new SqlCommand();
+private string strConnection = A2ACommon.STR_Connection;
+SqlParameter strSQLResult = new SqlParameter("@sResult", SqlDbType.VarChar,1000);
+private SqlDataAdapter sdaAgencyList = new SqlDataAdapter();
+private DataSet dsAgencyList = new DataSet();
+
+try 
+{ 
+	conn = new SqlConnection(strConnection); 
+	conn.Open(); 
+	cmd.Connection = conn; 
+	cmd.CommandType = CommandType.StoredProcedure; 
+	cmd.Parameters.Add("@iAgencyID", AgencyID); 
+	strSQLResult.Direction = ParameterDirection.Output;
+	cmd.Parameters.Add(strSQLResult);
+	cmd.CommandText = "spAgencyIUD"; 
+	cmd.ExecuteNonQuery(); 
+	Result = strSQLResult.Value.ToString();
+	cmd.Dispose(); 
+} 
+catch (Exception excep) 
+{ 
+	throw new Exception(excep.Message); 
+} 
+finally 
+{ 
+	conn.Close(); 
+} 
+
+try 
+{ 
+	conn = new SqlConnection(strConnection); 
+	cmd.Connection = conn; 
+	cmd.CommandType = CommandType.StoredProcedure; 
+	cmd.Parameters.Add("@iAgencyID", AgencyID); 
+	cmd.CommandText = "spAgencySelect"; 
+	sdaAgencyList.SelectCommand = cmd;
+	sdaAgencyList.Fill(dsAgencyList, "AgencyList");
+	cmd.Dispose(); 
+} 
+catch (Exception excep) 
+{ 
+	throw new Exception(excep.Message); 
+} 
+finally 
+{ 
+	conn.Close(); 
+} 
+
+
+Suppose you have a database with two tables, employee and department (see below for exact schema). Write a SQL statement to answer the following questions:
+
+    Show a list of all employees that includes both the employee name and the department name.
+    Show a list of departments and include the number of employees in each department.
+    Show a list of all departments with no employees.
+    Show a list of departments with more than 2 employees
+    Show a list of departments that includes average and maximum salary in that department. Sort the list by the average salary.
+
+Employee Table - id, first_name, last_name, salary, department
+
+Department Table -  id, name
+
+
+show tables;
+desc employee;
+select * from employee;
+select * from department;
+
+select * from employee e join department d on e.department = d.id;
+
+select d.name, count(e.department) 
+from department d join employee e on d.id = e.department
+group by d.name;
+
+select * from department d where d.id not in (select department from employee);
+
+select d.name,  max(e.salary),  avg(e.salary)
+from department d join employee e on d.id = e.department
+group by d.name
+
+
++--------------------+
+| Tables_in_thereqdb |
++--------------------+
+| department         |
+| employee           |
+| employee_project   |
+| project            |
++--------------------+
++------------+-------------+------+-----+---------+----------------+
+| Field      | Type        | Null | Key | Default | Extra          |
++------------+-------------+------+-----+---------+----------------+
+| id         | int(11)     | NO   | PRI | NULL    | auto_increment |
+| first_name | varchar(20) | YES  |     | NULL    |                |
+| last_name  | varchar(20) | YES  |     | NULL    |                |
+| salary     | int(10)     | YES  |     | NULL    |                |
+| department | int(11)     | YES  | MUL | NULL    |                |
++------------+-------------+------+-----+---------+----------------+
++----+------------+-----------+--------+------------+
+| id | first_name | last_name | salary | department |
++----+------------+-----------+--------+------------+
+|  1 | John       | Smith     |  20000 |          1 |
+|  2 | Ava        | Muffinson |  10000 |          5 |
+|  3 | Cailin     | Ninson    |  30000 |          2 |
+|  4 | Mike       | Peterson  |  20000 |          2 |
+|  5 | Ian        | Peterson  |  80000 |          2 |
+|  6 | John       | Mills     |  50000 |          3 |
++----+------------+-----------+--------+------------+
++----+-------------+
+| id | name        |
++----+-------------+
+|  1 | Reporting   |
+|  2 | Engineering |
+|  3 | Marketing   |
+|  4 | Biz Dev     |
+|  5 | Silly Walks |
++----+-------------+
++----+------------+-----------+--------+------------+----+-------------+
+| id | first_name | last_name | salary | department | id | name        |
++----+------------+-----------+--------+------------+----+-------------+
+|  1 | John       | Smith     |  20000 |          1 |  1 | Reporting   |
+|  3 | Cailin     | Ninson    |  30000 |          2 |  2 | Engineering |
+|  4 | Mike       | Peterson  |  20000 |          2 |  2 | Engineering |
+|  5 | Ian        | Peterson  |  80000 |          2 |  2 | Engineering |
+|  6 | John       | Mills     |  50000 |          3 |  3 | Marketing   |
+|  2 | Ava        | Muffinson |  10000 |          5 |  5 | Silly Walks |
++----+------------+-----------+--------+------------+----+-------------+
++-------------+---------------------+
+| name        | count(e.department) |
++-------------+---------------------+
+| Engineering |                   3 |
+| Marketing   |                   1 |
+| Reporting   |                   1 |
+| Silly Walks |                   1 |
++-------------+---------------------+
++----+---------+
+| id | name    |
++----+---------+
+|  4 | Biz Dev |
++----+---------+
++-------------+---------------+---------------+
+| name        | max(e.salary) | avg(e.salary) |
++-------------+---------------+---------------+
+| Engineering |         80000 |    43333.3333 |
+| Marketing   |         50000 |    50000.0000 |
+| Reporting   |         20000 |    20000.0000 |
+| Silly Walks |         10000 |    10000.0000 |
++-------------+---------------+---------------+
+
+
+When should you use database indexes in SQL and RDBMS?
+What is a database index? When would you use one? What's the downside of using an index?
+
+Why is it needed?
+
+When data is stored on disk based storage devices, it is stored as blocks of data. For example searching on a field that isn’t sorted requires a Linear Search which requires N/2 block accesses (on average), where N is the number of blocks that the table spans. If that field is a non-key field (i.e. doesn’t contain unique entries) then the entire table space must be searched at N block accesses.
+
+Whereas with a sorted field, a Binary Search may be used, this has log2 N block accesses. Also since the data is sorted given a non-key field, the rest of the table doesn’t need to be searched for duplicate values, once a higher value is found. Thus the performance increase is substantial.
+
+What is indexing?
+
+Indexing is a way of sorting a number of records on multiple fields. Creating an index on a field in a table creates another data structure which holds the field value, and pointer to the record it relates to. This index structure is then sorted, allowing Binary Searches to be performed on it.
+
+The downside to indexing is that these indexes require additional space on the disk, since the indexes are stored together in a table using the MyISAM engine, this file can quickly reach the size limits of the underlying file system if many fields within the same table are indexed.
+
+How does it work?
+
+Firstly, let’s outline a sample database table schema;
+
+Field name       Data type      Size on disk
+id (Primary key) Unsigned INT   4 bytes
+firstName        Char(50)       50 bytes
+lastName         Char(50)       50 bytes
+emailAddress     Char(100)      100 bytes
+Note: char was used in place of varchar to allow for an accurate size on disk value. This sample database contains five million rows, and is unindexed. The performance of several queries will now be analyzed. These are a query using the id (a sorted key field) and one using the firstName (a non-key unsorted field).
+
+Example 1
+
+Given our sample database of r = 5,000,000 records of a fixed size giving a record length of R = 204 bytes and they are stored in a table using the MyISAM engine which is using the default block size B = 1,024 bytes. The blocking factor of the table would be bfr = (B/R) = 1024/204 = 5 records per disk block. The total number of blocks required to hold the table is N = (r/bfr) = 5000000/5 = 1,000,000 blocks.
+
+A linear search on the id field would require an average of N/2 = 500,000 block accesses to find a value given that the id field is a key field. But since the id field is also sorted a binary search can be conducted requiring an average of log2 1000000 = 19.93 = 20 block accesses. Instantly we can see this is a drastic improvement.
+
+Now the firstName field is neither sorted, so a binary search is impossible, nor are the values unique, and thus the table will require searching to the end for an exact N = 1,000,000 block accesses. It is this situation that indexing aims to correct.
+
+Given that an index record contains only the indexed field and a pointer to the original record, it stands to reason that it will be smaller than the multi-field record that it points to. So the index itself requires fewer disk blocks that the original table, which therefore requires fewer block accesses to iterate through. The schema for an index on the firstName field is outlined below;
+
+Field name       Data type      Size on disk
+firstName        Char(50)       50 bytes
+(record pointer) Special        4 bytes
+Note: Pointers in MySQL are 2, 3, 4 or 5 bytes in length depending on the size of the table.
+
+Example 2
+
+Given our sample database of r = 5,000,000 records with an index record length of R = 54 bytes and using the default block size B = 1,024 bytes. The blocking factor of the index would be bfr = (B/R) = 1024/54 = 18 records per disk block. The total number of blocks required to hold the table is N = (r/bfr) = 5000000/18 = 277,778 blocks.
+
+Now a search using the firstName field can utilise the index to increase performance. This allows for a binary search of the index with an average of log2 277778 = 18.08 = 19 block accesses. To find the address of the actual record, which requires a further block access to read, bringing the total to 19 + 1 = 20 block accesses, a far cry from the 277,778 block accesses required by the non-indexed table.
+
+When should it be used?
+
+Given that creating an index requires additional disk space (277,778 blocks extra from the above example), and that too many indexes can cause issues arising from the file systems size limits, careful thought must be used to select the correct fields to index.
+
+Since indexes are only used to speed up the searching for a matching field within the records, it stands to reason that indexing fields used only for output would be simply a waste of disk space and processing time when doing an insert or delete operation, and thus should be avoided. Also given the nature of a binary search, the cardinality or uniqueness of the data is important. Indexing on a field with a cardinality of 2 would split the data in half, whereas a cardinality of 1,000 would return approximately 1,000 records. With such a low cardinality the effectiveness is reduced to a linear sort, and the query optimizer will avoid using the index if the cardinality is less than 30% of the record number, effectively making the index a waste of space.
+
+
+a column index in SQL: CREATE INDEX name_index ON Employee (Employee_Name)
+
+multi-column index in SQL: CREATE INDEX name_index ON Employee (Employee_Name, Employee_Age)
+
+
+Why can’t a table have two clustered indexes?
+
+A clustered index is the table. When you define a clustered index on a table, the database engine sorts all the rows in the table, in ascending or descending order.
+
+Example, The Sales table - order ID, line item ID, product number, quantity, order and shipping dates column. Create a clustered index based on the OrderID and LineID columns  -> CREATE UNIQUE CLUSTERED INDEX ix_oriderid_lineid ON dbo.Sales(OrderID, LineID); 
+
+When you run the statement, all rows in the table are physically sorted, first by the OrderID column and then by the LineID column, but the data itself remains a single logical unit, which is the table. For this reason, you cannot create two clustered indexes. There can be only one table and that table can be sorted in only one order.
+
+Non Clustered index, heap
+The table in its natural state, that is, as a heap, and create only nonclustered indexes to support your queries. A heap, as you’ll recall, stores data in an unspecified order. As a result, you have no way to predict how the data will be ordered.
+If the query engine must find data without the benefit of a nonclustered index, it does a full table scan to locate the target rows.
+
+Yet heaps can help improve performance in certain situations. Consider the table that has a lot of insert activity, but few updates and deletes, if any. For example, a table that stores log data is likely restricted mostly to insert operations, until perhaps the data is archived.
+
+Can you create a clustered index on a column with duplicate values?
+Yes and no. Yes, you can create a clustered index on key columns that contain duplicate values. No, the key columns cannot remain in a non-unique state.
+
+For example, create a clustered index on the LastName column. The column includes the values Franklin, Hancock, Washington, and Smith. You then insert the values Adams, Hancock, Smith, and Smith. Because the values in the key column must ultimately be unique, the database engine will modify the duplicates so that the values look something like this: Adams, Franklin, Hancock, Hancock1234, Washington, Smith, Smith4567, and Smith5678.
+
+What is the relationship between unique and primary key constraints and a table’s indexes?
+
+Primary key and unique constraints ensure that the values in the key columns are unique. You can define only one primary key on a table and it cannot contain null values. You can create multiple unique constraints on a table and each one can contain a single null value.
+
+When you create a primary key constraint, the database engine also creates a unique clustered index, if a clustered index doesn’t already exist. However, you can override the default behavior and specify that a nonclustered index be created. If a clustered index does exist when you create the primary key, the database engine creates a unique nonclustered index.
+
+When you create a unique constraint, the database engine creates a unique nonclustered index. However, you can specify that a unique clustered index be created if a clustered index does not already exist. For all practical purposes, a unique constraint and unique index are one in the same.
+
+If you index a view is it still a view?
+
+A view is a virtual table made up a data from one or more other tables. You can improve a view’s performance by creating clustered and nonclustered indexes on that view, just like you create indexes on a table.
+
+Before you can create an index on a view, it must meet a number of restrictions. For example, the view can reference only base tables, not other views, and those tables must be within the same database.

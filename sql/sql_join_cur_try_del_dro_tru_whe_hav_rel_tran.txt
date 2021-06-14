@@ -1,0 +1,342 @@
+Join conditions can be used in either the FROM or WHERE clauses; specifying them in the FROM clause is recommended. 
+WHERE and HAVING clauses can also contain search conditions to further filter the rows selected by the join conditions.
+
+Joins can be categorized as:
+
+    Inner joins or join - Return rows when there is at least one match in both tables
+    SELECT oid, cid, name FROM customer INNER JOIN order ON customer.cid=order.cid
+
+customer		order		inner join		cust left join order 	cust right join order
+cid	name		oid	cid	oid	cid	name	oid	cid		oid cid name			    	
+1	kader		11	3	11	3	abdul	null	1		11  3	a
+2	mohideen	12	3	12	3	abdul	13	2		12  3   a
+3	abdul		13	2	13	2	kader	11	3		13  2   m
+			14	4				12	3		14  4   null
+    Outer joins. Outer joins can be a left, a right, or full outer join.
+
+        LEFT JOIN or LEFT OUTER JOIN - Return all rows from the left table, even if there are no matches in the right table
+        SELECT column_name(s) FROM table1 LEFT JOIN table2 ON table1.column1=table2.column1
+
+        RIGHT JOIN or RIGHT OUTER JOIN - Return all rows from the right table, even if there are no matches in the left table
+        SELECT column_name(s) FROM table1 RIGHT JOIN table2 ON table1.column1=table2.column1
+
+        FULL JOIN or FULL OUTER JOIN - returns all rows from the left table and from the right table, 
+        combines the results of both left and right outer joins.
+        SELECT column_name(s) FROM table1 FULL JOIN table2 ON table1.column1=table2.column1
+
+    Cross or (CARTESIAN JOIN) joins return all rows from the left table. Each row from the left table is combined with all rows from the right table. 
+    SELECT column_name(s) FROM table1 CROSS JOIN company table2 OR (FROM table1,table2)
+    The result set contains 170 rows (SalesPerson has 17 rows and SalesTerritory has 10; 17 multiplied by 10 equals 170).
+
+SELF JOIN - A table can be joined to itself in a self-join.
+For example, here is an inner join retrieving the employees who are also sales persons:
+SELECT DISTINCT pv1.ProductID, pv1.VendorID FROM Purchasing.ProductVendor pv1
+    INNER JOIN Purchasing.ProductVendor pv2    ON pv1.ProductID = pv2.ProductID    AND pv1.VendorID <> pv2.VendorID
+ORDER BY pv1.ProductID
+
+---------------------------------------------------------
+
+Shrinking Database is bad practice for performance as it increases fragmentation
+
+------------------------------------------------------------------------------
+
+Simple Example of Cursor using AdventureWorks Database is listed here.
+
+DECLARE @ProductID INT
+DECLARE @getProductID CURSOR
+SET @getProductID = CURSOR FOR
+SELECT ProductID FROM Production.Product
+OPEN @getProductID
+FETCH NEXT
+FROM @getProductID INTO @ProductID
+WHILE @@FETCH_STATUS = 0
+BEGIN
+ PRINT @ProductID
+ FETCH NEXT
+ FROM @getProductID INTO @ProductID
+END
+CLOSE @getProductID
+DEALLOCATE @getProductID
+GO
+
+------------------------------------------------------------------------------
+Try Catch
+BEGIN TRY
+	INSERT INTO SampleTable (Col)
+	SELECT 'FourthRow'
+	UNION ALL
+	SELECT 'FifthRow---------'
+END TRY
+BEGIN CATCH
+	SELECT ERROR_NUMBER() AS ErrorNumber,ERROR_MESSAGE() AS ErrorMessage;
+END CATCH
+GO
+
+------------------------------------------------------------------------------
+How to Validate Syntax and Not Execute Statement – SET NOEXEC ON/OFF;
+
+------------------------------------------------------------------------------
+
+What is the Default Size of the Database? - The default size of the user database is based on system database model.
+
+------------------------------------------------------------------------------
+data manipulation language DML , data definition language or data description language (DDL)
+
+Difference between TRUNCATE, DELETE and DROP commands
+The DELETE command is used to remove rows from a table. Use COMMIT or ROLLBACK the transaction to make the change permanent or to undo it.  DELETE triggers will be fire. DML is a command
+
+TRUNCATE removes all rows from a table. The operation cannot be rolled back and no triggers will be fired. TRUCATE is faster and doesn't use as much undo space as a DELETE.it is DDL command , TRUNCATE TABLE emp;
+
+The DROP command removes a table from the database. All the tables' rows, indexes and privileges will also be removed. No DML triggers will be fired. The operation cannot be rolled back.it is DDL command DROP Table emp;
+
+------------------------------------------------------------------------------
+
+WHERE and HAVING
+HAVING specifies a search condition for a group or an aggregate function used in SELECT statement.
+
+-Apart from SELECT queries, WHERE can use with UPDATE/DELETE but HAVING can only be used with SELECT query
+
+-WHERE is used for filtering rows and it applies on each and every row, while HAVING is used to filter groups in SQL.
+
+-WHERE is used before GROUP BY clause, HAVING is used after GROUP BY clause.
+
+-When WHERE and HAVING are used together in a SELECT query with aggregate function,  WHERE is applied first on individual rows. Once group is created, HAVING is used to filter groups based upon condition specified.
+
+------------------------------------------------------------------------------
+
+Types of Table Relationships
+One-to-One Relationships - a row in table A can have no more than one matching row in table B, and vice versa. it is not common, for example Divide a table with many columns.
+One-to-Many Relationship - a row in table A can have many matching rows in table B, but a row in table B can have only one matching row in table A.
+Many-to-Many Relationships -  a row in table A can have many matching rows in table B, and vice versa, it is called junction table, whose primary key consists of the foreign keys from both table A and table B. customer, orders, custorder (third table will create)
+------------------------------------------------------------------------------
+
+SQL - Transactions
+
+A transaction is a unit or sequence of work that is performed against a database in a logical order.
+
+For example, performing transaction on the table for creating/updating/deleting a record, 
+
+Properties of Transactions: ACID:
+
+Atomicity: ensures that all operations within the work unit are completed successfully; otherwise, the transaction is aborted at the point of failure, and previous operations are rolled back to their former state.
+
+Consistency: ensures that the database properly changes states upon a successfully committed transaction.
+
+Isolation: enables transactions to operate independently of and transparent to each other.
+
+Durability: ensures that the result or effect of a committed transaction persists in case of a system failure.
+
+Transaction Control:
+There are following commands used to control transactions:
+
+COMMIT: to save the changes. COMMIT;
+
+ROLLBACK: to rollback(undo) the changes that have not already been saved to the database. ROLLBACK;
+
+SAVEPOINT: A SAVEPOINT is a point in a transaction when you can roll the transaction back to a certain point without rolling back the entire transaction.
+
+SET TRANSACTION: Places a name on a transaction.
+
+Transactional control commands are only used with the DML commands INSERT, UPDATE and DELETE only. 
+
+SAVEPOINT SAVEPOINT_NAME;
+ROLLBACK TO SAVEPOINT_NAME;
+
++----+----------+-----+-----------+----------+
+| ID | NAME     | AGE | ADDRESS   | SALARY   |
++----+----------+-----+-----------+----------+
+|  1 | Ramesh   |  32 | Ahmedabad |  2000.00 |
+|  2 | Khilan   |  25 | Delhi     |  1500.00 |
+|  3 | kaushik  |  23 | Kota      |  2000.00 |
++----+----------+-----+-----------+----------+
+Now, here is the series of operations:
+
+SAVEPOINT SP1; //Savepoint created.
+DELETE FROM CUSTOMERS WHERE ID=1; //1 row deleted.
+
+SAVEPOINT SP2; //Savepoint created.
+DELETE FROM CUSTOMERS WHERE ID=2; //1 row deleted.
+
+SAVEPOINT SP3; //Savepoint created.
+DELETE FROM CUSTOMERS WHERE ID=3; //1 row deleted.
+
+ROLLBACK TO SP2; //Rollback complete.
+the first deletion is done other are not undone
+
++----+----------+-----+-----------+----------+
+| ID | NAME     | AGE | ADDRESS   | SALARY   |
++----+----------+-----+-----------+----------+
+|  2 | Khilan   |  25 | Delhi     |  1500.00 |
+|  3 | kaushik  |  23 | Kota      |  2000.00 |
++----+----------+-----+-----------+----------+
+
+The RELEASE SAVEPOINT Command: is used to remove a SAVEPOINT that you have created. RELEASE SAVEPOINT SAVEPOINT_NAME;
+Once a SAVEPOINT has been released, you can no longer use the ROLLBACK command to undo transactions performed since the SAVEPOINT.
+
+The SET TRANSACTION Command: can be used to initiate a database transaction. This command is used to specify characteristics for the transaction that follows. For example, you can specify a transaction to be read only, or read write.
+
+ SET TRANSACTION [ READ WRITE | READ ONLY ];
+------------------------------------------------------------------------------------------------
+Imagine a scenario where your website's database can only handle 1,000 queries every second, and your traffic has grown enough to product 1,500 queries per second at peak times
+-Add Load balancer
+-Improve hardware processor
+-PROFILING
+-Indexing table
+-Optimizing table
+-Reducing The Number Of Queries By Using JOINs
+
+--------------------------------------------------------------------------------------------------
+.NET SQL CODE 
+using System.Data.SqlClient;
+
+private SqlConnection conn = new SqlConnection();
+private SqlCommand cmd = new SqlCommand();
+private string strConnection = A2ACommon.STR_Connection;
+SqlParameter strSQLResult = new SqlParameter("@sResult", SqlDbType.VarChar,1000);
+private SqlDataAdapter sdaAgencyList = new SqlDataAdapter();
+private DataSet dsAgencyList = new DataSet();
+
+try 
+{ 
+	conn = new SqlConnection(strConnection); 
+	conn.Open(); 
+	cmd.Connection = conn; 
+	cmd.CommandType = CommandType.StoredProcedure; 
+	cmd.Parameters.Add("@iAgencyID", AgencyID); 
+	strSQLResult.Direction = ParameterDirection.Output;
+	cmd.Parameters.Add(strSQLResult);
+	cmd.CommandText = "spAgencyIUD"; 
+	cmd.ExecuteNonQuery(); 
+	Result = strSQLResult.Value.ToString();
+	cmd.Dispose(); 
+} 
+catch (Exception excep) 
+{ 
+	throw new Exception(excep.Message); 
+} 
+finally 
+{ 
+	conn.Close(); 
+} 
+
+try 
+{ 
+	conn = new SqlConnection(strConnection); 
+	cmd.Connection = conn; 
+	cmd.CommandType = CommandType.StoredProcedure; 
+	cmd.Parameters.Add("@iAgencyID", AgencyID); 
+	cmd.CommandText = "spAgencySelect"; 
+	sdaAgencyList.SelectCommand = cmd;
+	sdaAgencyList.Fill(dsAgencyList, "AgencyList");
+	cmd.Dispose(); 
+} 
+catch (Exception excep) 
+{ 
+	throw new Exception(excep.Message); 
+} 
+finally 
+{ 
+	conn.Close(); 
+} 
+
+---------------------------------------------------------------------------------------
+Suppose you have a database with two tables, employee and department (see below for exact schema). Write a SQL statement to answer the following questions:
+
+    Show a list of all employees that includes both the employee name and the department name.
+    Show a list of departments and include the number of employees in each department.
+    Show a list of all departments with no employees.
+    Show a list of departments with more than 2 employees
+    Show a list of departments that includes average and maximum salary in that department. Sort the list by the average salary.
+
+Employee Table - id, first_name, last_name, salary, department
+
+Department Table -  id, name
+
+
+show tables;
+desc employee;
+select * from employee;
+select * from department;
+
+select * from employee e join department d on e.department = d.id;
+
+select d.name, count(e.department) 
+from department d join employee e on d.id = e.department
+group by d.name;
+
+select * from department d where d.id not in (select department from employee);
+
+select d.name,  max(e.salary),  avg(e.salary)
+from department d join employee e on d.id = e.department
+group by d.name
+
+
++--------------------+
+| Tables_in_thereqdb |
++--------------------+
+| department         |
+| employee           |
+| employee_project   |
+| project            |
++--------------------+
++------------+-------------+------+-----+---------+----------------+
+| Field      | Type        | Null | Key | Default | Extra          |
++------------+-------------+------+-----+---------+----------------+
+| id         | int(11)     | NO   | PRI | NULL    | auto_increment |
+| first_name | varchar(20) | YES  |     | NULL    |                |
+| last_name  | varchar(20) | YES  |     | NULL    |                |
+| salary     | int(10)     | YES  |     | NULL    |                |
+| department | int(11)     | YES  | MUL | NULL    |                |
++------------+-------------+------+-----+---------+----------------+
++----+------------+-----------+--------+------------+
+| id | first_name | last_name | salary | department |
++----+------------+-----------+--------+------------+
+|  1 | John       | Smith     |  20000 |          1 |
+|  2 | Ava        | Muffinson |  10000 |          5 |
+|  3 | Cailin     | Ninson    |  30000 |          2 |
+|  4 | Mike       | Peterson  |  20000 |          2 |
+|  5 | Ian        | Peterson  |  80000 |          2 |
+|  6 | John       | Mills     |  50000 |          3 |
++----+------------+-----------+--------+------------+
++----+-------------+
+| id | name        |
++----+-------------+
+|  1 | Reporting   |
+|  2 | Engineering |
+|  3 | Marketing   |
+|  4 | Biz Dev     |
+|  5 | Silly Walks |
++----+-------------+
++----+------------+-----------+--------+------------+----+-------------+
+| id | first_name | last_name | salary | department | id | name        |
++----+------------+-----------+--------+------------+----+-------------+
+|  1 | John       | Smith     |  20000 |          1 |  1 | Reporting   |
+|  3 | Cailin     | Ninson    |  30000 |          2 |  2 | Engineering |
+|  4 | Mike       | Peterson  |  20000 |          2 |  2 | Engineering |
+|  5 | Ian        | Peterson  |  80000 |          2 |  2 | Engineering |
+|  6 | John       | Mills     |  50000 |          3 |  3 | Marketing   |
+|  2 | Ava        | Muffinson |  10000 |          5 |  5 | Silly Walks |
++----+------------+-----------+--------+------------+----+-------------+
++-------------+---------------------+
+| name        | count(e.department) |
++-------------+---------------------+
+| Engineering |                   3 |
+| Marketing   |                   1 |
+| Reporting   |                   1 |
+| Silly Walks |                   1 |
++-------------+---------------------+
++----+---------+
+| id | name    |
++----+---------+
+|  4 | Biz Dev |
++----+---------+
++-------------+---------------+---------------+
+| name        | max(e.salary) | avg(e.salary) |
++-------------+---------------+---------------+
+| Engineering |         80000 |    43333.3333 |
+| Marketing   |         50000 |    50000.0000 |
+| Reporting   |         20000 |    20000.0000 |
+| Silly Walks |         10000 |    10000.0000 |
++-------------+---------------+---------------+
+
+
