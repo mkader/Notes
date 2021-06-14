@@ -1,0 +1,128 @@
+How LoadRunner Works? - 12.00 & 11.00
+1.LoadRuner Controller - It is central console from which the load test is managed and monitored.
+ It transfered the script which is created by VUGen to load generator machines while running the test.
+ Once test started, we can see, 
+2. Thousands of virtual users perform real-life transctions on a system to emulate produnction traffic.
+ During the test, controller reterieves the monitoring data from the Server(Production), and show them in graphical form
+3.Real-time monitors capture performance data across all tiers, server adn network resources and display information on the Controller.
+  After the test, results optined from the test can used  for analysis to find the performance issues and root cause.
+4.Results are stored in a database repoistory, allowing users to generate reports and peform analysis.  
+
+Definitions
+Business Process : A user interacting with an applicatio to accomplish a business tasks.(ex, send an email).
+Action: A recorded business process or series of steps that, when played back, emulated a real user performing the same steps. (login, compose, send).
+LoadRunner Scenario: An environment which describes all the elements to be used and the conditions undet which you want to test your system.(it is creating environment as similar as possible to production environment, this can be done through scripts,run time settings, design load module).
+LoadRunner Transction: An end-to-end measurement of one or more user actions within an action (browser-to backend-to browser) (login is one transction).
+Virtual User (Vuser): A virutal user is a script of recorded user actions. When played back, the script interacts with a Web applicaiton just like a real user.(20 users want to hit login button same time).
+Rendezvous point (Optional): This point makes the faster users wait for the slower users.
+Checkpoints: A Checkpoint is a step in a VUser scipt which verified whether a virtual cue apperared as expected.(confirming virtual users are perfoming as expected).
+
+Major Componenets of LoadRuner
+VUGen - Records VUser scripts that emulate the actions of real users.
+Controller -Administrative center for creating, maintaining and executing load test scenarios. Assigns Scenarios to VUsers and load generators, starts and stops load tests.
+Load Generator - An agent through which we can generate load (High configured computers used to generate VUsers).
+Analysis - Provides graphs and reports that summarize the system performance.
+
+Process of Automated Load Testing
+Stpe 1. System Analysis (Identification of critical transction, like test cases)
+Virtual User Generator (VUGen)
+2.Creating Virtual User Scripts(Recording, like steps)
+3.Defining Users Behavior(Runtime setting)
+LoadRunner Controller
+4.Crearing Load Test Scenarios
+5.Running the Load Test Scenarios and Monitoring the Performance
+LoadRunner Analysis
+6.Analysing the Results.
+
+LoadRunner 12.00 - License Utility (Open)
+License Bundle
+	Community - allows 50 users
+	Web&Multimedia (all protocols, like http,..) - allows 250 users.
+	
+ALM (Application Lifecycle Management) - VSTS - TFS 2012/2010
+Test Management Tools - VSTS 2012/2010, Jira
+Function Testing Tools - VSTS - MS Test Manager, CodeUI Test, Selenium 2.0
+Performance Testing Tools - Load Runnder 12/11.5, VSTS - Web/Load Test
+
+My web application is slow what should i do
+Add RAM
+Optimize my application code
+Allocate more memory to Server?
+Have a separate database server
+Change the database indexing
+Upgrade my internet bandwidth
+
+Performance Counters
+Why Perfomance Counters? they allow you to track the performance of your application
+Waht Performance Counters?
+ Client Side - Response Time, Hits/Sec, Throughput, Pass Fail Statistics
+ Server Side - CPU (%User Time, %Processor Time, Run Queue Length), Memory (Available and Committed Bytes), Network (Bytes -Sent/sec, Received/Sec), Disc (Read Bytes/Sec, Write bytes/sec).
+
+
+Process
+
+Identify acceptance criteria
+|
+Identify key scenarios
+|
+Create workload model
+|
+Identify load levels
+|
+Identify Metrics
+|
+Design Load test Script
+|
+Conduct Load tests
+|
+Analyse Results
+|
+Results <> Acceptance criteria?
+ - No Ok Fine   -Yes 
+		 |
+		 Performance Analysis
+		 |
+		 H/w, S/w, Code tuning - > go to Conduct Load tests steps
+
+
+VUGen Recoding Options
+Script Sections
+Start Recording Options
+Recording Options
+
+Script Sections
+ vuser_int - This section is called first and once while running the script (login)
+ Action - This seciton contains the actual steps of use case and continues to run through out the test run.(remaining part of test cases).
+ vuser_end - This section is calle at the end and once while running the script.(logout)
+ globals.h - it is used for declaring global variables and functions,
+
+i1
+
+New Virtual User Dialog Box (option to select the protocols).
+ Create a new single protocol script (protocol is the lanugage that application is used to communicate the back end of the system)
+ New Virutal User dialog box enables you to create a new Vuser script
+ Creates a new script using a recently used protocol 
+ Create a new mulitple protocol script (supports more than one protocols).
+
+i2
+
+Start Recording Dialog Box
+Application Type - Either win32 or internet applications
+Program to record - Select the browser, internet application or Win32 application to record.
+URL Address
+Working Diretory
+Record into Action - specify which action want to record the script?
+Options - recording options
+i3
+
+Recording Options - Script
+Script - select the language that is been used.
+i4
+
+
+Vugen Run-time Settings
+
+Recorded Vuser script has run-time settings.
+The run-time settings define the way that the script runs.
+These settings are stored in the file default.cfg. located in the Vuser directory
+Run-time settings are applied to Vusers when you run a script using VuGena and the Controller.
