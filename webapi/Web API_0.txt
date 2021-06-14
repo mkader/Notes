@@ -1,0 +1,1455 @@
+http://www.tutorialsteacher.com/mvc/tempdata-in-asp.net-mvc
+https://www.asp.net/web-api
+
+Download CSV
+-------------
+https://goosedotnet.wordpress.com/2014/09/29/generate-and-export-a-string-only-csv-file-from-webapi/
+http://www.vickram.me/download-csv-using-asp-net-web-api/
+http://www.vickram.me/ienumerable-to-csv-extension-method/
+http://stackoverflow.com/questions/15334227/how-to-download-csv-file-from-asp-net-web-api-using-jquery-ajax-call/15334355
+https://www.asp.net/web-api/overview/formats-and-model-binding/media-formatters
+
+ASP.NET Web API (Application Programming Interface)
+=================================================================
+https://www.asp.net/media/4071077/aspnet-web-api-poster.pdf
+				WinForm
+				| ^
+				| |
+				V |						
+W------	HTTP Request---------->	WEB<-------------Mob
+E<-----	HTTP Response----------	API------------->ile
+B     (JSON/XML/Other Format)
+
+
+Web API Version		Supported .NET Framework	Coincides with	Supported in
+Web API 1.0		.NET Framework 4.0		ASP.NET MVC 4	VS 2010
+Web API 2 - Current	.NET Framework 4.5		ASP.NET MVC 5	VS 2012, 2013
+
+
+- It is a framework for building Web API’s, i.e. HTTP based services on top of the .NET Framework. 
+- Using Web API is for building RESTful services. 
+- These services can then be consumed by a broad range of clients like 
+	1. Browsers 2. Mobile applications 3. Desktop applications 4. IOTs
+- It can also be used to create services that are not RESTful. It does not dictate any specific architeture style for creating services. 
+
+IOTs (Internet Of Things) - IOTs are the objects or devices that have an IP address and 
+-------------------------
+can communicate over the internet with other internet enabled devices and objects. 
+- Examples IoT include security systems, electronic appliances, thermostats, cars etc, in addition to desktops, laptops, and smart phones.
+
+RESTful services (Representational State Transfer)
+----------------
+- It is an architectural pattern for creating an API that uses HTTP as its underlying communication method. 
+- The REST architectural pattern specifies a set of constraints that a system should adhere to. 
+	REST constraints
+	-----------------												
+	Client Server constraint - Client sends a request and the server sends a response. 
+		This separation supports the independent evolution of the client-side logic and server-side logic.
+	Stateless constraint - The communication between the client and the server must be stateless between requests. 
+		Means, not be storing anything on the server related to the client.
+		Client request should contain all the necessary information for the server to process that request. 
+		This ensures that each request can be treated independently by the server.
+	Cacheable constraint - Some data provided by the server like list of products/departments in a company does not change that often.
+		This constraint says that let the client know how long this data is good for, so that the client does not 
+		have to come back to the server for that data over and over again. Increasing performance and unnecessary process
+	Uniform Interface - It defines the interface between the client and the server. 
+		To understand the UI constraint, we need to understand what a resource is and the HTTP verbs (GET, PUT, POST & DELETE). 
+		In the context of a REST API, resources (Product, Employee, Customer) typically represent data entities
+		The HTTP verb is sent with each request tells the API what to do with the resource. 
+		Each resource is identified by a specific URI (Uniform Resource Identifier). 
+		The following table shows some typical requests that you see in an API
+		Resource	Verb	Outcome
+		/Employees	GET	Gets list of employees
+		
+		//Route Data						OR Query string
+		-------------						-----------------
+		/Employee/1	GET	Gets employee with Id = 1	/Employee?id=1 => id should match with parameter name Get(id)
+		/Employees	POST	Creates a new employee
+		/Employee/1	PUT	Updates employee with Id = 1
+		/Employee/1	DELETE	Deletes employee with Id = 1
+		/Employee/1	PATCH	updates record partially
+	HATEOAS(Hypermedia as the Engine of Application State) - Each request will be set of hyperlinks,
+	that let's you know what other actions can be performed on the resource. 
+	
+	There are 2 other constraints as well - Layered System & Code on Demand (optional)
+
+Difference between WCF (Windows Communication Foundation) and Web API
+-----------------------------------------------------------------------
+- WCF - A lot of configuration is required to turn a WCF service into a RESTful service. 
+  API is specifically for RESTful service purpose.
+- WCF is more suited for creating services that are transport/protocol independent. 
+  API Single service with multiple end points
+  For example, a service can be consumed by 2 different (Java and .NET) clients. 
+  One End Point - Java expects transport protocol to be HTTP and message format to be XML for interoperability, 
+  Another End Point - .NET expects the protocol to be TCP and the message format to be binary for performance. 
+
+ - Web API						WCF
+----------------------------------------------------
+  Open source and ships with .NET framework.	 	Ships with .NET framework
+  Supports only HTTP protocol.			  	Supports HTTP, TCP, UDP and custom transport protocol.
+  Maps http verbs to methods			 	Uses attributes based programming model.
+  Uses routing and controller concept like MVC	 	Uses Service, Operation and Data contracts.
+  Not support Reliable Messaging and transaction.	Supports Reliable Messaging and Transactions.
+  Web API can be configured using			Uses web.config and attributes to configure a service.
+  HttpConfiguration class but not in web.config.
+  Ideal for building RESTful services.			Supports RESTful services but with limitations.  
+
+- When to choose WCF?
+  --------------------
+	Choose WCF if you use .NET Framework 3.5. Web API does not support .NET 3.5 or below.
+	Choose WCF if your service needs to support multiple protocols such as HTTP, TCP, Named pipe.
+	Choose WCF if you want to build service with WS-* standards like Reliable Messaging, Transactions, Message Security.
+	Choose WCF if you want to use Request-Reply, One Way, and Duplex message exchange patterns.
+
+- When to choose ASP.NET Web API?
+  -------------------------------
+	Choose Web API if you are using .NET framework 4.0 or above.
+		Choose Web API if you want to build a service that supports only HTTP protocol.
+	Choose Web API to build RESTful HTTP based services.
+	Choose Web API if you are familiar with ASP.NET MVC.
+
+Create Web API Project
+===============================================================
+- New -> Project -> ASP.NET Web Application -> Web API 
+- Controllers\ValuesController.cs which inherits from ApiController class that is present in System.Web.Http namespace
+-----------------------------------
+- Difference between the MVC Controller, it inherits from the Controller class that is present in System.Web.Mvc namespace.
+----------------------------------------
+- ValuesController class have methods (Get, Put, Post & Delete) that map to the HTTP verbs (GET, PUT, POST, DELETE) respectively. 
+
+- Difference between Web API and MVC controller:
+ ----------------------------------------------
+ Web API Controller					MVC Controller
+ Derives from System.Web.Http.ApiController class	Derives from System.Web.Mvc.Controller class.
+ Method name must start with Http verbs 		Must apply appropriate Http verbs attribute.
+ otherwise apply http verbs attribute.
+ Specialized in returning data.				Specialized in rendering view.
+ Return data automatically formatted based 		Returns ActionResult or any derived type.
+ on Accept-Type header attribute. Default to json or xml.
+ Requires .NET 4.0 or above				Requires .NET 3.5 or above
+
+
+using System.Web.Http;
+
+namespace WebAPIDemo.Controllers{
+    //[Authorize]
+    public class ValuesController : ApiController{
+        public IEnumerable<string> Get(){ return new string[] { "value1", "value2" }; } // GET api/values
+        
+        //By default, the HTTP verb GET is mapped in a controller Get() or starts the word Get..(GetEmployees() or GetSomething().
+        //The word Get is case-insensitive. It can be lowercase, uppercase or a mix of both.
+        public string Get(int id){  return "value"; } // GET api/values/5
+	Custom method names
+	----------------------
+	[HttpGet]
+	public string LoadEmployee(int id){  return "value"; } // GET api/values/5
+	
+	//Method is not named Get or start with get or not deccorate, throw error "The requested resource does not support 
+	http method 'GET' with the status code 405 Method Not Allowed. 
+	
+        //[FromBody]- input from Response Body, //[FromUri]- input from URL
+        ------------
+        public void Post([FromBody]string value){ } // POST api/values
+        public void Put(int id, [FromBody]string value){ } // PUT api/values/5
+        public void Delete(int id){} // DELETE api/values/5
+    }
+}
+- Configure Web API - Web API supports code based configuration. It cannot be configured in web.config file.
+  ------------------
+ - WebApiConfig/Register(HttpConfiguration config)
+ - The HttpConfiguration is the main class which includes following properties 
+   using which you can override the default behaviour of Web API.
+	Property			Description
+	DependencyResolver		Gets or sets the dependency resolver for dependency injection.
+	Filters				Gets or sets the filters.
+	Formatters			Gets or sets the media-type formatters.
+	IncludeErrorDetailPolicy	Gets or sets a value indicating whether error details should be included in error messages.
+	MessageHandlers			Gets or sets the message handlers.
+	ParameterBindingRules		Gets the collection of rules for how parameters should be bound.
+	Properties			Gets the properties associated with this Web API instance.
+	Routes				Gets the collection of routes configured for the Web API.
+	Services			Gets the Web API services.   
+
+- Web API Routing - Web API supports two types of routing:  Convention-based Routing &	Attribute Routing
+ ---------------
+ - Convention-based Routing - Web API uses route templates to determine which controller and action method to execute. 
+  --------------------------
+  At least one route template must be added into route table in order to handle various HTTP requests.
+  config.Routes.MapHttpRoute(name:"DefaultApi", routeTemplate: "api/{controller}/{id}", defaults: new { id = RouteParameter.Optional }}
+  OR
+  IHttpRoute defaultRoute = config.Routes.CreateRoute("api/{controller}/{id}", new { id = RouteParameter.Optional }, null);
+  config.Routes.Add("DefaultApi", defaultRoute); // Add route
+  
+  The following table lists parameters of MapHttpRoute() method.
+  
+  Parameter	Description
+  name		Name of the route
+  routeTemplate	URL pattern of the route
+  defaults	An object parameter that includes default route values
+  constraints	Regex expression to specify characteristic of route values
+  handler	The handler to which the request will be dispatched.
+
+ - Configure Multiple Routes:
+  ---------------------------
+    public static void Register(HttpConfiguration config)
+    {
+        config.MapHttpAttributeRoutes();
+    
+        // school route
+        config.Routes.MapHttpRoute(
+            name: "School",
+            routeTemplate: "api/myschool/{id}",
+            defaults: new { controller="school", id = RouteParameter.Optional }
+            constraints: new { id ="/d+" }
+        );
+
+        // default route
+        config.Routes.MapHttpRoute(
+            name: "DefaultApi",
+            routeTemplate: "api/{controller}/{id}",
+            defaults: new { id = RouteParameter.Optional }
+        );
+    }
+  - School route is configured before DefaultApi route. So any incoming request will be matched with the School route first 
+    and if incoming request url does not match with it then only it will be matched with DefaultApi route. 
+- Attribute Routing - The Route attribute can be applied on any controller or action method.
+  -----------------
+	-Use Route Attribute, it must be enabled in WebApiConfig by calling config.MapHttpAttributeRoutes() method.
+
+	public class StudentController : ApiController
+	{
+	    [Route("api/student/names")]
+	    public IEnumerable<string> Get()
+	    {
+		return new string[] { "student1", "student2" };
+	    }
+	}
+
+	namespace WebAPI {
+	    public static class WebApiConfig {
+		public static void Register(HttpConfiguration config) {
+		    // Web API routes - enable Attribute Routing
+		    config.MapHttpAttributeRoutes();
+
+		    config.Routes.MapHttpRoute(
+			name: "DefaultApi",
+			routeTemplate: "api/{controller}/{id}",
+			defaults: new { id = RouteParameter.Optional }
+		    );
+		    ....
+		}
+	    }
+	}
+
+RoutePrefix attribute in Web API  - This eliminates the need to repeat the common prefix "api/students" on every controller action method.
+---------------------------------
+	public class StudentsController : ApiController {
+	    [Route("api/students")]
+	    public IEnumerable<Student> Get()
+
+	    [Route("api/students/{id}")]
+	    public Student Get(int id)
+
+
+	    [Route("api/students/{id}/courses")]
+	    public IEnumerable<string> GetStudentCourses(int id)
+	}
+
+	-- common prefix 'api/students'
+	
+	[RoutePrefix("api/students")]
+	public class StudentsController : ApiController{
+	    [Route("")]
+	    public IEnumerable<Student> Get()
+
+	    [Route("{id}")]
+	    public Student Get(int id) 
+
+	    [Route("{id}/courses")]
+	    public IEnumerable<string> GetStudentCourses(int id)
+	}
+
+	- override the route prefix - Use ~ character to override the route prefix 
+	---------------------------
+	[Route("api/teachers")]
+	public IEnumerable<Teacher> GetTeachers() {
+	    List<Teacher> teachers = new List<Teacher>(){
+	    };
+	    return teachers;
+	}	
+	navigate - /api/teachers, it will throw error, if you navigate '/api/students/api/teachers' it will work.
+
+	[Route("~/api/teachers")]  // /api/teachers will work
+	public IEnumerable<Teacher> GetTeachers()
+	{
+	    List<Teacher> teachers = new List<Teacher>(){
+	    };
+	    return teachers;
+	}		
+
+-Routing constraints
+---------------------
+	[RoutePrefix("api/students")]
+	public class StudentsController : ApiController{
+	    [Route("{id}")]
+	    public Student Get(int id){ }
+
+	    [Route("{name}")]
+	    public Student Get(string name){}
+	}
+	- navigate to /api/students/1, it will throw error "Multiple actions were found that match the request" /api/students/1 or /api/students/Sam
+	- This is because the framework does not know which version of the Get() method to use. 
+	- constraints, if integer (/api/students/1), use Get(int id)  method and if text (/api/students/Sam), use Get(string name)  method
+	- to solve this problem, route constraint, the syntax is "{parameter:constraint}". 
+	
+	[Route("{id:int}")]
+	public Student Get(int id){}
+
+ 	[Route("{name:alpha}")] 
+	public Student Get(string name){}
+	
+	Constraint	Description										Example
+	min		Matches an integer with a minimum value							{x:min(0)}
+	max		Matches an integer with a maximum value							{x:max(100)}
+	length		Matches a string with the specified length or within a specified range of lengths	{x:length(3)} {x:length(1,10)}
+	minlength	Matches a string with a minimum length							{x:minlength(1)}
+	maxlength	Matches a string with a maximum length							{x:maxlength(100)}
+	range		Matches an integer within a range of values						{x:range(1,100)}
+	
+	[Route("{id:int:min(1):max(3)}")] //between 1 and 3 inclusive => [Route("{id:int:range(1,3)}")]
+	
+- Route names	
+-------------
+	- response.Headers.Location = new Uri(Request.RequestUri + "/" + student.Id.ToString()); //the problem with this approach is that, we get 2 forward slashes (//) in the generated link, 
+	-  Every route in Web API has a name.
+	- To specify a name for a route, set the Name property on the Route attribute.  
+	  [Route("{id:int}", Name = "GetStudentById")]
+	  public Student Get(int id){}
+	  
+	 response.Headers.Location = new Uri(Url.Link("GetStudentById", new { id = student.Id }));
+	
+- Default Route 
+ --------------
+- Global.asax\Application_Start()-> the Web API configuration 'WebApiConfig.Register' method. 
+  ------------------------------
+  protected void Application_Start(){
+            AreaRegistration.RegisterAllAreas();
+            GlobalConfiguration.Configure(WebApiConfig.Register);
+            FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
+            RouteConfig.RegisterRoutes(RouteTable.Routes);
+            BundleConfig.RegisterBundles(BundleTable.Bundles);
+        }
+- App_Start\WebApiConfig.cs\Register() method -> Default Route configured, MVC routes in App_Start\RouteConfig.cs
+  -------------------------------------------						 -------------------------
+	using System.Net.Http;														
+	using System.Net.Http.Headers;
+	using System.Net.Http.Formatting;
+
+	//Approach 2	
+	    public class CustomJsonFormatter : JsonMediaTypeFormatter
+	    {
+		public CustomJsonFormatter()
+		{
+		    this.SupportedMediaTypes.Add(new MediaTypeHeaderValue("text/html"));
+		}
+
+		public override void SetDefaultContentHeaders(Type type, HttpContentHeaders headers, MediaTypeHeaderValue mediaType)
+		{
+		    base.SetDefaultContentHeaders(type, headers, mediaType);
+		    headers.ContentType = new MediaTypeHeaderValue("application/json");
+		}
+	    }	
+	public static void Register(HttpConfiguration config)
+        {
+            // Web API configuration and services
+            // Configure Web API to use only bearer token authentication.
+            			    ------------------------------------		
+            config.SuppressDefaultHostAuthentication();
+            config.Filters.Add(new HostAuthenticationFilter(OAuthDefaults.AuthenticationType));
+
+            // Web API routes
+            config.MapHttpAttributeRoutes();
+
+            config.Routes.MapHttpRoute(
+                name: "DefaultApi",
+                routeTemplate: "api/{controller}/{id}",
+                defaults: new { id = RouteParameter.Optional }
+            );
+            
+            //Return only JSON from Web API Service irrespective of the Accept header value
+            -----------------------------
+            //config.Formatters.Remove(config.Formatters.XmlFormatter);  //config.Formatters.JsonFormatter
+
+	   //convert to json to indented format, Change the serialization settings of these formatters
+	   						-------------------------------------------
+	   //config.Formatters.JsonFormatter.SerializerSettings.Formatting = Newtonsoft.Json.Formatting.Indented;
+	   //convert key "FirstName" to "firstName"
+	   //config.Formatters.JsonFormatter.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();            
+           
+           /*Reques from browser, Return JSON only. Reqquest from Fiddler, return both JSON and XML
+           ----------------------------------------------------------------------------------------
+           //2 Approaches
+           
+           //Approach 1
+           //config.Formatters.JsonFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("text/html"));
+	
+            //Approach 2
+            config.Formatters.Add(new CustomJsonFormatter());
+        }  
+  
+- The default Web API route starts with  "api/{controller}/{id}", an optiontion id parameter.
+- http://localhost/WebAPIDemo/api/values/
+	<ArrayOfstring xmlns:i="http://www.w3.org/2001/XMLSchema-instance" 
+		       xmlns="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
+		<string>value1</string>
+		<string>value2</string>
+	</ArrayOfstring>
+   
+   http://localhost/WebAPIDemo/api/values/1	
+   	<string xmlns="http://schemas.microsoft.com/2003/10/Serialization/">value</string>
+
+   'values' is the name controller   	
+- if i comment "ValuesController.cs", access http://localhost/WebAPIDemo/api/values/, throws error
+	<Error>
+		<Message> No HTTP resource was found that matches the request URI 'http://.../WebAPIDemo/api/values1'.</Message>
+		<MessageDetail> No type was found that matches the controller named 'values1'. </MessageDetail>
+	</Error>
+
+HTTP GET PUT POST DELETE
+=========================
+CRUD	HTTP Verb	Query String		Request Body
+----------------
+Create	POST		Primitive Type		Complex Type
+Read	GET		Primitive/Complex Type	N/A 
+Update	PUT		Primitive Type		Complex Type
+Delete	DELETE		Primitive/Complex Type	N/A
+Update	Patch		Primitive Type		Complex Type	
+
+HTTP Terms & Concepts
+---------------------
+- Request Verbs : HTTP verbs (GET, POST, PUT & DELETE)
+- When a client sends request to the server, the request contains a header and a body.
+  Request Header : contains additional information such as what type of response (XML or JSON) is required. 
+  Request Body : contains the data (XML or JSON) to send to the server. 
+- Response Body : contains the data (XML or JSON) sent as response from the server. 
+- Response Status codes : Give the client details on the status of the request. 
+  Some of the common status codes are 200/OK, 404/Not Found, 204/No Content, 201/Created. 
+
+Fiddler
+========
+- HTTP/1.1 405 Method Not Allowed -> Goto IIS -> Handler Mappings -> WebDAV -> Request Restrictions -> Check 'All Verbs'
+- Run Fiddler -> From browser -> http://localhost/WebAPI/api/values/ -> Fiddler -> click the link -> Header -> HTTP/1.1 200 OK -> XML
+- Fiddler -> Composer -> Drag the link and drop next "GET"
+- Response Header -> Change to "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+  Accept: application/json => result will be JSON.
+- Change to POST -> Response Header enter "Content-Type:application/json" -> Response Body "New String" -> Execute
+- Fiddler -> Response Body is red color means, URI is GET not post or put.
+- HTTP/1.1 200 OR 204 OK NO Content means return type id void
+- Response body is encoded. click to decode -> to view Raw in Text
+
+Content Negotiation, Accept header, MediaType (MIME type) formatters
+=====================================================================
+- Using the Accept header, the client specify the response(XML, JSON..). A request is sent to the server includes an Accept header. 
+  For example
+  Accept: application/xml returns XML
+  Accept: application/json returns JSON
+  Depending on the Accept header value in the request, the server sends the response. This is called Content Negotiation.
+- Not specify the Accept header, Default the Web API returns JSON data.
+- what does the API do when we request for data in a specific format 
+  ------------------------------------------------------------------
+  The API controller generates the data (list of employees) and hands the data to the WEP API pipeline. 
+  										-------------------
+  The pipeline choose the appropriate formatter from the client requested Accept header. 
+  Example, the client requested for XML/JSON data, Web API uses XML/JSON formatter, these formatters are called MediaTypeFormatters. 
+ 														---------------------
+- Media type specifies the format of the data as type/subtype e.g. text/html, text/xml, application/json, image/jpeg etc.
+- MediaTypeFormatter is an abstract class from which Json(XML)MediaTypeFormatter (handles JSON/XML) classes inherit from. 
+  ------------------
+  JsonMediaTypeFormatter -> JsonMediaTypeFormatter -> BaseJsonMediaTypeFormatter -> MediaTypeFormatter
+  Formatters handles serializing and deserializing strongly-typed objects into specific format.
+  
+- Web API includes following built-in media type formatters.
+  
+  Media Type Formatter Class		MIME Type				Description
+  JsonMediaTypeFormatter		application/json, text/json		Handles JSON format
+  XmlMediaTypeFormatter			application/xml, text/json		Handles XML format
+  FormUrlEncodedMediaTypeFormatter	application/x-www-form-urlencoded	Handles HTML form URL-encoded data
+  JQueryMvcFormUrlEncodedFormatter	application/x-www-form-urlencoded	Handles model-bound HTML form URL-encoded data
+
+- Display all media type formatters.
+        public IEnumerable<string> Get()
+        {
+            IList<string> formatters = new List<string>();
+
+            foreach (var item in GlobalConfiguration.Configuration.Formatters)
+            {
+                formatters.Add(item.ToString());
+            }
+
+            return formatters.AsEnumerable<string>();
+            //return s;
+        }
+  
+- BSON Formatter - BSON is binary JSON, it is a binary-encoded serialization of JSON-like documents, but it is disabled by default  
+  Currently there is very little support for BSON and no JavaScript implementation is available for clients running in browsers.
+  JSON Formatter - JsonMediaTypeFormatter class that handles JSON format. Converts JSON data in an HTTP request into CLR objects 
+		   and also converts CLR objects into JSON format that is embeded within HTTP response.  			
+		   It uses 3rd party open source library called Json.NET to perform serialization.
+  XML Formatter -  The XmlMediaTypeFormatter class is responsible for serializing model objects into XML data. 
+                   It uses System.Runtime.DataContractSerializer class to generate XML data.		   
+	  
+- ASP.NET Web API allow to create own formatters, for custom formatting the data. 
+                          ----------------------
+- Multiple values can also be specified for the Accept header. Accept: application/xml,application/json
+  ----------------
+  In this case, the server picks the first formatter which is a XML formatter.
+- Quality factor, application/xml;q=0.8,application/json;q=0.5 
+  --------------
+- Client request format is XML,.., 'Content-Type=application/xml' is set to the appropriate value. 
+                                   ------------------------------  
+
+Web API Filters - Web API includes filters to add extra logic before or after action method executes
+===============
+	- Filters can be used to provide cross-cutting features such as logging, exception handling, 
+	  performance measurement, authentication and authorization.
+
+Filter Type	Interface		Class				Description
+--------------------------------------------------------------------------------
+Simple Filter	IFilter			-				Defines the methods that are used in a filter
+Action 		IActionFilter		ActionFilterAttribute		Used to add extra logic before or after action methods execute.
+Authentication	IAuthenticationFilter	-				Used to force users or clients to be authenticated before action methods execute.
+Authorization	IAuthorizationFilter	AuthorizationFilterAttribute	Used to restrict access to action methods to specific users or groups.
+Exception	IExceptionFilter	ExceptionFilterAttribute	Used to handle all unhandled exception in Web API.
+Override	IOverrideFilter		-				Used to customize the behaviour of other filter for individual action method.
+
+- Logging Filter 
+  ---------------
+	public class LogAttribute : ActionFilterAttribute {
+	    public LogAttribute(){	    }
+
+
+	    public override void OnActionExecuting(HttpActionContext actionContext) {
+		Trace.WriteLine(string.Format("Action Method {0} executing at {1}", 
+		actionContext.ActionDescriptor.ActionName, DateTime.Now.ToShortDateString()), "Web API Logs");
+	    }
+
+	    public override void OnActionExecuted(HttpActionExecutedContext actionExecutedContext){
+		Trace.WriteLine(string.Format("Action Method {0} executed at {1}", 
+		actionExecutedContext.ActionContext.ActionDescriptor.ActionName, DateTime.Now.ToShortDateString()), "Web API Logs");
+	    }
+	}
+	//Overrided OnActionExecuting/Executed methods to log in the trace listeners. 
+	//You can use your own logging class to log in textfile or other medium.
+
+	//Another way of creating LogAttribute class
+
+	public class LogAttribute : Attribute, IActionFilter {
+	    public LogAttribute(){ }
+	    public Task<HttpResponseMessage> ExecuteActionFilterAsync(HttpActionContext actionContext, 
+	    	CancellationToken cancellationToken, Func<Task<HttpResponseMessage>> continuation){
+		Trace.WriteLine(string.Format("Action Method {0} executing at {1}", actionContext.ActionDescriptor.ActionName, DateTime.Now.ToShortDateString()), "Web API Logs");
+
+		var result = continuation();
+
+		result.Wait();
+
+		Trace.WriteLine(string.Format("Action Method {0} executed at {1}", actionContext.ActionDescriptor.ActionName, DateTime.Now.ToShortDateString()), "Web API Logs");
+
+		return result;
+	    }
+
+	    public bool AllowMultiple { get { return true; } }
+	} 
+
+	[Log]
+	public class StudentController : ApiController{
+	    public StudentController(){	    }
+
+	    public Student Get(){ //provide implementation  }
+	}
+
+Post method
+===========
+- public void Post([FromBody]Employee emp) {
+     using (CanvassEntities ce = new CanvassEntities()) {
+  	ce.Employees.Add(emp);
+  	ce.SaveChanges();
+     }
+  }
+  From Fiddler -> POST, http://localhost/WebAPI/api/employee
+  RequestHeader -> Host: localhost Content-Type: application/json
+  ResponseBody -> {"FirstName": "Mohideen", "LastName":"Noor", "Gender":"Male", "Salary":1200 }
+  Record will be create, but Response Header -> HTTP/1.1 204 No Content => Should return return code is 201 Item created.
+
+- Rewrite the code 
+  public HttpResponseMessage Post([FromBody]Employee emp){
+     try { 
+ 	using (CanvassEntities ce = new CanvassEntities()){
+ 	    ce.Employees.Add(emp);
+ 	    ce.SaveChanges();
+ 	    var res = Request.CreateResponse(HttpStatusCode.Created, emp);
+ 	    res.Headers.Location = new Uri(Request.RequestUri +"/"+ emp.ID.ToString()); //The problem with this approach is that, we get 2 forward slashes (//) in the generated 
+ 	    return res;
+ 	}
+     } catch(Exception e) {
+ 	return Request.CreateErrorResponse(HttpStatusCode.BadRequest, e);
+     }
+  }  
+
+  [HttpGet]   
+  public HttpResponseMessage LoadEmployees(){ Custom Method Name
+  					    --------------------
+  //Another way web api 2.0
+    public IHttpActionResult Post(Employee emp)
+    {
+        if (!ModelState.IsValid) return BadRequest("Invalid data.");
+
+     try { 
+ 	using (CanvassEntities ce = new CanvassEntities()){
+ 	    ce.Employees.Add(emp);
+ 	    ce.SaveChanges();
+ 	    return Ok();
+ 	}
+     } catch(Exception e) {
+ 	return BadRequest(e);
+     }
+
+  Response Header
+  HTTP/1.1 201 Created
+  --------------------
+  ...
+  Location: http://localhost/WebAPI/api/employee/9
+  {"ID":9,"FirstName":"Mohideen1","LastName":"Noor1","Gender":"Male","Salary":3000}  
+  
+- {"FirstName": "Mohideen4", "LastName":"Noor2", "Gender":"Male", "Salary"300 }  
+
+  HTTP/1.1 400 Bad Request
+  ------------------------
+  ...
+  {"Message":"An error has occurred.","ExceptionMessage":"Value cannot be null.\r\nParameter name: entity",
+  "ExceptionType":"System.ArgumentNullException",
+  "StackTrace":"   at System.Data.Entity.Utilities.Check.NotNull[T](T value, String parameterName)\r\n   
+  at System.Data.Entity.DbSet`1.Add(TEntity entity)\r\n   at WebAPI.Controllers.EmployeeController.Post(Employee emp) 
+  in C:\\...EmployeeController.cs:line 38"}
+  
+
+Get Method
+==========
+        public HttpResponseMessage Get(int id){
+            try { 
+                using (CanvassEntities ce = new CanvassEntities()) {
+                    var emp = ce.Employees.FirstOrDefault(x => x.ID == id);
+                    if (emp!=null)
+                        return Request.CreateResponse(HttpStatusCode.OK, emp);
+                    else
+                        return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Emp '" + id.ToString() + "' not Found");
+                }
+            } catch(Exception e) {
+                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, e);
+            }
+        }       
+
+	[HttpGet]   
+	public HttpResponseMessage LoadEmployee(int id){ Custom Method Name
+							--------------------
+	public HttpResponseMessage Get(string gender="all"){ => http://localhost/webAPIDemo/api/employee?gender=male
+	http://localhost/webAPIDemo/api/employee/1?gender=male OR /employee?id=&gender=male  => it will call  Get(int id)
+	
+	http://localhost/webAPIDemo/api/employee/gender => error 'The parameters dictionary contains a null entry for parameter 'id'
+
+//Another way web api 2.0
+	public class StudentController : ApiController {
+	    public IHttpActionResult GetAllStudents () {
+            try { 
+                using (CanvassEntities ce = new CanvassEntities()) {
+                    var emp = ce.Employees.FirstOrDefault(x => x.ID == id);
+                    if (emp!=null)
+                        return return Ok(emp);
+                    else
+                        return NotFound();
+                }
+            } catch(Exception e) {
+                return return BadRequest(e);
+            }
+	
+Delete Method
+=============
+        public HttpResponseMessage Delete(int id) {
+            try {
+                using (CanvassEntities ce = new CanvassEntities()) {
+                    var emp = ce.Employees.FirstOrDefault(x => x.ID == id);
+                    if (emp != null) { 
+                        ce.Employees.Remove(emp);
+                        ce.SaveChanges();
+                        return Request.CreateResponse(HttpStatusCode.OK);
+                    } else {
+                        return Request.CreateResponse(HttpStatusCode.NotFound, "Emp ID = " + id.ToString() + " not Found");
+                    }
+                }
+            } catch(Exception e){
+                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, e);
+            }
+        }
+    }
+Put Method
+==========
+        public HttpResponseMessage Put(int id, [FromBody]Employee emp){
+            try {
+                using (CanvassEntities ce = new CanvassEntities()){
+                    var uemp = ce.Employees.FirstOrDefault(x => x.ID == id);
+                    if (uemp != null){
+                        uemp.FirstName = emp.FirstName;
+                        uemp.LastName = emp.LastName;
+                        uemp.Gender = emp.Gender;
+                        uemp.Salary = emp.Salary;
+                        ce.SaveChanges();
+
+                        return Request.CreateResponse(HttpStatusCode.OK);
+
+                    } else{
+                        return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Employee ID = " + id.ToString() + " not Found");
+                    }
+                }
+
+            } catch(Exception e) {
+                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, e);
+            }
+        }
+
+FromBody and FromUri
+====================
+- FromUri -> FromUriAttribute -> ModelBinderAttribute -> ParameterBindingAttribute -> Attribute
+- if not mention in the paramenter, default is FromUri.
+- Parameter Binding - Web API maps the data in the request to the PUT method parameters.
+  -----------------									
+- Simple type Parameter (int, bool, double, etc.,), API tries to get the value from the URI (Either from route data or Query String)
+  Complex type Parameter(Customer, Employee etc.,), API tries to get the value from the request body  
+  Put(int id, [FromBody]Employee emp)
+  URI => http://localhost/webAPIDemo/api/employee/1 OR /employee?id=1
+  RequestBody => {"FirstName":"fn","LastName":"ln","Gender":"Male","Salary":1234}
+- Change to Put(int id, [FromUri]Employee emp)  
+  http://localhost/webAPIDemo/api/employee/3?FirstName=fn3&LastName=ln2&Gender=Female&Salary=454 OR id=3&FirstName=...
+- Change to Put([FromBody]int id, [FromUri]Employee emp)  
+  http://localhost/webAPIDemo/api/employee?FirstName=fn3&LastName=ln2&Gender=Female&Salary=454 OR id=3&FirstName=...
+  RequestBody => 3
+
+Action Method Return Type - Void, Primitive type or Complex type, HttpResponseMessage, IHttpActionResult
+=========================
+ - Void => public void Delete(int id){}, Return Status is 204 (No Content).
+ - Primitive or Complex Type => public int GetId(string name) { return  GetEmployeeId(name);}
+    public Employee GetEmployee(int id){ return GetEmployeeFromDB(id);}
+ - HttpResponseMessage
+ 	- Advantage, you can configure a response(the status code, content or error message) your way.
+	public HttpResponseMessage Get(int id)
+	{
+	    Student stud = GetStudentFromDB(id); 
+	    if (stud == null) return Request.CreateResponse(HttpStatusCode.NotFound, id);
+	    return Request.CreateResponse(HttpStatusCode.OK, stud);
+	}   	
+ - IHttpActionResult 
+	public IHttpActionResult Get(int id)
+	{
+	    Student stud = GetStudentFromDB(id);
+
+	    if (stud == null) return NotFound(); //does not exists, it will return response with the status code 404
+	    
+	    return Ok(stud); //it sends student data with status code 200 as a response.
+	}
+ 
+	ApiController Method	Description
+	BadRequest()		Creates a BadRequestResult object with status code 400.
+	Conflict()		Creates a ConflictResult object with status code 409.
+	Content()		Creates a NegotiatedContentResult with the specified status code and data.
+	Created()		Creates a CreatedNegotiatedContentResult with status code 201 Created.
+	CreatedAtRoute()	Creates a CreatedAtRouteNegotiatedContentResult with status code 201 created.
+	InternalServerError()	Creates an InternalServerErrorResult with status code 500 Internal server error.
+	NotFound()		Creates a NotFoundResult with status code404.
+	Ok()			Creates an OkResult with status code 200.
+	Redirect()		Creates a RedirectResult with status code 302.
+	RedirectToRoute()	Creates a RedirectToRouteResult with status code 302.
+	ResponseMessage()	Creates a ResponseMessageResult with the specified HttpResponseMessage.
+	StatusCode()		Creates a StatusCodeResult with the specified http status code.
+	Unauthorized()		Creates an UnauthorizedResult with status code 401. 
+
+- Create Custom Result Type
+	public class TextResult : IHttpActionResult
+	{
+	    string _value;
+	    HttpRequestMessage _request;
+
+	    public TextResult(string value, HttpRequestMessage request)
+	    {
+		_value = value;
+		_request = request;
+	    }
+
+	    public Task<HttpResponseMessage> ExecuteAsync(CancellationToken cancellationToken)
+	    {
+		var response = new HttpResponseMessage()
+		{
+		    Content = new StringContent(_value),
+		    RequestMessage = _request
+		};
+		return Task.FromResult(response);
+	    }
+	}
+
+	public IHttpActionResult GetName(int id)
+	{
+	    string name = GetStudentName(id);
+
+	    if (String.IsNullOrEmpty(name))
+	    {
+		return NotFound();
+	    }
+
+	    return new TextResult(name, Request);
+	}
+ 
+Consume Web API for CRUD operation
+==================================
+ Consume Web API in ASP.NET MVC
+ 			MVC Controller
+	Brow	-> 		Http   -> Web		 
+				Client <- API
+	ser	<-	Model   <-|
+				
+ Consume Web API in AngularJS
+ 	Client  AJ ->   WEB
+ 	Browser AX <-  API 
+ 
+Call Web API from jQuery (WebApi/Employee.html)
+=========================
+<script src="Scripts/jquery-1.10.2.min.js"></script>
+<script>
+$(document).ready(function () {
+    var ulEmployee = $("#ulEmployee");
+    $("#btnList").click(function () {
+	$.ajax({
+	    type: 'GET',
+	    url: 'api/employee/',
+	    dataType:'json',
+	    success: function (data) {
+		ulEmployee.empty();
+		$.each(data, function (index,val) {
+		    var name = val.FirstName + " " + val.LastName;
+		    ulEmployee.append("<li>"+ name +"</li>");
+		});
+	    }
+	});
+    });
+});
+</script>
+<input type="button" value="List" id="btnList" />
+<ul id="ulEmployee"></ul>
+
+Calling Web API service in a cross domain using jQuery ajax
+============================================================
+- Same origin policy -> Browsers allow a web page to make AJAX requests only with in the same domain. 
+  ------------------
+  Browser security prevents a web page from making AJAX requests to another domain.
+  2 URLs have the same origin
+  http://localhost:1234/api/employees
+  http://localhost:1234/Employees.html
+- 2 URLs have different origins  
+  Port => http://localhost:1234/api/employees  &  http://localhost:5678/Employees.html 
+  Domains => http://dns.com/api/employees & http://dns.net/Employees.html
+  Schemes => http://dns.com/api/employees & https://dns.net/Employees.html
+
+- Created New WebApp projet, http://localhost:13025/employee1.html (above code) => ajax.url: 'http://localhost:18553/api/employee',
+  Throws Error =>   XMLHttpRequest cannot load http://localhost:18553/api/employee. 
+  	No 'Access-Control-Allow-Origin' header is present on the requested resource. 
+  	Origin 'http://localhost:13025' is therefore not allowed access.
+  	
+- 2 ways to solve this problem
+	Using JSONP (JSON with Padding) 
+	Enabling CORS (Cross Origin Resource Sharing)
+- 1. Using JSONP (JSON with Padding) 
+  -------------------------------
+  JSOP - JSON with Padding. All JSONP does is wraps the data in a function. 
+  JSON object				JSONP
+  {					CallbackFunction({
+      "FirstName" : "Mark",			"FirstName" : "Mark",
+      "LastName"  : "Hastings",			"LastName"  : "Hastings",
+      "Gender"    : "Male",			"Gender"    : "Male",
+  }					});
+  
+  - Browsers allow to consume JavaScript that is present in a different domain but not data. 
+    Since the data is wrapped in a JavaScript function, this can be consumed by a web page that is present in a different domain.
+ 
+  - install NuGet Package  'Install-Package WebApiContrib.Formatting.Jsonp'
+   (WebApi/Employee.html) & WebApp/employee1.html, change to   dataType:'jsonp'
+    WebApiConfig.cs/Register
+	var jsopFormatter = new JsonpMediaTypeFormatter(config.Formatters.JsonFormatter);
+	config.Formatters.Insert(0, jsopFormatter);	   	
+   Now http://localhost:13025/employee1.html it will get data from 'http://localhost:18553/api/employee.
+
+ - Fiddler  
+   Composer, http://localhost:18553/api/employee?callback=abc, results will be
+   	/**/ typeof abc === 'function' && abc([{"ID":1,"FirstName":...},{"ID":2,...}]);
+   Composer, http://localhost:18553/api/employee, Accept: application/json, you will get raw json
+   Composer, http://localhost:18553/api/employee?callback=zxy, Accept: application/javascript, you will get /**/ typeof zxy === '....
+
+- 2.Enabling CORS (Cross Origin Resource Sharing)
+---------------------------------------------------
+  - Install-Package Microsoft.AspNet.WebApi.Cors
+  - It's enable to all controllers in the website.
+     WebApiConfig.cs/Register,
+      using System.Web.Http.Cors;
+      EnableCorsAttribute cores = new EnableCorsAttribute("*","*","*");
+      config.EnableCors(cores);
+  - change to dataType:'json', Try now it will work
+  - EnableCorsAttribute(Origin,Headers,Methods); 
+    Origin - "http://localhost:18553/api/employee,http://www.mywebsite.com", ajax only allow these websites, all websites "*".
+    Headers - "accept,content-type,origin" will only allow these 3 headers. Use "*" to allow all.  
+    Methods - "GET,POST", only allows Get and Post, allow all "*".
+  - Enable only for particular controller    
+    WebApiConfig.cs/Register => config.EnableCors(); //no passing value
+    
+     [EnableCorsAttribute("*", "*", "*")]
+     public class EmployeesController : ApiController { }  
+
+     [DisableCors]   // the above will enable all the methods in the controller except this method.
+     public HttpResponseMessage Get(){ }   
+
+Enable SSL in Visual Studio Development Server
+==============================================
+- Only for IIS Express, Project Properties -> Servers -> IIS Express -> build & run, VS studio will install Certificate.
+
+- \RequireHttpsAttribute.cs
+	using System.Web;
+	using System.Web.Http.Controllers;
+	using System.Web.Http.Filters;
+	using System.Net.Http;
+	using System.Net;
+	using System.Text;
+
+	namespace WebAPIDemo
+	{
+	    public class RequireHttpsAttribute : AuthorizationFilterAttribute
+	    {
+		public override void OnAuthorization(HttpActionContext actionContext)
+		{
+		    if(actionContext.Request.RequestUri.Scheme != Uri.UriSchemeHttps)
+		    {
+			actionContext.Response = actionContext.Request.CreateResponse(HttpStatusCode.Found);
+			actionContext.Response.Content = new StringContent("<p>Use HTTPS</p>", Encoding.UTF8, "text/html");
+
+			UriBuilder ub = new UriBuilder(actionContext.Request.RequestUri);
+			ub.Scheme = Uri.UriSchemeHttps;
+			ub.Port = 44313;
+
+			actionContext.Response.Headers.Location = ub.Uri;
+		    }
+		    else
+		    {
+			base.OnAuthorization(actionContext);
+		    }
+		}
+	    }
+	}
+
+-  WebApiConfig.cs/Register, it is for global.
+	config.Filter.Add(new RequireHttpsAttribute());
+	
+- if you type 	http://localhost:50504/, it will transfer to https://localhost:44313/
+
+- Controller level only HTTPs, other controllers no need https
+  [RequireHttps]
+  public class EmployeeController : ApiController {}
+
+- Controller Method level only HTTPs, other controllers no need https
+  public class EmployeeController : ApiController {
+  [RequireHttps]
+   public HttpResponseMessage Get(){}
+  }
+
+Implementing basic authentication
+=================================
+- Insert sql
+	Create Table Users
+	(
+	     Id int identity primary key,
+	     Username nvarchar(100),
+	     Password nvarchar(100)
+	)
+
+	Insert into Users values ('male','male')
+	Insert into Users values ('female','female')
+- \EmployeeSecurity.cs
+	using EmployeesDataAccess;
+
+	namespace WebAPIDemo
+	{
+	    public class EmployeeSecurity
+	    {
+		public static bool Login(string username, string password)
+		{
+		    using (MVC5DBEntities db= new MVC5DBEntities())
+		    {
+			return db.Users.Any(x => x.Username.Equals(username, StringComparison.OrdinalIgnoreCase) 
+						&& x.Password == password);
+		    }
+		}
+	    }
+	}
+
+-	\BasicAuthenticationAttribute.cs
+		using System.Web;
+		using System.Web.Http;
+		using System.Web.Http.Controllers;
+		using System.Web.Http.Filters;
+		using System.Net.Http;
+		using System.Text;
+		using System.Threading;
+		using System.Security.Principal;
+
+		namespace WebAPIDemo
+		{
+		    public class BasicAuthenticationAttribute : AuthorizationFilterAttribute
+		    {
+			public override void OnAuthorization(HttpActionContext actionContext)
+			{
+			    if (actionContext.Request.Headers.Authorization == null)
+			    {
+			       actionContext.Response =  actionContext.Request.CreateResponse(System.Net.HttpStatusCode.Unauthorized);
+			    }
+			    else { 
+				string authenticationToken  = actionContext.Request.Headers.Authorization.Parameter;
+				string decodedAuthenticationToken   = Encoding.UTF8.GetString(Convert.FromBase64String(authenticate));
+				string[] userNamePwd = decodedAuthenticationToken .Split(':');
+				string userName = userNamePwd[0];
+				string password = userNamePwd[1];
+				if (EmployeeSecurity.Login(userName, password))
+				{
+				    //null is role
+				    Thread.CurrentPrincipal = new GenericPrincipal(new GenericIdentity(userName), null);
+				}
+				else
+				{
+				    actionContext.Response = actionContext.Request.CreateResponse(System.Net.HttpStatusCode.Unauthorized);
+				}
+			    }
+			}
+		    }
+		}	
+
+- The BasicAuthenticationAttribute can be applied on a specific controller, specific action, or globally on all Web API controllers.
+	config.Filters.Add(new BasicAuthenticationAttribute()); //global
+	[BasicAuthentication]
+	public HttpResponseMessage Get(string gender = "All"){} //specific controller
+
+- if i access http://localhost/webAPIDemo/api/employee
+ 	Request URL:http://localhost/webAPIDemo/api/employee
+	Request Method:GET
+	Status Code:401 Unauthorized
+	Remote Address:[::1]:80
+	
+- https://www.base64encode.org/, Passing Authentication "username:password" format, but not plain text, using 64 decoded values
+  male:male => bWFsZTptYWxl
+  female:female => ZmVtYWxlOmZlbWFsZQ==
+  all:all => YWxsOmFsbA==
+- Fiddler, Composer-> Get, http://localhost/webAPIDemo/api/employee
+  Header
+  Host: localhost
+  Authorization: Basic bWFsZTptYWxl 
+  i will get male list.
+
+- using ajax
+        $(document).ready(function () {
+            var ulEmployee = $("#ulEmployee");
+            $("#btnList").click(function () {
+                $.ajax({
+                    type: 'GET',
+                    url: 'api/employee/',
+                    dataType: 'json',
+                     // Specify the authentication header btoa() method encodes a string to Base64
+                    headers: { 'Authorization': 'Basic ' + btoa('femalea:female') },
+                    success: function (data) {
+                        ulEmployee.empty();
+                        $.each(data, function (index,val) {
+                            var name = val.FirstName + " " + val.LastName;
+                            ulEmployee.append("<li>"+ name +"</l>");
+                        });
+                    },
+                    complete:function(xhr){
+                        if (xhr.status == '401') {
+                            ulEmployee.empty();
+                            ulEmployee.append("<li>" + xhr.status + " - " + xhr.statusText + "</l>");
+                        }
+                    }
+                });
+            });
+
+Using asp.net identity with Web API
+===================================
+- Once you register records, ASP.NET WEb API create strange identity database on app_data folder. 
+	App_Data\aspnet-WebAPIDemo-20161221093218.mdf
+- It contains 
+	Table			Description
+	__MigrationHistory	The presence of this table tells us that it is using entity framework
+	AspNetRoles		Store roles information.
+	AspNetUserClaims	
+	AspNetUserLogins	It is for 3rd party authentication providers like Twitter, Facebook. Microsoft etc.
+				Information about those logins will be stored in this table
+	AspNetUserRoles		This is a mapping table which tells us which users are in which roles
+	AspNetUsers		This table stores the registered users of our application
+- Change the database name. web.config\DefaultConnection string
+  <add name="DefaultConnection" connectionString="Data Source=(LocalDb)\MSSQLLocalDB;
+  		AttachDbFilename=|DataDirectory|\aspnet-WebAPIDemo-20161221093218.mdf;
+  		Initial Catalog=aspnet-WebAPIDemo-20161221093218;Integrated Security=True" providerName="System.Data.SqlClient" />
+  change to <add name="DefaultConnection" connectionString="Data Source=(LocalDb)\MSSQLLocalDB;
+  		AttachDbFilename=|DataDirectory|\UserDB.mdf;Initial Catalog=UserDB;Integrated Security=True" providerName="" />
+  now register, App_Data\UserDb.mdf created.
+- Create Database on SQL Server  
+  <add name="DefaultConnection" connectionString="Data Source=.;Initial Catalog=UserDB;Integrated Security=True" providerName="" />
+- Create existing Database on SQL Server  
+  <add name="DefaultConnection" connectionString="Data Source=.;Initial Catalog=UserDB;Integrated Security=True" providerName="" />  
+
+- Register
+ 	$.ajax({
+	    url: '/api/account/register',
+	    method: 'POST',
+	    data: {
+		email: $('#txtEmail').val(),
+		password: $('#txtPassword').val(),
+		confirmPassword: $('#txtConfirmPassword').val()
+	    },
+	    success: function () {
+		$('#successModal').modal('show');
+	    },
+	    error: function (jqXHR) {
+		$('#divErrorText').text(jqXHR.responseText);
+		$('#divError').show('fade');
+	    }
+	});
+
+- Using fiddler to test ASP.NET Web API token based authentication
+  ------------------------------------------------------------------
+  POST, http://localhost:18553/token 
+  Header => Host: localhost:18553
+  Request Body => username=test1@test.com&password=Test123!&grant_type=password
+  'grant_type' => This indicates that we are presenting password for acquiring access token.
+  
+  JSON Result
+  .issued=Wed, 28 Dec 2016 18:14:00 GMT
+  .expires=Wed, 28 Dec 2016 19:14:00 GMT
+  access_token=BTWKivVOmMg...
+  expires_in=3599
+  token_type=bearer
+  userName=test1@test.com
+
+  GET, http://localhost:18553/api/employee
+  Header 
+  Host: localhost:18553
+  Authorization: bearer BTWKivVOmM...
+  
+  you will list of employess.
+
+  - Understand how the access token is generated.
+  ----------------------------------------------------------
+	The code that generates the access token is provided by ASP.NET Web API out of the box. 
+	App_Start\Startup.Auth.cs\ConfigureAuth()\OAuthAuthorizationServerOptions is created
+	The /Token end point to which we have posted username and password is specified in here
+	Provider = new ApplicationOAuthProvider(PublicClientId), 
+	The Provider property is initialised with a new instance of ApplicationOAuthProvider class. 
+	ApplicationOAuthProvider.cs\GrantResourceOwnerCredentials() method which verifies the username and password are valid. 
+	If valid an access token is issued. The token is generated when context.Validated(ticket) method is called.
+
+- Login
+	$.ajax({
+	    // Post username, password & the grant type to /token
+	    url: '/token',
+	    method: 'POST',
+	    contentType: 'application/json',
+	    data: {
+		username: $('#txtUsername').val(),
+		password: $('#txtPassword').val(),
+		grant_type: 'password'
+	    },
+	    // save the access token in the browser session storage
+	    success: function (response) {
+		sessionStorage.setItem("accessToken", response.access_token);
+		sessionStorage.setItem("userName", response.userName);
+		window.location.href = "Data.html";
+	    },
+	    // Display errors if any in the Bootstrap alert <div>
+	    error: function (jqXHR) {
+		$('#divErrorText').text(jqXHR.responseText);
+		$('#divError').show('fade');
+	    }
+	});  
+
+Get authenticated user identity details in ASP.NET Web API controller
+=======================================================
+- User.Identity object to retrieve user details
+  User.Identity.IsAuthenticated - Returns true or false depending on whether the user is authenticated => true | false
+  User.Identity.AuthenticationType - Authentication Type used => "Bearer" | null
+  User.Identity.Name - Logged in username => "test1@test.com" | null
+
+  Instead of using User.Identity, we can also use RequestContext.Principal.Identity	
+  RequestContext.Principal.Identity.IsAuthenticated - Returns true or false depending on whether the user is authenticated
+  RequestContext.Principal.Identity.AuthenticationType - Authentication Type used
+  RequestContext.Principal.Identity.Name - Logged in username
+
+sessionStorage & localStorage  
+============================
+- sessionStorage - sessionStorage data is lost when the browser window is closed.
+  --------------
+- localStorage - Not to loose the access token, when the browser is closed.
+  -------------
+	Store an item in the browser session storage =>  sessionStorage.setItem("accessToken", response.access_token)
+		 localStorage.setItem("accessToken", response.access_token)
+	Retrieve an item => sessionStorage.getItem("accessToken"), localStorage.getItem("accessToken")
+	Remove => sessionStorage.removeItem('accessToken')  , localStorage.removeItem('accessToken')  	
+	
+ - Deleting the access token on the client. not invalidating or deleting the access token from the server side. 
+   is it possible intercept the access token? YES. Most of the systems that use access tokens, work over SSL.
+
+- Should we invalidate or delete access tokens from the server? No
+  Access token lives on the client, and it is enough if we remove it from the client. 
+  Good practise is to set the expiry of the access token to as short time
+  
+Run IIS Express multi website
+===============================
+Go to c:\Documents\IISExpress\config\applicationhost.config, all add webistes with different port number
+<sites>
+            <site name="WebAPI" id="1">
+		    <application path="/" applicationPool="Clr4IntegratedAppPool">
+			<virtualDirectory path="/" physicalPath="C:\MohideenKader\project\CSharp\VS2015\WebAPI" />
+		    </application>
+		    <bindings>
+			<binding protocol="http" bindingInformation="*:18553:localhost" />
+		    </bindings>
+            </site>
+            
+            <site name="EDM.VoterManagement.Service" id="2">
+                <application path="/" applicationPool="Clr4IntegratedAppPool">
+                    <virtualDirectory path="/" physicalPath="C:\projects_tfs_2012\EDM\Crm\EDM\EDM.VoterManagement\EDM.VoterManagement.Service" />
+                </application>
+                <bindings>
+                    <binding protocol="http" bindingInformation="*:22362:localhost" />
+                </bindings>
+            </site>
+            
+            <site name="WebApp" id="3">
+		    <application path="/" applicationPool="Clr4IntegratedAppPool">
+			<virtualDirectory path="/" physicalPath="C:\MohideenKader\project\CSharp\VS2015\WebApp" />
+		    </application>
+		    <bindings>
+			<binding protocol="http" bindingInformation="*:13025:localhost" />
+		    </bindings>
+            </site>
+</sites>            
+
+go to C:\Program Files (x86)\IIS Express, run from cmd iisexpress /apppool:"Clr4IntegratedAppPool"
+
+Web API versioning using URI
+=============================
+	Why is versioning required in Web API? - Once a Web API service is made public, different client applications start using your Web API services.
+	--------------------------------------
+	- Different options available to version Web API services : Versioning can be implemented using
+	1. URI's
+	2. Query String
+	3. Version Header
+	4. Accept Header
+	5. Media Type 
+	
+	-1. How to version a Web API service using URI's 
+	--------------------------------------------
+	-- convention-based routing implement
+	
+	public class StudentV1 {
+	    public int Id { get; set; }
+	    public string Name { get; set; }
+	}
+	public class StudentsV1Controller : ApiController {
+	    public IEnumerable<StudentV1> Get(){}
+	    public StudentV1 Get(int id){}
+	}
+	WebApiConfig.cs
+	config.Routes.MapHttpRoute(
+	    name: "Version1",
+	    routeTemplate: "api/v1/Students/{id}",
+	    defaults: new { id = RouteParameter.Optional, controller = "StudentsV1" }
+	);
+	/api/v1/students or /api/v1/students/2
+	
+	public class StudentV2 {
+	    public int Id { get; set; }
+	    public string FirstName { get; set; }
+	    public string LastName { get; set; }
+	}
+	public class StudentsV2Controller : ApiController {
+	    public IEnumerable<StudentV2> Get(){}
+	    public StudentV2 Get(int id){}
+	}	
+	config.Routes.MapHttpRoute(
+	    name: "Version2",
+	    routeTemplate: "api/v2/Students/{id}",
+	    defaults: new { id = RouteParameter.Optional, controller = "StudentsV2" }
+	);	
+	/api/v2/students or /api/v2/students/2
+
+	--implement Attribute Routing 	
+	public class StudentsV1Controller : ApiController{
+	    [Route("api/v1/students")]
+	    public IEnumerable<StudentV1> Get() {...}
+
+	    [Route("api/v1/students/{id}")]
+	    public StudentV1 Get(int id) {...}
+	}
+
+	public class StudentsV2Controller : ApiController{
+	    [Route("api/v2/students")]
+	    public IEnumerable<StudentV2> Get() {...}
+
+	    [Route("api/v2/students/{id}")]
+	    public StudentV2 Get(int id) {...}
+	}	
+	-  no need config.Routes.MapHttpRoute( for 2 routes
+	
+	-2. Web API versioning using querystring parameter
+	-----------------------------------------------
+	/api/students?v=1 or /api/students?v=2
+	
+	-Understand how a controller is selected when a request is issued to a web api service. For example, the following URI /api/students/1
+	 In Web API, there is a class called DefaultHttpControllerSelector->method called SelectController() that takes the name of the controller in this case "Students" 
+	 and finds "StudentsController" and returns it. This is the default implementation.
+	- the default implementation won't work, we do not have controller that is named StudentsController. Instead we have StudentsV1Controller and StudentsV2Controller 	 
+	- our implementation, /api/students?v=1 => StudentsV1Controller & /api/students?v=2 => StudentsV2Controller
+	-web api project/custom/CustomControllerSelector.cs
+		using System.Net.Http;
+		using System.Web;
+		using System.Web.Http;
+		using System.Web.Http.Controllers;
+		using System.Web.Http.Dispatcher;
+
+		namespace WebAPI.Custom {
+		    // Derive from the DefaultHttpControllerSelector class
+		    public class CustomControllerSelector : DefaultHttpControllerSelector {
+			private HttpConfiguration _config;
+			public CustomControllerSelector(HttpConfiguration config) : base(config) { _config = config;}
+
+			public override HttpControllerDescriptor SelectController(HttpRequestMessage request){
+			    var controllers = GetControllerMapping(); // Get all the available Web API controllers
+			    var routeData = request.GetRouteData(); // Get the controller name and parameter values from the request URI
+
+			    var controllerName = routeData.Values["controller"].ToString(); // Get the controller name from route data. "Students"
+			    
+			    string versionNumber = "1"; // Default version number to 1
+			    var versionQueryString = HttpUtility.ParseQueryString(request.RequestUri.Query);
+			    if (versionQueryString["v"] != null){ versionNumber = versionQueryString["v"]; }
+
+			    if (versionNumber == "1"){ controllerName = controllerName + "V1"; // controller name will become StudentsV1
+			    } else { controllerName = controllerName + "V2"; // controller name will become StudentsV2 }
+
+			    HttpControllerDescriptor controllerDescriptor;
+			    if (controllers.TryGetValue(controllerName, out controllerDescriptor)) { return controllerDescriptor; }
+
+			    return null;
+			}
+		    }
+		}	
+	-web api project/app_start/WebApiConfig.cs
+		config.Services.Replace(typeof(IHttpControllerSelector), new CustomControllerSelector(config)); //add this code
+		- remove "[Route("api/v1/students")]" attribute from StudentsV1Controller  and  StudentsV2Controller
+	3. Web API versioning using a custom (Version) header
+	-----------------------------------------------------
+		- code
+		public override HttpControllerDescriptor SelectController(HttpRequestMessage request){
+		    ...
+		    string versionNumber = "1"; // Default version number to 1
+
+		    // Get the version number from Custom version header
+		    // This custom header can have any name. We have to use this
+		    // same header to specify the version when issuing a request
+		    string customHeader = "X-StudentService-Version";
+		    if (request.Headers.Contains(customHeader)){
+			versionNumber = request.Headers.GetValues(customHeader).FirstOrDefault();
+		    }
+		    ...
+		}	
+		-fiddler 
+		 GET http://localhost/api/students
+		 Host:localhost
+		 >> Response JSON  (default StudentsV1)
+			
+		 GET http://localhost/api/students
+		 Host:localhost
+		 X-StudentsService-Version:2
+		 >> Response JSON (StudentsV2)
+		 
+	4.Web API versioning using accept header (accept header tells  the server in what file format the browser wants the data)
+	-----------------------------------------------------
+		- These file formats are more commonly called as MIME-types. MIME stands for Multipurpose Internet Mail Extensions.
+		- code
+		public override HttpControllerDescriptor SelectController(HttpRequestMessage request) {
+		    ...
+		    string versionNumber = "1";
+		    // Get the version number from the Accept header
+		    // Users can include multiple Accept headers in the request
+		    // Check if any of the Accept headers has a parameter with name version
+		    var acceptHeader = request.Headers.Accept.Where(a => a.Parameters.Count(p => p.Name.ToLower() == "version") > 0);
+		    // If there is atleast one header with a "version" parameter
+		    if (acceptHeader.Any()){
+			// Get the version parameter value from the Accept header
+			versionNumber = acceptHeader.First().Parameters.First(p => p.Name.ToLower() == "version").Value;
+		    }
+		    ...		
+		}	
+		-fiddler 
+		 GET http://localhost/api/students
+		 Host:localhost
+		 Accept: application/xml;
+		 >> Response JSON  (default StudentsV1)
+			
+		 GET http://localhost/api/students
+		 Host:localhost
+		 Accept: application/xml; Version = 2
+		 >> Response JSON (StudentsV2)        
+
+	5.Web API versioning using custom media types
+	---------------------------------------------
+	 - Instead of using the standard media types like application/xml or application/json, we want to use our custom media type
+	 Accept:application/vnd.dns/students.v1+json
+	 Accept:application/vnd.dns/students.v1+xml
+	 - vnd - Custom media types have vnd prefix. vnd indicates that it is a vendor specific media type. 
+	 -code
+ 	public override HttpControllerDescriptor SelectController(HttpRequestMessage request){
+	    ...	        	
+            string versionNumber = "1";
+            // Get the version number from the Custom media type
+
+            // Use regular expression for mataching the pattern of the media
+            // type. We have given a name for the matched group that contains
+            // the version number. This enables us to retrieve the version number 
+            // using the group name("version") instead of ZERO based index
+            string regex = @"application\/vnd\.pragimtech\.([a-z]+)\.v(?<version>[0-9]+)\+([a-z]+)";
+
+            // Users can include multiple Accept headers in the request.
+            // Check if any of the Accept headers has our custom media type by
+            // checking if there is a match with regular expression specified
+            var acceptHeader = request.Headers.Accept.Where(a => Regex.IsMatch(a.MediaType, regex, RegexOptions.IgnoreCase));
+            
+            // If there is atleast one Accept header with our custom media type
+            if (acceptHeader.Any()) {
+                var match = Regex.Match(acceptHeader.First().MediaType, regex, RegexOptions.IgnoreCase); // Retrieve the first custom media type
+                versionNumber = match.Groups["version"].Value; // From the version group, get the version number
+            }
+	    ...
+        }	 
+	- WebApiConfig.cs
+	//json format
+	config.Formatters.JsonFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/vnd.pragimtech.students.v1+json"));
+	config.Formatters.JsonFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/vnd.pragimtech.students.v2+json"));
+	
+	//xml format
+	config.Formatters.XmlFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/vnd.pragimtech.students.v1+xml"));
+	config.Formatters.XmlFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/vnd.pragimtech.students.v2+xml"));
+	
+ASP.NET Web API google authentication
+http://csharp-video-tutorials.blogspot.com/2016/12/aspnet-web-api-google-authentication.html
+
+ASP.NET Web API facebook authentication
+http://csharp-video-tutorials.blogspot.com/2017/02/aspnet-web-api-facebook-authentication.html

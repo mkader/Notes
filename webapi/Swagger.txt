@@ -1,0 +1,146 @@
+- https://www.talkingdotnet.com/add-swagger-to-asp-net-core-2-0-web-api/
+- http://petstore.swagger.io/
+- https://docs.microsoft.com/en-us/aspnet/core/tutorials/web-api-help-pages-using-swagger?view=aspnetcore-2.2
+Add Swagger to ASP.NET Core 2.0 Web API
+	- Swagger is an UI representation of your RESTful API. Swagger UI allows anyone — be it your development team or your end consumers — 
+	  to visualize and interact with the API’s resources having none of the implementation logic in place.
+	- Install-Package Swashbuckle.AspNetCore
+	- Open Startup.cs file to add swagger service to middleware. Like:
+		public void ConfigureServices(IServiceCollection services)
+		{
+		    services.AddMvc();
+		    services.AddSwaggerGen(c =>
+		    {
+			c.SwaggerDoc("v1", new Info
+			{
+			    Version = "v1",
+			    Title = "My API",
+			    Description = "My First ASP.NET Core Web API",
+			    TermsOfService = "None",
+			    Contact = new Contact() { Name = "Talking Dotnet", Email = "contact@talkingdotnet.com", Url = "www.talkingdotnet.com" }
+			});
+		    });
+		}
+	- And enable the Swagger UI in Configure() method.
+		public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+		{
+		    if (env.IsDevelopment())
+		    {
+			app.UseDeveloperExceptionPage();
+		    }
+
+		    app.UseMvc();
+		    app.UseSwagger();
+		    app.UseSwaggerUI(c =>
+		    {
+			c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+		    });
+		}
+	- Change the application launch URL so that Swagger UI loads on launch. =>  Project -> properties -> debug -> change Launch Browser value to “swagger”.(api/values)
+	- Run the APP and you should see Swagger UI for ValuesContoller.
+	- Show action’s XML Comments
+		- By default, swagger does not show XML comments. There is an option to display them with Swagger UI. 
+		- First, we need to ensure that when the project is built, all the XML comments get saved in an XML file. 
+	          Swagger will use this file to show XML comments on the Swagger UI.
+		- To save XML comments in a file, project -> properties -> build tab -> check “XML documentation file” option. 
+		  -> By enabling this option, xml comments are saved in an XML file with the name [your assembly].xml. 
+		  This file is located at bin\[Debug/Release]\netcoreapp2.0 folder. We need to pass this path Swashbuckle’s IncludeXMLComments method.
+		- Add a method in Startup.cs to get the path of generated XML. This code to get the XML path will work in your local environment as well as in the prod environment.
+			private string GetXmlCommentsPath()
+			{
+			    var app = System.AppContext.BaseDirectory;
+			    return System.IO.Path.Combine(app.ApplicationBasePath, “ASPNETCoreSwaggerDemo.xml”);
+			}
+			 - Next, add code to include XML comments in ConfigureService method. Like:
+			services.AddSwaggerGen(c =>
+			{
+			   c.IncludeXmlComments(GetXmlCommentsPath());
+			}
+		- Next, add XML comments to our actions. Here is XML comment for Delete method.
+			// DELETE api/values/5
+			/// <summary>
+			/// Delete API Value
+			/// </summary>
+			/// <remarks>This API will delete the values.</remarks>
+			/// <param name="id"></param>
+			[HttpDelete("{id}")]
+			public void Delete(int id)
+			{
+			}
+		- Now run the app, you should see XML comments.
+	- Showing Enum values as string
+		- You can display the enum value as a string in the Swagger UI using DescribeAllEnumsAsStrings method. Like:
+			services.AddSwaggerGen(c =>
+			{
+			   c.IncludeXmlComments(GetXmlCommentsPath());
+			   c.DescribeAllEnumsAsStrings();
+			}
+			- To see this in action, Let’s add an enum and modify Get method to accept enum type parameter.
+				public enum ValueType
+				{
+				    Number,
+				    Text
+				}
+ 
+				[HttpGet("{id}")]
+				public string Get(int id, ValueType type)
+				{
+				    return "value";
+				}
+				- You should see the string value of enum are populated in the dropdown, instead of number (which is default).
+
+		- There is also a method named DescribeStringEnumsInCamelCase to convert enum string values in camel case.
+	- Different swagger documents for different API versions
+		If you have multiple versions of your WEB API, then you can use swagger to generate the different document based on the selected version. Like:
+		services.AddSwaggerGen(c =>
+		{
+		    c.SwaggerDoc("v1", new Info
+		    {
+			Version = "v1",
+			Title = "My API",
+			Description = "My First ASP.NET Core Web API",
+			Contact = new Contact() { Name = "Talking Dotnet", Email = "contact@talkingdotnet.com", Url = "www.talkingdotnet.com" }
+		    });
+
+		    c.SwaggerDoc("v2", new Info
+		    {
+			Version = "v2",
+			Title = "New API",
+			Description = "Sample Web API",
+			Contact = new Contact() { Name = "Talking Dotnet", Email = "contact@talkingdotnet.com", Url = "www.talkingdotnet.com" }
+		    });
+		});
+		- https://www.talkingdotnet.com/support-multiple-versions-of-asp-net-core-web-api/
+		- We also need to update the swagger UI to show multiple endpoints. They’ll be listed in the top right corner of the page, 
+		  allowing users to toggle between the different documents.
+			app.UseSwaggerUI(c =>
+			{
+			    c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+			    c.SwaggerEndpoint("/swagger/v2/swagger.json", "My API V2");
+			}
+
+	-  i wish Swashbuckle to support Swagger UI looking as http://petstore.swagger.io
+		- Swagger out of the box doesn’t have this kind of UI but it can be easily tweaked and customized. To tweak the look and feel, 
+		  you can inject additional CSS stylesheets by adding them to your wwwroot folder and specifying the relative paths in the middleware options:
+
+			app.UseSwaggerUI(c =>
+			{
+				…
+				c.InjectStylesheet(“/swagger-ui/custom.css”);
+			}
+		- https://www.talkingdotnet.com/create-petstore-like-swagger-ui-asp-net-core-web-api/
+	
+		-  Issue on Authorize, although I gave the token it is not included in request header. Need some thought where I broke.
+			Startup.cs
+			c.AddSecurityDefinition(“bearer”, new ApiKeyScheme
+			{
+				Description = “JWT Authorization header using the Bearer scheme.Example: \\\”Authorization: Bearer {token}\\\”\””,
+				Name = “Authorization”,
+				In = “header”,
+				Type = “apiKey”
+			});
+			- I myself never tried but as per my knowledge currently Swagger has functionality for authentication with JWT-token and 
+			  can automatically add token into header. You need to supply that by clicking the Authorize button. This should help.
+				- https://stackoverflow.com/questions/38784537/use-jwt-authorization-bearer-in-swagger-in-asp-net-core-1-0/47709074#47709074
+			- How do you add Basic Authentication to your swagger documentation page
+				https://github.com/domaindrivendev/Swashbuckle.AspNetCore/issues/536
