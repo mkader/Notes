@@ -1,0 +1,28 @@
+Unit Testing in ASP.NET MVC Applications
+
+1)Easily implement unit tests for your Web application
+2)ASP.NET MVC has been architected for testability without dependencies on the IIS server, on a database, or on external classes. 
+3)Create a new ASP.NET MVC project, Select the Create Unit Test Project, a test project will be created in your ASP.NET MVC solution 
+  that contains unit tests for the account controller and the home controller.
+4)Unit test calls an action method in a controller, you can validate that the correct view date is returned 
+  (although you do not validate the HTML). Also test whether a method correctly redirects to another controller or view.
+  
+Using TDD(test-driven development) with ASP.NET MVC  
+
+
+
+To create an MVC application with unit tests
+
+1)Create a new ASP.NET MVC project, Select the Create Unit Test Project,
+2)VS creates a solution that contains two projects, one named MvcContacts and one named MvcContacts.Tests.
+  using Microsoft.VisualStudio.TestTools.UnitTesting; 
+3)On the Test menu, click Run, and then click All Tests in Solution.
+  The results are displayed in the Test Results window. The tests pass.
+  
+  Results -> Test Run, Test Name (Controller Name), Result (Passed, Failed), Duration, Computer Name, Start Time and End Time,
+  	     Error Message (if Failed), Test Files
+  	     
+4)In the Tests project, open and examine the account controller test class (AccountControllerTest) and 
+  the account controller model class (MvcContacts\Models\AccountModels). 
+  
+  These classes provide a good introduction to how to create mock interfaces and to TDD. Mocking is the process of creating simple substitute (mock) objects for the dependencies in a class so you can test the class without the dependencies. To test interfaces, you typically create a mock class that implements the interface you want to test. For example, the MockMembershipService class in the account controller test class implements the IMembershipService interface to mock members that are part of membership classes, such as the ValidateUser, CreateUser, and ChangePassword methods. The MockMembershipService class enables you to test the action methods that create user accounts, validate user registration information, and change a user's password without having to instantiate a membership class like Membership. 

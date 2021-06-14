@@ -1,0 +1,239 @@
+HTML Helper
+===========
+	- An HTML helper is a method that is used to render html content in a view. HTML helpers are implemented as extension methods.
+	- Some of the html attributes, are reserved keywords. Examples include class, readonly etc. 
+	  To use these attributes, use "@" symbol as shown below.
+	  @Html.TextBox("firstname", "John", new { @class = "redtextbox", @readonly="true" })
+	- Is it possible to create our own custom html helpers? Yes
+	- Is it mandatory to use HTML helpers? No, you can type the required HTML, but using HTML 
+	  helpers will greatly reduce the amount of HTML that we have to write in a view. 
+	- ViewBag.DepartmentId = new SelectList(db.Departments, "Id", "Name", employee.DepartmentId);//employee.DepartmentId selected	  
+ 	  @Html.DropDownList("DepartmentId", null, "Select Department", htmlAttributes: new { @class = "form-control" })		  
+ 	  =>ViewBag.DepartmentId = new SelectList(db.Departments, "Id", "Name", 2);//employee.DepartmentId 2 is selected	   		
+ 	
+	- 'FOR' difference (Strongly typed HTML helpers are added in MVC2). Both are producing the same HTML.
+	  ---------------
+	  Html.TextBox controls are not strongly typed, just hardcode the name. 
+	  @Html.TextBox("CompanyName", (string)ViewBag.CompanyName)  //ViewBag. CompanyName1 won't throw
+	  Html.TextBoxFor controls are strongly typed, and  the name is inferred from the lambda expression.
+	  @Html.TextBoxFor(m => m.CompanyName),  //m.CompanyName1 it will throw error
+	  Strongly typed HTML helpers also provide compile time checking.
+ 
+	- @using (Html.BeginForm()) { } - Begin & form tag.
+
+	- @Html.RadioButtonFor(m => m.SelectedCity, item.Id) @item.City //Refer Code (Radio Button)
+
+	- @Html.CheckBoxFor(x=>x.isSelected)
+	
+	-@Html.ActionLink() - instead of harcoding <a href></a> tag
+	 @Html.ActionLink("Back to List", "Index") //added for html action link
+	 @Html.ActionLink(str linktext, str actionName, str controllerName, obj routeValues, obj htmlAttrbuites)
+		<li>@Html.ActionLink(f.Name, "Index", "FileType", new { FileSetID = f.FileSetID },null)</li>
+	
+	-@*@Html.EditorFor(model => model.Gender, new { htmlAttributes = new { @class = "form-control" } })*@ //replace below code		
+	
+	-@Html.DropDownList("Gender", new List<SelectListItem>{ 
+	     new SelectListItem {Text="Male",Value="Male" }, new SelectListItem {Text="Female",Value="Female" }}, "Select Gender",
+	    new { htmlAttributes = new { @class = "form-control" } })
+	 @Html.DropDownList("DepartmentId", null, "Select Department", htmlAttributes: new { @class = "form-control"})
+	
+	-@Html.HiddenFor(model => model.Name)	    
+	
+	-@Html.DisplayForModel() //diplay all the fields, no need any html code
+	 @Html.EditorForModel()
+
+	-Display and edit templated helpers, 2 categories.
+		1. Display Templates - 
+			@Html.Display("EmployeeDate"), - not strongly typed, like using ViewBag["EmployeeDate"]
+			@Html.DisplayFor(model=> model.City) - strongly typed 
+			@Html.DisplayModel(), it use EmployeeMetadata
+		2. Editor Templates - Edit,EditFor, EditModel()	 
+
+Creating Custom Html Helpers	
+----------------------------
+	-crate new folder CustomHtmlHelpers, class
+	using System.Web.Mvc;
+
+	namespace Mvc4App.CustomHtmlHelpers {
+	    public static class CustomHtmlHelpers { 
+		public static IHtmlString Image(this HtmlHelper helpers, string src, string alt) {
+		    TagBuilder tb = new TagBuilder("img");
+		    tb.Attributes.Add("src", VirtualPathUtility.ToAbsolute(src));
+		    tb.Attributes.Add("alt", alt);
+
+		    return new MvcHtmlString(tb.ToString(TagRenderMode.SelfClosing)); //SelfClosing is <img .../> self closing tag
+		    //if it string return, details page display string text instead of image.
+		}
+	    }
+	}
+	
+	-Details.cshtml
+	@using Mvc4App.CustomHtmlHelpers;	
+	<img src="@Url.Content(Model.Photo)" alt="@Model.PhotoText" />	 
+	replace to @Html.Image(@Model.Photo, @Model.PhotoText);
+	
+	-if you want to all the html for image tag, add 'Mvc4App.CustomHtmlHelpers;'to views/web.config	, close and reopen solutions
+	
+	<configuration>
+	  <system.web.webPages.razor>
+	    <pages pageBaseType="System.Web.Mvc.WebViewPage">
+	      <namespaces>
+		<add namespace="System.Web.Mvc" />
+		...
+		<add namespace="Mvc4App.CustomHtmlHelpers" />
+	      </namespaces>
+	    </pages>
+	  </system.web.webPages.razor>		
+
+WebGrid
+-------
+http://aspdotnet-kishore.blogspot.com/2014/12/mvc-4-razor-how-to-select-deselect-all.html
+http://www.dotnetawesome.com/2014/07/how-to-delete-multiple-webgrid-rows-by-checkbox-in-mvc4.html
+https://www.codeproject.com/articles/875859/insert-update-and-delete-mvc-webgrid-data-using-jq
+http://www.advancesharp.com/blog/1125/search-sort-paging-insert-update-and-delete-with-asp-net-mvc-and-bootstrap-modal-popup-part-1
+http://www.advancesharp.com/blog/1126/search-sort-paging-insert-update-and-delete-with-asp-net-mvc-and-bootstrap-modal-popup-part-2
+<form id="exportWebGrid" action="ExportHeader" method="post">
+        <div style="display:@(Model.Count() > 0 ? "block" : "none")">
+            @{
+                //Version 1
+                //WebGrid webGrid = new WebGrid(Model);
+                //Version 2
+                WebGrid webGrid = new WebGrid(Model, rowsPerPage: 3, canPage: true);
+            }
+            <!--Version 1-->
+            @*@webGrid.GetHtml()*@
+            <!--Version 2-->
+            <!--it will display column ascending order-->
+            @*@webGrid.GetHtml(
+                    tableStyle:"Grid-table",
+                    headerStyle:"Grid-Header",
+                    alternatingRowStyle:"Grid-alt",
+                    selectedRowStyle:"Grid-selected",
+                    rowStyle:"Grid-rowstyle",
+                    mode:WebGridPagerModes.All
+                )*@
+            <!--Version 3-->
+            <!--i controlling display order of colunm & number of columns (total i have 7)-->
+            @*@webGrid.GetHtml(
+             tableStyle: "Grid-table",
+             headerStyle: "Grid-Header",
+             alternatingRowStyle: "Grid-alt",
+             selectedRowStyle: "Grid-selected",
+             rowStyle: "Grid-rowstyle",
+             mode: WebGridPagerModes.All,
+             columns:
+                 webGrid.Columns
+                 (
+                     webGrid.Column(columnName: "Name", header: "Name"),
+                     webGrid.Column(columnName: "HireDate", header: "Hire Date"),
+                     webGrid.Column(columnName: "DepartmentId", header: "Department Id")
+                 )
+            )*@
+            <!--Version 4-->
+            @webGrid.GetHtml(
+             tableStyle: "Grid-table",
+             headerStyle: "Grid-Header",
+             alternatingRowStyle: "Grid-alt",
+             selectedRowStyle: "Grid-selected",
+             rowStyle: "Grid-rowstyle",
+             mode: WebGridPagerModes.All,
+             columns:
+                 webGrid.Columns
+                 (
+                     webGrid.Column(columnName: "Name", header: "Name"),
+                     webGrid.Column(columnName: "HireDate", header: "Hire Date"),
+                     webGrid.Column(columnName: "DepartmentId", header: "Department Id"),
+                     webGrid.Column(format:@<text><a href="" onclick="DeleteME('@item.EmployeeId')">Delete</a></text>)
+                )
+            )
+
+            @*grid.Column("SubGrid", format: (item) =>
+            {
+                var subGrid = new WebGrid((item.Value as User).Groups);
+                return subGrid.GetHtml(
+                    tableStyle: "table table-bordered table-condensed",
+                    htmlAttributes: new { id="subGrid"},
+                    columns: subGrid.Columns (
+                        subGrid.Column("Groups", format: (groupString) => groupString, canSort: false)
+                    )
+                );
+            }*@
+
+        </div>
+        <input id="Submit1" type="submit" value="Export to Excel" />
+</form>        
+
+ 	public ActionResult Show()
+        {
+            //return View(db.Employees.Where(x=>x.EmployeeId==12312).ToList());
+            return View(db.Employees.ToList());
+        }
+
+        public ActionResult ExportHeader()
+        {
+            IEnumerable<Employee> emp = db.Employees.ToList();
+
+            /*WebGrid grid = new WebGrid
+            (source: emp, canPage: false, canSort: false);
+            string gridData = grid.GetHtml(
+                columns: grid.Columns(
+                         grid.Column(columnName: "Name", header: "Name"),
+                         grid.Column(columnName: "HireDate", header: "Hire Date"),
+                         grid.Column(columnName: "DepartmentId", header: "Department Id")
+                        )
+                   ).ToString();
+            Response.ClearContent();
+            Response.AddHeader("content-disposition",
+            "attachment; filename=MeetingDetails.xls");
+            Response.ContentType = "application/excel";
+            Response.Write(gridData);
+            Response.End();
+            return View(emp);*/
+
+            //No Header formatting, by simply sending passing the list of records to GridView object and 
+            //then export the same as shown below:
+            GridView obj = new GridView();
+            obj.DataSource = emp;
+            obj.DataBind();
+            Response.AddHeader("content-disposition",
+            string.Format("attachment; filename={0}", "Meeting.xls"));
+            Response.ContentType = "application/ms-excel";
+            StringWriter sw = new StringWriter();
+            HtmlTextWriter htw = new HtmlTextWriter(sw);
+            obj.HeaderRow.Style.Add("background-color", "#FFFFFF");
+            for (int i = 0; i < obj.HeaderRow.Cells.Count; i++)
+            {
+                obj.HeaderRow.Cells[i].Style.Add("background-color", "#507CD1");
+            }
+            int j = 1;
+            foreach (GridViewRow gvrow in obj.Rows)
+            {
+                gvrow.BackColor = Color.White;
+                if (j <= obj.Rows.Count)
+                {
+                    if (j % 2 != 0)
+                    {
+                        for (int k = 0; k < gvrow.Cells.Count; k++)
+                        {
+                            gvrow.Cells[k].Style.Add("background-color", "#EFF3FB");
+                        }
+                    }
+                }
+                j++;
+            }
+            obj.RenderControl(htw);
+            Response.Write(sw.ToString());
+            Response.End();
+            return View(emp);
+            
+        }
+
+        // POST: Employee/Delete/5
+        [HttpPost]
+        public ActionResult EmplpyeeDelete(Employee emp)
+        {
+            Employee employee = db.Employees.Find(emp.EmployeeId);
+            db.Employees.Remove(employee);
+            db.SaveChanges();
+            return View(db.Employees.ToList());
+        }

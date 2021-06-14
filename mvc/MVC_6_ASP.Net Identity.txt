@@ -1,0 +1,27 @@
+ASP.NET Identity as a system to manage access in ASP.NET application on premises and also in the cloud
+ASP.NET Identity gets away from the Membership Provider Model
+
+Azure Active Directory	| Improved User Profiles | Social Logins
+	OWININ Integration |	Persistance Improvements
+		     One ASP.NET
+
+It provides the major security like Two Factor Authentication, Account Lockout, and Account Confirmation,..
+
+
+http://www.webdevelopmenthelp.net/2015/07/customize-profile-info-in-asp-net-identity.html
+
+http://www.webdevelopmenthelp.net/2015/05/custom-authentication-and-authorization-in-asp-net-mvc.html
+
+http://www.webdevelopmenthelp.net/2015/04/asp-net-mvc-authorize-attribute.html
+
+http://www.webdevelopmenthelp.net/2015/07/bootstrap3-with-asp-net-mvc5.html
+
+http://www.webdevelopmenthelp.net/2015/04/understand-application-lifecycle-in-asp-net-mvc.html
+
+
+
+https://www.asp.net/mvc/overview/security/create-an-aspnet-mvc-5-app-with-facebook-and-google-oauth2-and-openid-sign-on
+
+https://docs.microsoft.com/en-us/azure/app-service-web/web-sites-dotnet-deploy-aspnet-mvc-app-membership-oauth-sql-database
+
+http://csharpcorner.mindcrackerinc.netdna-cdn.com/UploadFile/EBooks/11112013031641AM/PdfFile/Programming%20ASP.NET%20MVC%205.pdf

@@ -1,0 +1,71 @@
+Explain MVC (Model-View-Controller) in general?
+
+What is ASP.NET MVC?
+	ASP.NET MVC is a web development framework that is based on MVC architectural design pattern.
+
+Difference between ASP.NET MVC and ASP.NET WebForms?
+	Web Forms uses Page controller pattern approach for rendering layout,(every page has its own controller(code-behind file))
+	MVC uses Front controller approach. (a common controller for all pages processes the requests.
+
+What are the Core features of ASP.NET MVC?
+	Clear separation of application concerns (Presentation and Business Logic). URL Routing
+	
+Can you please explain the request flow in ASP.NET MVC framework?
+	Client -> URL Routing -> Controller (->Model->DB, ->View)-->Client
+	
+What is Routing in ASP.NET MVC?
+
+What is the difference between ViewData, ViewBag and TempData?
+
+What are Action Methods in ASP.NET MVC?
+
+Explain the role of Model in ASP.NET MVC?
+	Role of Model in MVC is to contain all application logic including validation, business and data access logic 
+	except view i.e. input and controller i.e UI logic. 
+	Model is normally responsible for accessing data from some persistent medium like database and manipulate it
+	 
+What are Action Filters in ASP.NET MVC?
+
+What are the new features introduced in ASP.NET MVC5?
+
+What is a ViewEngine in ASP.NET MVC?
+
+What is the difference between Razor View Engine and ASPX View Engine?
+	No big difference, Razor is clean Code & good support for Test Driven Development
+	namespace System.Web.Mvc.WebFormViewEngine, System.Web.Razor
+	Syntax :  <%= employee.FullName %>,  @employee.FullName
+
+Is it possible to remove the unused ViewEngine in ASP.NET MVC project?
+	Yes, Gloabal.asax , 
+		ViewEngines.Engines.Clear();
+		ViewEngines.Engines.Add(new RazorViewEngine());
+	
+What is a ViewModel in ASP.NET MVC?
+	A ViewModel basically acts as a single model object for multiple domain models, 
+	facilitating to have only one optimized object for View to render. 
+
+What are ASP.NET MVC HtmlHelpers?
+
+What is Bootstrap in MVC5?
+	Bootstrap (a front-end framework) is an open source collection of tools that contains HTML and CSS-based 
+	design templates along with Javascript to create a responsive design for web applications
+	
+Kindly explain Attribute Routing in ASP.NET MVC5?
+	Easily define routes with Controller’s action methods as follows:
+	[Route("Employee/{id?}")]	
+	public ActionResult  Employee(int id)
+	
+What is Scaffolding in ASP.NET MVC? and what are the advantages of using it?
+	Scaffolding does the job of writing CRUD operations code for us. Create, Retrieve, Update and Delete.
+	Scaffolding is basically a Code Generation framework. (Micrsoft’s T4 template).
+	
+Briefly explain ASP.NET Identity?
+	ASP.NET Identity as a system to manage access in ASP.NET application on premises and also in the cloud
+	ASP.NET Identity gets away from the Membership Provider Model
+	
+	Azure Active Directory	| Improved User Profiles | Social Logins
+		OWININ Integration |	Persistance Improvements
+			     One ASP.NET
+	
+Is it possible in ASP.NET MVC Project to boost speed by caching the static content folder(s)?
+	OutputCache

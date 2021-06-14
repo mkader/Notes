@@ -1,0 +1,162 @@
+System.ComponentModel.DataAnnotations
+=====================================
+	EmployeeExt.cs
+	
+	using System.ComponentModel.DataAnnotations;
+
+	namespace MVC5EF.Models {
+	    [MetadataType(typeof(EmployeeMetaData))]
+	    public partial class Employee { 
+	    	[Compare("Email")]
+	    	public string ConfirmEmail { get; set; } //this is not in Employee.cs, so i can't add in EmployeeMetaData
+	    }
+
+	    public class EmployeeMetaData {
+	        [StringLength(10,MinimumLength =5)] //	[StringLength(10,MinimumLength =5,ErrorMessage ="Test Error")]
+		public string Name { get; set; }
+		public string Email { get; set; }
+	    }
+	}	
+	
+	-[Required]
+        
+	- [Compare("Email")], see the above code compare both email & confirm email
+	
+	-[StringLength(10,MinimumLength =5)] //	[StringLength(10,MinimumLength =5,ErrorMessage ="Test Error")]
+	
+	-[Display(Name = "Department Name")] //OR [DisplayName("Department Name")]
+	
+	-[RegularExpression(@"^(([A-za-z]+[\s]{1}[A-za-z]+)|([A-Za-z]+))$", ErrorMessage = "Please enter a valid name")]
+	 (http://regexr.com/)
+	 
+	-[DisplayFormat(DateFormatString = "{0:d}")] => 02/01/2007
+	  if value is null, display message instead of null, [DisplayFormat(NullDisplayText ="Gender not specified")]
+	  [DisplayFormat(DataFormatString="{0:MM/dd/yyyy}",ApplyFormatInEditMode=true)] // only edit mode
+	
+	-[ScaffoldColumn(false)] //column won't display on the screen, it works only @Html.DisplayForModel() 
+	
+	-[HiddenInput(DisplayValue=false)] System.Web.Mvc, will be <input type=hidden>, will work for @Html.EditorForModel. 
+	
+	-[ReadOnly(true)],allow to edit on the view, but edit won't be back to HttpPost,@Html.EditorForModel.
+          Another option remove 'set;', 
+          
+	-[Range(1,100)]
+	 [Range(typeof(DateTime),"01/10/2000","12/31/2020")]
+	 //used Jquery,the client side validation does not work as expected, i removed Jquery from page, it works. 		
+
+	- [Key] //mention primary key
+	
+	- DataType (EmailAddress, PhoneNumber, CreditCard, Date, Time, DateTime, URL,..) 
+          [DataType(DataType.EmailAddress)] //filed convert to email link
+          [DataType(DataType.Currency)]  //$ will show, <system.web> <globalization culture = "en-BR" /> change currency 
+          [DataType(DataType.Date)]  /.time ///datetime
+
+
+	- DisplayColumn attribute is useful, when a class has a property of complex type, 
+	-------------
+		and you want to pick one property of this complex object for display purpose. 
+		1)Create EF models, it contains Employee.Cs
+		2)Create EmployeeExt.cs, add the  employeemetadata code
+		    public class EmployeeMetaData {
+			public int Id { get; set; }
+			[Display(Name="Full Name")]
+			public string Name { get; set; }
+			public string Gender { get; set; }
+			public string City { get; set; }
+			public Nullable<System.DateTime> DateOfBirth { get; set; }
+		    }
+
+		 add metadatatype code
+		    [MetadataType(typeof(EmployeeMetaData))]
+		    [DisplayColumn("Name")]
+		    public partial class Employee {    }
+
+		 create company class code
+		    public class Company {
+			public Employee CompanyDirector {
+			    get {
+				MVCEFEntities db= new MVCEFEntities();
+				return db.Employees.Single(x=>x.Id==1 );
+			    }
+			}
+		    }
+		4)Add controller action methods
+			public ActionResult Index() {
+			    Company c = new Company();
+			    return View(c);
+			}
+		5)add the index.cshtml
+		@model Mvc4App.Models.Company
+		@Html.DisplayTextFor(x => x.CompanyDirector); //it will display only name
+
+		6)if '[DisplayColumn("Name")]' not declare, @Html.DisplayTextFor(x => x.CompanyDirector);=> code will display "1"
+		7)if you want to use display more fields, then use @Html.DisplayTextFor(x => x.CompanyDirector.Name); 
+		  part 2 no need
+		8)if [DisplayColumn("Name, DateOfBirth")] declare more fields, called @Html.DisplayTextFor(x => x.CompanyDirector);, 
+		  it will throw  Mvc4App.Models.Employee has a DisplayColumn attribute for Name, DateOfBirth, but property Name, 
+		  DateOfBirth does not exist. fix the part use @Html.DisplayTextFor(x => x.CompanyDirector.Name);
+
+	[UIHint("OpenNewWindow")] - Opening a page in new browser window using Shared Template
+	--------------------------------------------------------------------------------------------
+	1)Employee.cs => public string Website { get; set; }, it display just text, not link
+	2)Added EmployeeExt.Cs = > EmployeeMetaData class  
+		[DataType(DataType.Url)]
+		public string Website { get; set; }
+	  it will display link, but it will open on the same form		
+	3)created Shared/DisplayTemplates => Url.cshtml, file can be any places in the view folder  
+		<a href="@ViewData.Model" target="_blank">@ViewData.Model</a>
+	  MVC will look if any view file name exactly like "DataType.Url", it will use the templatess, so in this case it will open
+	  new window. Suppose if the file name is Url1.cshtml, MVC won't implement this template code.
+	4)Url.cshtml is will apply for all URL using in [DataType(DataType.Url)], so i create 
+	  custom template name OpenNewWindow.cshtml added the above code, use UIHint , 
+	  ------------------		 				      -------
+		[DataType(DataType.Url)]
+		public string Website { get; set; } = > it will open same window
+		[DataType(DataType.Url)]
+		[UIHint("OpenNewWindow")]
+		public string Link { get; set; } => it will open new window
+
+Creating custom validation attribute
+ -------------------------------------
+ 	- i want to pass upto today maximum instead of hardcode
+ 	   [Range(typeof(DateTime),"01/10/2000","12/31/2020")] =>
+ 	   [Range(typeof(DateTime),"01/10/2000",DateTime.Now.ToShortDateString())] //it will throw error
+	- i created custom validation attribute, Common/DateRangeAttribute.cs
+		using System.ComponentModel.DataAnnotations;
+
+		namespace MVC5EF.Common	{
+		    public class DateRangeAttribute : RangeAttribute  {
+			public DateRangeAttribute(string minimumValue) : 
+			    base(typeof(DateTime), minimumValue, DateTime.Now.ToShortDateString())
+			{
+
+			}
+		    }
+		}	
+	  - inheirts 'RangeAttribute' -> it has method public RangeAttribute(Type type, string minimum, string maximum);
+	    called in base method to override.
+	- change to extension class
+		[DisplayFormat(DataFormatString = "{0:d}",ApplyFormatInEditMode =true)]
+		//[Range(typeof(DateTime), "01/01/2000", DateTime.Now.ToShortDateString())]
+		[DateRange("01/01/2000")]
+		public DateTime HireDate { get; set; }	    
+		
+	- Example 2, allow any date <=today.
+	  RangeAttribute -> ValidationAttribute, it has method  'public virtual bool IsValid(object value);'
+		[DisplayFormat(DataFormatString = "{0:d}",ApplyFormatInEditMode =true)]
+		//[Range(typeof(DateTime), "01/01/2000", DateTime.Now.ToShortDateString())]
+		//[DateRange("01/01/2000")]
+		[CurrentDate()]
+		public DateTime HireDate { get; set; }	  
+
+		using System.ComponentModel.DataAnnotations;
+
+		namespace MVC5EF.Common {
+		    public class CurrentDateAttribute: ValidationAttribute    {
+			public override bool IsValid(object value){
+			    DateTime dt = Convert.ToDateTime(value);
+			    return dt <= DateTime.Now;
+			}
+		    }
+		}		
+		

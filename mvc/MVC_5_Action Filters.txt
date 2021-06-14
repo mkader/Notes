@@ -1,0 +1,350 @@
+Action Selectors, NonAction, AcceptVerbs , Action Filters
+---------------------------------------------------------
+	[NonAction]
+	public string Method2() { return "test"; } - /Home/Method2 - it won't work
+ 	- ActionName selector: This action selector is used when you want to invoke an action method with a different name. 
+ 	-------------
+ 	- must create List.cshtml, otherwise will throw error.
+	public class HomeController : Controller{
+	    [ActionName("List")]
+	    public string Index(){ return "Index action method invoked"; } - /Home/Index won't work, /Home/List will work
+	    //public string Index(){ return View("Index"); } - now /Home/Index will work
+	} 	
+		
+	- Action Filters - are attributes that can be applied either on a controller action method or on a controller. 
+	  ---------------
+	  - Action filters allow us to add, pre and post processing logic to an action method. 
+	    This means, it allow us to execute some custom code, either before or after an action method
+	  - If it controller level, applicalbe to all the action within that controller. 
+		[ValidateInput(false)] //it will apply to all the action methods
+		public class HomeController : Controller{
+		    public string Index(){ return ""; } 
+		    public string Create(){ return ""); }
+		}	  
+	  
+	- Name a few action filters - 
+		Authorize, ChildActionOnly, HandleError, OutputCache, RequireHttps, ValidateInput, ValidateAntiForgeryToken 
+
+	- AcceptVerbs selector  - [HttpDelete]
+	 --------------------
+	  - [AcceptVerbs(HttpVerbs.Get)] OR [HttpGet]
+	  - [AcceptVerbs(HttpVerbs.Post)] OR [HttpPost]
+	  - [HttpOptions] - It represents a request for information about the communication options supported by web server.
+	  - [HttpPatch] - To full or partial update the resource.
+	 - [HttpHead] - Identical to GET except that server do not return message body.
+	 - [HttpPut] - To update an existing resource.
+	
+	  - [AcceptVerbs(HttpVerbs.Post | HttpVerbs.Get)] - allow multiple http verbs
+	  -[HttpGet] - attribute, the controller action method will only respond to a get request of this URL
+	  public ActionResult Create(){ return View();}
+
+	  -FormCollection class will receive the posted form values in the controller action method, in key/value pairs.
+	  ----------------
+	   Keys & values can be accessed using key names or index. 
+	   [HttpPost] attribute, which is going to receive the posted form data.
+
+	    public ActionResult Create(FormCollection fc) { //fc["Name"] }
+	
+	- [ValidateInput(false)] //allow html code or not
+        ------------------------
+        
+ 	- Actions are public methods, if it private (OR NonAction attribute) can't access through mvc controller
+ 	private string Method2() { return "test"; } - /Home/Method2 - it won't work
+ 	
+	- Can you create a custom action filter in mvc? Yes
+	- Authorize, AllowAnonymous attribute
+	  ------------------------------------
+	    public class FiltersController : Controller {
+		public ActionResult SecureIndex() { return View(); }    /Filters/SecureIndex - can view
+		public ActionResult NonSecureIndex(){ return View(); } /Filters/NonSecureIndex - can view
+	    }			
+
+	    [Authorize]
+	    public ActionResult SecureIndex() { return View(); }   /Filters/SecureIndex - can't view without windows login
+	    public ActionResult NonSecureIndex(){ return View(); } /Filters/SecureIndex - can view
+
+	    [Authorize]	
+	    public class FiltersController : Controller {
+		public ActionResult SecureIndex() { return View(); }    /Filters/SecureIndex - can't view without windows login
+		public ActionResult NonSecureIndex(){ return View(); } /Filters/NonSecureIndex - can't view without windows login
+	    }			
+
+	    [Authorize]	
+	    public class FiltersController : Controller {
+		public ActionResult SecureIndex() { return View(); }    /Filters/SecureIndex - can't view without windows login
+		[AllowAnonymous]
+		public ActionResult NonSecureIndex(){ return View(); } /Filters/NonSecureIndex - can view
+	    }			    
+	    - [Authorize(Roles="admin", Users="Imghani, Ren")]
+	      It checks whether the user is Imghani or Ren and holds the Admin role or not. 
+	      If not then it redirects the user to the Login Url.
+	    
+	-ChildActionOnly Attribute, @Html.Action, Html.RenderAction()
+	----------------
+		6. Child action methods are different from NonAction methods, 
+		   NonAction methods cannot be invoked using Action() or RenderAction() helpers. 
+		7. Using child action methods, it is possible to cache portions of a view. 
+		   This is the main advantage of child action methods. 
+		
+		public ActionResult Country(){ return View(); }	//EmployeeController.cs				
+		- /Employee/Country, without or with ChildActionOnly, it can access list using action or actionrender 
+		
+		[ChildActionOnly]
+		public ActionResult List(List<String> countryName){ return View(countryName);}	
+		// /Employee/List?countryName=India throws runtime error, "Child action is accessible only by a child request."
+		if comment [ChildActionOnly], then you can access 		   
+
+		Country.cshtml (it is paritla view but not compulsory)
+			@Html.Action("List", new { countryName= new List<String>() { "USA","India","UAE" } })        		
+			OR 
+
+			@{
+			    Html.RenderAction("List", new { countryName = new List<String>() { "USA", "India", "UAE" } });
+			}				
+		List.cshtml
+			@model List<String>
+			@foreach(var c in Model){ <li>@c</li> }        
+		
+	-HandleError Attribute
+	------------
+	 - public ActionResult Country(){  throw new Exception("this is error message"); }		
+	  //the application throw error message + yellow message about the source error code.
+	
+	- to avoid this web.config	          
+		<system.web> ... <customErrors mode="On"></customErrors>
+	  create Views/Shared/Errr.cshtml = > just "Something Wrong in this request. "
+	  [but still i am getting yello message, reason the below points]
+	
+	- [STEP] MVC5 doesn't have FilterConfig.cs file in App_Start folder.so i created file		  
+		using System.Web;
+		using System.Web.Mvc;
+
+		namespace MVC5EF {
+		    public class FilterConfig {
+			public static void RegisterGlobalFilters(GlobalFilterCollection filters) {
+			    filters.Add(new HandleErrorAttribute());
+			}
+		    }
+		}	
+	   added the below line  'Global.asax.cs' FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);	           
+	   
+	  Now run /Employee/Country, i am not getting yellow message, only custom error "Something Wrong in this request. "	       
+	  
+	  How did all this work?
+		HandleErrorAttribute is added to the GlobalFilters collection in global.asax. 
+		When a filter is added to the GlobalFilters collection, then it is applicable for all controllers 
+		and their action methods in the entire application. 					
+	
+	-Avoid the above [STEP]	 method, just add
+	    [HandleError]
+	    public ActionResult Country() 
+	    //now i will get  custom error "Something Wrong in this request. ", no yellow page,
+	      but it is not global level.
+	
+	- /Employee/List - there is no action method controller, so throw 404 error "...cannot ... Description: HTTP 404.'		      
+	   To fix this error
+	   create ErrorController.cs, ... public ActionResult NotFound(){ return View(); }
+	   create NotFound.cshtml  => msg "Page not found"    			 
+	   web.config add the lines
+		    <customErrors mode="On">
+		      <error statusCode="404" redirect="~/Error/NotFound"/>
+		    </customErrors>		   
+
+	- OutputCache  Attribute -  is used to cache the content returned by a controller action method, 
+	-----------------------
+	so that, the same content does not need to be generated each and every time the same controller action is invoked. 
+	[OutputCache(Duration =10)]  //it will keep same content for 10 seconds, then it will refresh
+	public ActionResult List(){ return View(db.Employees.ToList()); }
+	//now it will show ..00:00 seconds, if i refresh :05, show content from output cache, :11, now it refresh from db.
+
+	- Example 2 - List will refresh every time, but ListCount will refresh every 10 seconds.
+	public ActionResult List() { return View(db.Employees.ToList()); }
+
+	[OutputCache(Duration = 10)]
+	[ChildActionOnly]
+	public string ListCount() {
+	    return "Records = " + db.Employees.ToList().Count().ToString() + " Last Refreshed " + DateTime.Now.ToString();
+	}
+
+	List.cshtml => @Html.Action("ListCount")
+		
+	- CacheProfile Disadvantage , the above implementaion is hardcoded, later want to change, re compile the project, 
+	  -------------
+	  so fix using CacheProfile, add code in web.config
+	    <caching>
+	      <outputCacheSettings>
+		<outputCacheProfiles>
+		  <add name="DemoCaching" duration="15" varyByParam="none"/>
+		</outputCacheProfiles>
+	      </outputCacheSettings>
+	    </caching>
+	  </system.web>		         
+
+	[OutputCache(CacheProfile = "DemoCaching")]
+	public ActionResult List() { return View(db.Employees.ToList()); }		  
+
+	- if i apply ChildActionOnly or partial view, it will throw runtime error
+	 "OutputCacheAttribute for child actions only supports Duration, VaryByCustom, and VaryByParam values. 
+	 Please do not set CacheProfile, Location, NoStore, SqlDependency, VaryByContentEncoding, or VaryByHeader 
+	 values for child actions"
+	 [OutputCache(CacheProfile = "DemoCaching")]
+	 [ChildActionOnly]
+	 public string ListCount(){ ... }
+
+	 fix use the below steps, created Common/PartialOutoutCache.cs
+	using System.Web;
+	using System.Web.Mvc;
+	using System.Web.Configuration;
+
+	namespace MVC5EF.Common {
+	    public class PartialOutoutCache :OutputCacheAttribute {
+		public PartialOutoutCache(string cacheProfileName) {
+		    OutputCacheSettingsSection ocss = 
+		    	(OutputCacheSettingsSection)WebConfigurationManager.GetSection("system.web/caching/outputCacheSettings");
+		    OutputCacheProfile ocp =  ocss.OutputCacheProfiles[cacheProfileName];
+		    Duration = ocp.Duration;
+		    VaryByParam = ocp.VaryByParam;
+		}
+	    }
+	}	
+
+	change to 
+	 [PartialOutoutCache("DemoCaching")]
+	 [ChildActionOnly]
+	 public string ListCount(){ ... }		
+	now it will work.
+		
+	- RequireHttps Attribute - attribute forces an unsecured HTTP request to be re-sent over HTTPS
+	------------------------
+	[RequireHttps]
+	public ActionResult List(){ return View(db.Employees.ToList());}		
+
+	- Action filters & Types, Filter Order
+	-----------------------
+	  There are 4 types of filters in asp.net mvc. applied the following order
+	  1. Authorization filters - Implements IAuthorizationFilter. -> OnAuthorization()
+	     Examples, [Authorize], [RequireHttps]. These filters run before any other filter.
+	  2. Action filters - Implement IActionFilter
+	  3. Result filters - Implement IResultFilter. Examples include [OutputCache]. 
+	     2 & 3 -> ActionFilterAttribute -> IActionFilter, IResultFilter
+	     IActionFilter ->  OnActionExecuted(), OnActionExecuting()
+	     IResultFilter -> OnResultExecuted(), OnResultExecuting()
+	  4. Exception filters - Implement IExceptionFilter -> OnException. Examples include [HandleError].		
+	
+	- Filters can be applied at three levels.
+	-----------------------------------------
+		1. Global Level: Global.asax/Application_Start() { FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);}
+		   FilterConfig { RegisterGlobalFilters(GlobalFilterCollection filters){ filters.Add(new HandleErrorAttribute());}}		
+		   It will be applied to all the controller and action methods of an application.	
+		2. Controller level: [HandleError] public class HomeController : Controller 		   
+		3. Action method level: public class HomeController : Controller { [HandleError] public ActionResult Index() {
+		
+	 - Create Custom action filters 
+	 -------------------------
+	 - Common/TrackExecutionTime.cs
+
+		using System.Web;
+		using System.Web.Mvc;
+		using System.IO;
+
+		namespace MVC5EF.Common {
+		    public class TrackExecutionTime : ActionFilterAttribute, IExceptionFilter {
+			public override void OnActionExecuted(ActionExecutedContext filterContext) {
+			    string message = "\n" + filterContext.ActionDescriptor.ControllerDescriptor.ControllerName +
+				" -> " + filterContext.ActionDescriptor.ActionName + " -> OnActionExecuted \t- " +
+				DateTime.Now.ToString() + "\n";
+			    LogExecutionTime(message);
+			}
+
+			public override void OnActionExecuting(ActionExecutingContext filterContext) {
+			    string message = "\n" + filterContext.ActionDescriptor.ControllerDescriptor.ControllerName +
+				" -> " + filterContext.ActionDescriptor.ActionName + " -> OnActionExecuting \t- " +
+				DateTime.Now.ToString() + "\n";
+			    LogExecutionTime(message);
+			}
+
+			public override void OnResultExecuting(ResultExecutingContext filterContext) {
+			    string message = "\n" + filterContext.RouteData.Values["controller"].ToString()+
+				" -> " + filterContext.RouteData.Values["action"].ToString() + " -> OnResultExecuting \t- " +
+				DateTime.Now.ToString() + "\n";
+			    LogExecutionTime(message);
+			}
+
+			public override void OnResultExecuted(ResultExecutedContext filterContext) {
+			    string message = "\n" + filterContext.RouteData.Values["controller"].ToString() +
+				" -> " + filterContext.RouteData.Values["action"].ToString() + " -> OnResultExecuted \t- " +
+				DateTime.Now.ToString() + "\n";
+			    LogExecutionTime(message);
+			    LogExecutionTime("---------------------------------------------------------\n");
+			}
+
+			public void OnException(ExceptionContext filterContext) {
+			    string message = "\n" + filterContext.RouteData.Values["controller"].ToString() +
+				" -> " + filterContext.RouteData.Values["action"].ToString() + " -> " + filterContext.Exception.Message + 
+				" \t- " + DateTime.Now.ToString() + "\n";
+			    LogExecutionTime(message);
+			    LogExecutionTime("---------------------------------------------------------\n");
+			}
+
+			private void LogExecutionTime(string log) {
+			    File.AppendAllText(HttpContext.Current.Server.MapPath("~/Data/Log.txt"), log);
+			}
+		    }
+		}		
+
+	- EmployeeController.cs
+		[TrackExecutionTime]
+		public string Display() { return "Method Invoked"; }
+
+		[TrackExecutionTime]
+		public string DisplayError() { throw new Exception("Exception Throwed"); }
+
+	- Log.txt
+		Employee -> Display -> OnActionExecuting 	- 12/17/2016 9:37:59 PM
+
+		Employee -> Display -> OnActionExecuted 	- 12/17/2016 9:37:59 PM
+
+		Employee -> Display -> OnResultExecuting 	- 12/17/2016 9:37:59 PM
+
+		Employee -> Display -> OnResultExecuted 	- 12/17/2016 9:37:59 PM
+		---------------------------------------------------------
+
+		Employee -> DisplayError -> OnActionExecuting 	- 12/17/2016 9:38:00 PM
+
+		Employee -> DisplayError -> OnActionExecuted 	- 12/17/2016 9:38:00 PM
+
+		Employee -> DisplayError -> Exception Throwed 	- 12/17/2016 9:38:01 PM
+		---------------------------------------------------------	
+
+Different action for different buttons from a single page in MVC
+-----------------------------------------------------------------
+public class HttpParameterActionAttribute : ActionNameSelectorAttribute {
+    public override bool IsValidName(ControllerContext controllerContext, string actionName, MethodInfo methodInfo) {
+        if (actionName.Equals(methodInfo.Name, StringComparison.InvariantCultureIgnoreCase))
+            return true;
+
+        var request = controllerContext.RequestContext.HttpContext.Request;
+        return request[methodInfo.Name] != null;
+    }
+}
+
+[HttpParameterAction]
+public ActionResult Save(MyModel model)
+{
+    // ...
+}
+
+[HttpParameterAction]
+public ActionResult SaveAndPublish(MyModel model)
+{
+    // ...
+}
+
+@using (@Html.BeginForm())
+{
+    -------------------------------
+    -------------------------------
+    -------------------------------
+    <input type="submit" name="Save" value="Save" />
+    <input type="submit" name="SaveAndPublish" value="Save and Publish" />
+}

@@ -1,0 +1,1417 @@
+ASP.NET MVC - Models, Views and Controllers 
+============================================
+https://www.codeproject.com/Articles/728216/ASP-NET-MVC-New-Features
+https://www.codeproject.com/Articles/556995/ASP-NET-MVC-interview-questions-with-answers
+http://www.advancesharp.com/blog/1188/mvc-display-image-from-database
+http://www.webdevelopmenthelp.net/2014/06/using-tempdata-asp-net-mvc.html
+https://www.codeproject.com/Articles/850062/Exception-handling-in-ASP-NET-MVC-methods-explaine
+https://www.codeproject.com/Articles/866143/Learn-MVC-Project-in-days-Day
+
+Versions - http://www.asp.net/mvc/mvc5. Sytem.Web.MVC. At run time, typeof(Controller).Assembly.GetName().Version.ToString()  
+
+VS 2013 - MVC5 - one template for everything.
+		      [Co ordinator]
+EndUser-->Browse<----->	Controller -> Model  [Look and Data] --- WCF Service  
+				|	^			 Data Layer
+				|	|	
+				V---> View [Look and feel]
+	- The controller responds to URL request, gets data from a model and hands it over to the view. 
+	  The view then renders the data. 
+	  
+MVC 3.0					MVC 4.0				MVC 5.0/5.2
+Unobtrusive javascript validation	Mobile project template		Authentication filters (auth user by custom or 3rd party)
+Razor view engine			Bundling and minification	Bootstrap support	
+Global filters				Support for Windows Azure SDK	New scaffolding items
+Remote validation			ASP.NET Web API			ASP.Net Identity
+Dependency resolver for IoC		Empity Project			Attribute based routing => Route("Employee/{EmpID}")]
+ViewBag									One Asp.Net
+									ASP.NET Web API2
+MVC - model-view-controller. 
+MVC - well architected and easy to maintain.    
+Controllers: Classes that handle incoming requests to the application, retrieve model data, and then 
+	     specify view templates that return a response to the client.
+Models: Classes that represent the data of the application and that use validation logic to enforce business rules for that data.
+Views: Template files that your application uses to dynamically generate HTML responses.									Filter Overrides
+
+-----------------------------------------------------------------------------------------
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+
+namespace ReynoldsWeb.Controllers
+{
+    public class HelloWorldController : Controller
+    {
+        // 
+        // GET: /HelloWorld/ 
+ 
+        public string Index() 
+        { 
+            return "This is my <b>default</b> action..."; 
+        } 
+ 
+        // 
+        // GET: /HelloWorld/Welcome/ 
+ 
+        public string Welcome() 
+        { 
+            return "This is the Welcome action method..."; 
+        }
+        
+        // 
+        // GET: /HelloWorld/Message?name=kader&numTimes=1
+
+        public string Message(string name, int numTimes = 1)
+        {
+            return HttpUtility.HtmlEncode("Hello " + name + ", NumTimes is: " + numTimes);
+        }
+    } 
+}
+
+-----------------------------------------------------------------------------------------
+The following shows the Index.cshtml file that was created:
+----------------------------------------------------------
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Index</h2>
+
+<p>Hello from our View Template!</p> - this added myself
+
+
+The following shows the Index.aspx file that was created:
+---------------------------------------------------------
+<%@ Page Title="" Language="C#" MasterPageFile="~/Views/Shared/Site.Master" Inherits="System.Web.Mvc.ViewPage<dynamic>" %>
+
+<asp:Content ID="Content1" ContentPlaceHolderID="TitleContent" runat="server">
+    Index
+</asp:Content>
+
+<asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
+
+<h2>Index</h2>
+
+<p>Hello from our View Template!</p>
+
+</asp:Content>
+
+-----------------------------------------------------------------------------------------
+						
+Application Structure	
+---------------------
+References: contain all the refererences of libraries
+App_Data: to store local database, xml, other data related files, IIs never server files from App_Data folder.
+App_Start: It contain class files which will be executed when the application starts.
+	AuthConfig.cs: as the same suggest for authentication configuration
+	BundleConfig.cs: To bundle all the CSS and JavaScript files
+	FilterConfig.cs: To register global filters if we created any
+	IdentityConfig.cs: Contain some common classes like to send the email and SMS etc.
+	RouteConfig.cs: To manage routing of application, default is enough for our project
+Content: it contain static files like css, images
+Controllers: xxxxController
+fonts: font files
+Model: 
+Scripts: It contain all the JavaScript files
+Views: .cshtml, .vbhtml, .aspx, ascs
+	Shared folder contain a file _Layout.cshtml, which is our master page
+Global.asax: same as asp.net application. it allows to write code that runs in response to application level events,
+             such as Application_BeginRequest, application_start, application_error, session_start, session_end etc.
+Packages.config: It is managed by NuGet to keep track of what packages and versions you have installed in the application.
+Web.config: as the name, used to configure the web site.	
+
+Creating MVC Application
+=================================
+	- View Engine -  ASPX, Razor(clean code) - upto MVC4, (MVC5 no option of multiple view engine )
+	- it contains Models, Views and Controllers folders
+	- Add Controller, 'HomeController'.cs, inherits base Controller class
+		- http://localhost/MVC4Demo/Home/Index
+	         [server] [project] |    [function index()]
+				    V	
+	public class  HomeController : Controller 
+	{
+        	public string Index() 
+        	{ -> Controller Action Methods, Index is default function for each controllers
+        	    return  "Modify this template to jump-start your ASP.NET MVC application.";
+        	}
+        }        	
+	- In MVC URL's are mapped to controller Action Methods
+
+Controllers
+===========
+	- ASP.Net Routing, using routing the URLs mapped to Controller action methods
+	  ---------------
+	- Controllers implement IController interface either directly or indirectly. 
+	  public class HomeController : Controller -> public abstract class Controller : ControllerBase,...
+	  -> public abstract class ControllerBase : IController
+	  
+Routing - simplified mvc url => url like Home/Home/GotoHome => /Home, Route defines the URL pattern and handler information.
+========
+	- it helps us creating user friendly url, those urls you can map with controller names and action names
+	- it also acheive SEO, like /Computers => content contains Computers.
+	- All the configured routes of an application stored in RouteTable and Routing engine will be determine 
+	  appropriate incoming request handler.
+		URL Request	  
+		|	
+	  No	V	
+404 Error<---URL Matches with configured Routes?<------	RouteTabl
+	     |						Route1 URL Pattern Handler
+	     |  					Route2 URL Pattern Handler
+	     |Yes					Route3 URL Pattern Handlers
+             V			
+            Execute Controller and Action Mehtod--->Response
+            
+	- Global.asax, when application start, Application_Start() event handler method will execute first -> calls RegisterRoutes().
+		public class MvcApplication : System.Web.HttpApplication {
+    		     protected void Application_Start() {
+    		         AreaRegistration.RegisterAllAreas(); //code to register all areas in your application
+		 
+    		         WebApiConfig.Register(GlobalConfiguration.Configuration);
+    		         FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
+    		         RouteConfig.RegisterRoutes(RouteTable.Routes);
+    		     }
+    		}	
+	-App_Start\RouteConfig.cs
+	 - you configure custom route & multiple routes. MVC evaluates each route in sequence. 
+		public class RouteConfig
+		{ 
+			public static void RegisterRoutes(RouteCollection routes) 
+			{
+			    routes.IgnoreRoute("{resource}.axd/{*pathInfo}"); //ignore {resource} means "anything" with extenion .axd
+			   
+			   //create table and keeping all info and generate it
+			   
+			   /*//type localhost/MVC5/  it is start page.
+	   		   routes.MapRoute( name: "Home", url: "",
+				defaults: new { controller = "Home", action = "GotoHome", id = UrlParameter.Optional }  );
+
+			   //type localhost/MVC5/Home			    
+			   routes.MapRoute( name: "Home1", url: "Home",
+				defaults: new { controller = "Home", action = "GotoHome", id = UrlParameter.Optional } );
+		    
+		            //defaults: new { controller = "Home", action = "Index", id = 0 } //default 0
+			    
+			    constraints: new  { id =@"\d{1,2}" } //decimal, ,minimum size is 1 digits and maximum lenght is 2
+			    if i type /Home/Index/1 - it will go to the function
+			    if i type /Home/Index/12 - it won't go to the function. "The resource could not be found" error thorw
+			    constraints: new { httpMethod = new HttpMethodConstraint("GET")}
+			    */			    
+
+			    //never make this start code, it will execute first	*/
+			    routes.MapRoute(  //MapRoute() extension method of RouteCollection
+				name: "Default", //it is key Route Name
+				url: "{controller}/{action}/{id}", //URL Pattern
+				defaults: new { controller = "Home", action = "Index", id = UrlParameter.Optional }
+			    );
+			    
+			    
+			}
+		}	  
+   	
+	- http://localhost/MVC4App/Home/Index/10 = > 
+	  public string Index() { return "Id ";} => just print "Id ", because id "10" is optional parameter
+	  public string Index(int id){ return "Id " + id;} = > print "Id 10"
+	   - http://localhost/MVC4App/Home/Index/, throws error, looking for parameter "id"
+	  
+	- Passing QueryString or Form ('http://localhost/MVC4App/Home/Index?name1=teert&name=ertret')
+	  ---------------------------
+	  public string Index() { return " Name= " + Request.QueryString["name"];}   OR
+	  public string Index(string name) { return " Name= " + name} => Name= test 
+	   - "name" should match with parameter query string name "name"
+	   
+	- [Route("Employee/{id?}")] => mvc 5, easily define routes with Controller’s action methods 	   
+	   
+Views ("Views" folder, it only contains "web.config"), Action, Action Methods
+=======================================================
+	- The purpose of a view is to render (format) the data to end users. 
+	- Views should be placed in a specific location that MVC can find them. 	
+	  For exmple change Index.cshtml ->Index1.cshtml, exception will throw, it looking for Index 2 places (Employee, Shared) 
+	  & .aspx, .ascs, .cshtml & vb.html file extensions.
+
+	  The view 'Index' or its master was not found or no view engine supports the searched locations. 
+	  The following locations were searched:
+	  ~/Views/Employee(/Shared)/Index.aspx (ASPX view engine), Index.cshtml(.vbhtml) (Razor view engine)
+	  ~/Views/Employee(/Shared)/Index.ascx (partial view)
+	  
+	- MVC 4, If I have all of the following files in "Views/Employee" folder, then MVC picks up "Index.aspx"
+	   a) Index.aspx 	  b) Index.cshtml 	  c) Index.vbhtml 	  d) Index.ascx
+	- call different views, View("~/Views/Employee/Index.cshtml", employees.ToList());
+	  	
+	- ViewModels (use strongly typed), ViewBag & ViewData - pass data from controller to view
+	- Use "@" symbol to switch between html and c# code.
+
+	- Public List<string> Index() { return new List<string>(){ "WI", "NE", "CA", "FL", "TX" }; }        
+	  Run the url http://localhost/MVC4App/Home/Index, it print "System.Collections.Generic.List`1[System.String]"
+	
+	- View name, must matching the controller action method name,  
+	- Employee Controller can have several action methods and several views.	  	  
+	
+	- ActionResult
+	  ------------
+	  Index action should return a view ("return View()")
+	  	public ActionResult Index() {
+		   //return new List<string>(){ "WI", "NE", "CA", "FL", "TX" };
+	           return View();
+		} 
+	- "return View();" is returning type is "ViewResult", but Index method returning type is "ActionResult"
+	  "View()"  -> protected internal ViewResult View(); ->  public class ViewResult : ViewResultBase ->
+	   public abstract class ViewResultBase : ActionResult.
+	  
+	- Why 'ActionResult' not 'ViewResult', the reason, it can do more than just returning a view, 
+	  like it can return another controller, json, 
+	  
+	- Using ViewBag objects, pass return type ViewResult    
+		public ViewResult Index() {
+		   //.States is dynamic property, you can name it anything. This property string list
+		    ViewBag.States = new List<string>() { "WI", "NE", "CA", "FL", "TX" };
+		    return View();  //return Json("Data");
+		} 		
+	  index.cshmtl => @foreach (string shortname in ViewBag.States) { <li>@shortname</li> }
+
+	- sub-types of ActionResult, Differnet type of Action Methods
+	--------------------------------------------------------------
+		HttpNotFoundResult	HttpNotFound	
+		HttpUnauthorizedResult	None. 		- Returns HTTP 403 status
+		JavaScriptResult	JavaScript	- Returns a javascript code
+		FileContentResult	File		- returns file content
+		FilePathResult
+		FilteStreamResult
+		ParitalViewResult	ParitalView	- Returns HTML from Partial view
+		ViewResult		View()		- Represents HTML and markup.
+		ContentResult		Content()	- Represents string literal.
+		JsonResult		Json		- Represent JSON that can be used in AJAX
+		EmptyResult		None		- Represents No response.
+		RedirectResult		Redirect	- Represents a redirection to a new URL
+		RedirectToRouteResult	RedirectToRoute	- Represent another action of same or other controller
+					RedirectToRoutePermanent, RedirectToAction, RedirectToActionPermanent
+					
+	- public ActionResult Index() {
+	    if (Your_Condition)
+	        return View();            // returns ViewResult object
+	    else
+	        return Json("Data");  // returns JsonResult object
+	  }
+
+	- Passing models a list(IEnumerable) of filetypes objects
+	--------------------------------------------------
+	@model IEnumerable<MVC4App.Models.FileType> 
+	@foreach (MVC4App.Models.FileType ft in @Model) { ft.Description }
+	
+	/*OR Replace the above code using 
+	@using MVC4App.Models
+	@model IEnumerable<FileType>
+	@foreach (FileType ft in @Model){ }
+	*/
+
+ViewData, ViewBag & TempData ( used to pass data from a controller to a view) 
+=============================================================================
+		   ViewBag & ViewData		   
+	Controller--------------------->View	 
+	|
+	|TempData
+	|
+	v
+	Controller
+	- ViewData is a dictionary of objects that are stored and retrieved using strings as keys. 
+	----------
+	- The syntax of ViewData is very similar to that of ViewState, SessionState and ApplicationState.
+		ViewData["YourData"] = "SomeData"; //stroing
+		string strData = ViewData["YourData"].ToString(); //Retrieving
+		ViewData["States"] =  new List<string>() { "WI", "NE", "CA", "FL", "TX" };
+		@foreach (string shortname in (List<string>)ViewData["States"]) { <li>@shortname</li> }				    
+
+	- ViewBag uses the dynamic feature that was introduced in to C# 4.0. 
+	  -------
+	  It allows an object to have properties dynamically added to it. 
+	  Internally ViewBag properties are stored as name/value pairs in the ViewData dictionary.
+		ViewBag.YourData = "SomeData"; //stroing
+		string strData = ViewData.YourData.ToString(); //Retrieving
+	  "YourData" property is defined on the fly.
+	
+	- ViewData, & ViewBag does not provide compile time error checking. 
+	  For example, if you mis-spell the key names you wouldn't get any compile time error. 
+	  You get to know about the error only at runtime.		
+	- Avoid the run time exception, Good practice to use strongly typed view models instead of using ViewBag/Data. 
+	  Strongly typed view models  provide compile time error checking. 
+	  
+	- Call 2 View Bag
+		public ViewResult Index() {
+		    ViewBag.States =  new List<string>() {"WI", "NE", "CA", "FL", "TX" }
+		    ViewBag.Countries = new List<string>(){ "USS", "IND", "UAE" };
+		    return View();
+		}
+		index.cshtml			        		
+		@foreach (string shortname in ViewBag.States) { <li>@shortname</li> }
+		@foreach (string shortname in ViewBag.Countries) { <li>@shortname</li>}
+	-TempData - used to store temporary data which can be used in the subsequent request. 
+	---------
+	 It will be cleared out after the completion of a subsequent request. TemData is a TempDataDictionary type.
+	 TempData internally uses session to store the data. It is short lived session
+	 Index() -> TempData["name"] = "Test data";
+	 About() -> TempData["name"].ToString();
+	 First Request /Home/Index - Index() Assing
+	 Second Request /Home/About  - About() Reteriving
+	 Third Request /Home/Contact - Contact() , Reteriving, TempData is not available
+		- Call TempData.Keep() to retain TempData values in a third consecutive request. About(){ ... TempData.Keep();}	 	 	
+	 TempData can be used to store only one time messages like error messages, validation messages.		
+
+Models
+===========
+	- Models, don't have any strict rules, you can remove models folder (it is optional), models can be present anywhere in MVC.
+	- Models can be entities or business objects. Busines objects can state or behavior.
+	- Create Student.cs file under Models folder
+		namespace MVC4App.Models {
+		    public class Student {
+			public int StudentID { set; get; }
+			public string Name { set; get; }
+		    }
+		}		
+	- Create StudentController.cs, action method name is 'Details'
+		using MVC4App.Models; //must declare
+
+		namespace MVC4App.Controllers  {
+		    public class StudentController : Controller {
+			public ActionResult Details() { //by default Index(), change to Details() 
+			   //just hardcode, MVC4App.Models.Student OR declare using MVC4App.Models
+			    Student s = new Student {
+				StudentID =1,
+				Name ="Test"
+			    };
+			    /*return View(); you will get error message, Object reference not set to an instance of an object.
+			    s is not passed to view, view is trying to access	"@Model.StudentID"*/
+			    return View(s);				    		    
+	- Create a View
+	       @model MVC4App.Models.Student \\passs the model is in a one Student object
+					      --------------------------------------	
+		<td>@Model.StudentID</td> <td>@Model.Name</td>
+		
+	- @model MVC4App.Models.Student, this view is strongly typed the student object, 
+	  so the model for this view is the student class. Student properties will be available within this view.		
+			      	
+Data access using entity framework (EntityFramework.dll)
+==================================================================
+	- install 'entityframework' using nuget package manger	
+	- Entities are mapped to database tables, and object relational mapping tools like Entity Framework, nHibernate, etc 
+	  are used to retrieve and save data. 
+
+	- By default the entity framework is looking for a table with the name filetype, (tblfiletype or filetype)
+	  using Table attribute, this entity class to map to  table (tblemployee),
+	Models\FileType.cs
+	namespace MVC4App.Models {
+	    [Table("tblFileType")] //OR [Table("FileType")], it must declare, otherwise error.
+	    public class FileType {
+		public int FileTypeID { set; get; }
+		public string Description { set; get; }
+		public string Extension { set; get; }
+		//public string Place { set; get; }, it is not exit in the table, mvc will throw on run time.
+		//public string Place { set; get; }, if exist,not declared, no error
+	    }
+	}
+
+	- Add connection string on web.config 
+	  </entityFramework> connectionStrings> <add name="CanvassContext" connectionString="" providerName=""/> </connectionStrings>		  
+	  The connection string name matches with the canvass context class name "public class CanvassContext : DbContext"
+	  When I create an instance of this class it's going to look for the connection string with that name with in web.config
+
+	Models\CanvassContext.cs
+	using MVC4App.Models;
+	using System.Data.Entity;
+
+	namespace MVC4App.Models {
+	    public class CanvassContext : DbContext  { //the purpose of DBContext class is to establish a connection to database
+		public DbSet<FileType> FileTypes { get; set; }
+	    }
+	}	
+	
+	- The purpose of 'SetInitializer' function, if no db,it will create a db,tables & and some sample data.
+	  If you have a db, tables and data, don't want any initialization strategy, pass null.
+	
+	Global.asax => Application_Start() { Database.SetInitializer<MVC4App.Models.CanvassContext>(null);... }
+
+	Controllers\FileTypeController.cs	
+	using MVC4App.Models;
+
+	namespace MVC4App.Controllers {
+	    public class FileTypeController : Controller {
+		public ActionResult Details(int id) {
+		    CanvassContext sc = new CanvassContext();
+		    FileType ft =  sc.FileTypes.Single(s => s.FileTypeID == id);
+		    return View(ft);
+
+Using business objects as model , List, View, Delete, Create, Edit
+==================================================================
+	Business objects contain both state(data) and behaviour, that is logic specific to the business. 
+	
+Creating a view to insert data (ActionName, HttpPost, RedirectToAction, UpdateModel, ModelState, AddModelError)
+============================================================================================================================
+	Model Binding - Model binder (pass parameters) replacing formcollection. 	  
+	--------------------------------------------------------
+ 	- Mapping the posted form data field(input, textarea) attribute 'name' with the action mehtod parameter names.
+	- The parameters names must match with the form control names, otherwise model binding will not work.
+	- The order of the parameters does not matter.
+	- Retrieving Values Directly from the Request:   public ActionResult Edit() {int id = Int32.Parse(Request["EmployeeId"])}
+	  Binding to Primitive type: public ActionResult Edit(int id)
+	  Binding to Complex type: public ActionResult Edit(Emplopyee emp)
+	  FormCollection: public ActionResult Edit(FormCollection fc)
+	  Bind Attribute:  public ActionResult Edit([Bind(Include="ID,Gender,City,DateOfBirth")]Employee emp)
+	  Bind updatemodel:  UpdateModel(emp) & TryupdateModel(emp), UpdateModel<IEmployee>(emp);
+	  
+        [HttpPost]
+        public ActionResult Create(string name, string dateofbirth, string gender, string city) {
+            Employee emp = new Employee() {
+                Name = name,
+                Gender = gender,
+                City = city,
+                DateOfBirth = DateTime.Parse(dateofbirth)
+            };
+        }
+        
+  	- Pass the employee object as a parameter, so the employee object is going to receive the posted form data
+  	  ----------------------------------------
+  	- To check if there are any model validation errors using ModelState.IsValid,
+  				--------------------	
+  	  if error, "return View()", is going to show same Create View.
+  	  
+        [HttpPost]
+        public ActionResult Create(Employee emp){
+  	    if (string.IsNullOrEmpty(emp.Name)){ ModelState.AddModelError("Name", "The Name field is required.");}      
+  	    					---------------------------
+            if (ModelState.IsValid) {
+                EmployeeLayers el = new EmployeeLayers();
+                el.AddEmployee(emp);
+                return RedirectToAction("Index");
+            }
+            return View();
+	}          	  
+
+	- ModelState Validation, i passing all values, dateofbirht value is "test" instead of date
+	-----------------------
+		ModelState.IsValid => false
+		ModelState.Keys
+			Count = 4
+			    [0]: "Name"
+			    [1]: "Gender"
+			    [2]: "City"
+			    [3]: "DateOfBirth"
+		ModelState["DateofBirth"]
+			{System.Web.Mvc.ModelState}
+			    Errors: Count = 1
+			    Value: {System.Web.Mvc.ValueProviderResult}
+		ModelState["DateofBirth"].Errors
+			Count = 1
+			    [0]: {System.Web.Mvc.ModelError}
+		ModelState["DateofBirth"].Errors[0]
+			{System.Web.Mvc.ModelError}
+			    ErrorMessage: "The value 'test' is not valid for DateOfBirth."
+			    Exception: null	
+
+  	- Updatemodel function, without using any parameter values, to receive the posted form data.  	  
+  	  -------------------- 
+  	- "UpdateModel()" function inspects all the HttpRequest inputs such as posted Form data, QueryString, Cookies and 
+	   Server variables and populate the employee object.  
+
+        [HttpPost]
+        public ActionResult Create() {
+            if (ModelState.IsValid) {
+                Employee emp = new Employee();
+                UpdateModel(emp);
+                
+                EmployeeLayers el = new EmployeeLayers();
+                ...
+	
+	- Both are same method name, it will compile error, so rename it Create_Post(), but this controller action method 
+	  --------------------------
+  	   will no longer respond, because url is 'http://localhost/MVC5/Employee/Create', so fix this, add ActionName parameter.
+  	 
+        [HttpGet]
+        [ActionName("Create")] //url is create, it know get create
+        public ActionResult Create_Get() //to differnetiate
+
+        [HttpPost]
+        [ActionName("Create")] //url is create, it know post create
+        public ActionResult Create_Post() //both are create, do _post added, but url doesn't know, added ActionName
+
+Difference between updatemodel and tryupdatemodel
+=================================================
+	Difference - UpdateModel() throws an exception if validation fails, TryUpdateModel() will never throw an exception. 
+	Similarity - Both the functions are used to update the Model with the Form values and perform the validations.
+	
+	public ActionResult Create_Post() {
+            Employee emp = new Employee();
+            UpdateModel(emp);
+
+            if (ModelState.IsValid) ....
+	- Submit, Record Throws Exception error
+	
+	To fix use TryUpdateModel, will return boolean
+	    Employee emp = new Employee();
+            TryUpdateModel(emp);	
+	- Submit, the each field required message("The Name field is required.") will shown on the form 
+	
+	- Is it mandatory to use "UpdateModel()" or "TryUpdateModel()" function to update the Model? NO.
+	  The above method can be re-written as shown below and we get the same behaviour.
+	public ActionResult Create_Post(Employee emp) {
+            //Employee emp = new Employee();
+            //TryUpdateModel(emp);
+
+            if (ModelState.IsValid)
+	  
+	- Why do we need to explicitly invoke model binding?
+	  If you want to limit on what can be bound, explicitly invoking model binding can be very useful.
+	
+Include (white) & Exclude (black) list - Prevent Unintended updates 
+==========================================================================
+     	[HttpPost]
+        public ActionResult Edit(int id) {
+            Employee emp  = el.Employees.Where(w => w.ID == id).Single();
+            //UpdateModel(emp, new String[]{ "ID","Gender","City" , "DateOfBirth"}); //include list
+            
+            UpdateModel(emp,null,null, new String[] { "Name" }); /exclude list
+            if (ModelState.IsValid) {
+        
+	- including and excluding properties using model bind attribute	  
+	  -------------------------------------------------------
+        public ActionResult Edit_Post([Bind(Include="ID,Gender,City,DateOfBirth")]Employee emp)
+        //public ActionResult Edit_Post([Bind(Exclude="Name")]Employee emp)
+	
+	- Including and excluding properties from model binding using interfaces
+	------------------------------------------------------------------------
+	    public interface IEmployee {
+		 int ID { get; set; }
+		 string Gender { get; set; }
+		 string City { get; set; }
+		 DateTime? DateOfBirth { get; set; }
+	    }
+
+	    public class Employee : IEmployee {	
+		
+            Edit(int id) { ... UpdateModel<IEmployee>(emp); }
+
+IUD using entity framework (ADO.NET Entity Data Model)
+---------------------------------------------------------------------------------------------------------------------------------
+	- Models -> Add New Item -> Data -> ADO.NET Entity Data Model (MVC5EFModel) -> EF Designer from database
+	  -> Save ConnectionSettings (MVC5EFEntities) -> Select Tables -> Model Namespace (Models)
+	- Run, List headers area 'Name Gender City Name		', 2nd name should be Departmnet Name
+	- Customizing auto generate index.cshtml view( MetadataType ), it contains '@model IEnumerable<MVC5EF.Models.Employee>', 
+	  ---------------------------------------------------------
+	  'Models.Employee' auto generated code, change anything, it will overwrite next time, so create partial Employee class 
+	  'EmployeeExt.cs'
+
+View engines (MVC5 only fro RAZOR, i don't know how to create ASPX engine)
+---------------------------------------------------------------------------
+	Out of the box asp.net offers the following 2 view engines. 1. ASPX & 2. Razor 
+
+	1. Difference between RAZOR and ASPX view engines?
+		No major difference, just syntax. 
+		In ASPX view engine, the server side script is wrapped between <% %>, where as in RAZOR we use @. 
+		RAZOR views have the extension of .CSHTML or .VBHTML, where as ASPX views has the extension of .ASPX
+
+	2. Is it possible, to have both RAZOR and ASPX views in one application? (upto MVC4) Yes
+
+	3. Is it possible, to use a custom or third party view engine with asp.net mvc? Yes
+
+	- i created ASPX "List".cshtml view for Index Action, when run i got Razor list page. to get ASPX list page
+        public ActionResult Index() {
+            var employees = db.Employees.Include(e => e.Department);
+            return View("List", employees.ToList());
+        }	
+        
+        - Custom view - Several custom view engines, some of them  1. Spark, 2. NHaml, 3. SharpDOM, 4. Brail etc...
+        -------------
+        
+        - Add Spark -> Nuget -> Search Spark.Web.MVC2/3/4/5 -> Install
+          ---------
+	 Step 1: Navigate to the following path and create a folder with name="Spark". 
+	 Spark specific templates must be copied into "Spark" folder.
+	 C:\Program Files (x86)\Microsoft Visual Studio 10.0\Common7\IDE\ItemTemplates\CSharp\Web\MVC 4\CodeTemplates\AddView        
+	 2015,CPF86\Microsoft Visual Studio 14.0\Common7\IDE\ItemTemplates\CSharp\Web\MVC 4\CodeTemplates\AddView
+
+	Step 2: Create an xml file with in "Spark" folder. 
+	The name of the XML file must be "ViewEngine.xml" and must contain the following xml content.
+	<?xml version="1.0" encoding="utf-8" ?>
+	<ViewEngine DisplayName="Spark" 
+	  ViewFileExtension=".spark" 
+	  DefaultLayoutPage="~/Views/Shared/_Layout.spark" 
+	  PartialViewFileExtension=".spark" />
+        
+Customizing Display & Edit Templates
+------------------------------------
+	The following is the convention used by MVC to find the customized templates
+	1. The customized 
+		Display templates must be in a sub-folder that is named - DisplayTemplates. 
+		Editor templates must be in a sub-folder that is named - EditorTemplates.
+	2. These sub-folders can live in "Shared" folder, or a specific views folder. 
+		If these folders are present in the Shared folder, then the templates are available for all the views. 
+		If they are in a specific views folder, then, they are available only for that set of views.
+	3. The name of the template must match the name of the type. 
+		For example, as we are customizing DateTime template, the name of the template in this case has to be 
+		DateTime.ascx or DateTime.cshtml.
+	-i need content and scripts folder, it contains jquery	
+	- Shared\EditorTemplates\DateTime.cshmtl
+		@model DateTime?
+		@Html.TextBox("", (Model.HasValue? Model.Value.ToString("dd/MM/yyyy"):""),new {@class="date"})	
+	- Views\Edit.cshtml
+		@model Mvc4App.Models.Employee
+
+		<script src="~/Scripts/jquery-1.8.2.min.js" type="text/javascript"></script>
+		<script src="~/Scripts/jquery-ui-1.8.24.min.js" type="text/javascript"></script>
+		<link href="~/Content/Site.css" type="text/css" rel="stylesheet" />
+		<link href="~/Content/themes/base/jquery.ui.all.css" type="text/css" rel="stylesheet"/>
+
+		<script>
+		    $(function () {
+			$("input:text.date").datepicker({ dateFormat: "dd/mm/yy" });
+		    });
+		</script>
+		@Html.EditorForModel()
+
+Accessing model metadata from custom templated helpers
+------------------------------------------------------
+	@model DateTime?
+	@Html.TextBox("", (Model.HasValue? @ViewData.TemplateInfo.FormattedModelValue:""),new {@class="date"})
+	<br />DisplayFormatString - @ViewData.ModelMetadata.DisplayFormatString
+	<br />ContainerType - @ViewData.ModelMetadata.ContainerType
+	
+	-To fix hard code value	=>@Html.TextBox("", (Model.HasValue? Model.Value.ToString("dd/MM/yyyy"):""),new {@class="date"})	
+	 change to @Html.TextBox("", (Model.HasValue? @ViewData.TemplateInfo.FormattedModelValue:""),new {@class="date"})
+
+Image Display, @Url.Content(Model.Photo)        
+------------------------------------------
+	-Created Photos folder & add image (1.PNG), in db '~\photos\1.png', ~ means root path
+	-@Html.Image there is no helpers
+	-remove the below code in details.html
+		<div class="display-label">  @Html.DisplayNameFor(model => model.PhotoText)</div>
+		<div class="display-field">  @Html.DisplayFor(model => model.PhotoText) </div>	
+	-change to, @Url.Content convert to '/mvc4app/photos/1.png' means remove '~'
+		<img src="@Url.Content(Model.Photo)" alt="@Model.PhotoText" />	
+	- Url.Content() html helper method, it resolves a url for a resource when we pass it the relative path.		
+
+Html encoding ( replacing ASCII characters with their 'HTML Entity' equivalents)
+-------------------
+	  ASCII	HTML Encoded
+	  <	&lt;
+	  >	&gt;
+
+	Why would you html encode? To avoid cross site scripting attacks, all output is automatically html encoded in mvc.
+
+	Avoiding html encoding in razor views:
+	IHTML strings	- Razor, ASPX
+	Html.Raw()	- Razor, ASPX , if it return string, use @Html.Raw(Html.Image(@Model.Photo, @Model.PhotoText));
+	<%=%>		- ASPX
+
+Detect errors in views at compile time
+-------------------------------------
+	- Compile time error checking in MVC views is disabled by default.
+	- For example, @Html.DisplayNameFor(model => model.Name) change to @Html.DisplayNameFor(model => model.Name1)
+	  compile, it will buld succeeded, when run it, you will get the error. 
+	- If you want to enable compile time error checking for views in MVC
+	1. Open MVC project file .csproj or .vbproj, Search for MvcBuildViews under PropertyGroup. 
+	   MvcBuildViews is false by default. Turn this to true as shown below. <MvcBuildViews>true</MvcBuildViews>
+	3. Save the changes.
+	
+	If you now build the project, you should get compile time error.
+	
+Advantages of using strongly typed views	
+----------------------------------------
+	There are several ways available to pass data from a controller to a view in an mvc application. 
+	1. ViewBag or ViewData 	2. Dynamic type  3. Strongly typed view 
+	
+	The following are the advantages of using strongly typed views. We get
+	1. Intellisense and  2. Compile-time error checking	
+	
+	-Example ViewBag
+		Employee employee = db.Employees.Single();
+		ViewBag.EmployeeData = employee;
+    		return View();
+		 @Html.DisplayName("FullName"), @ViewBag.EmployeeData.FullName
+		 @Html.DisplayName("FullName"), @ViewBag.EmployeeData.FullName1, no compile time error/intellisense but run time error
+
+	-Example Dynamics
+		Employee employee = db.Employees.Single();
+		return View(employee);
+    		@model dynamic
+		 @Html.DisplayName("FullName"), @Model.FullName
+		 @Html.DisplayName("FullName"), @Model.FullName1, no compile time error but run time error, no intellisense		 
+
+	-Example strongly typed error
+		Employee employee = db.Employees.Single();
+		return View(employee);
+    		@model MVCDemo.Models.Employee
+		 @Html.DisplayName("FullName"), @Model.FullName
+		 @Html.DisplayName("FullName"), @Model.FullName1, compile time/intellisense error.
+
+Partial() views (.cshmtl, .vbhtml .ascx) like user controls in asp.net  & RenderParital()
+-----------------------------------------------------------------------------------------
+	- Partial views are used to encapsulate re-usable view logic
+	- index.html
+		@model IEnumerable<Mvc4App.Models.Employee>
+
+		@foreach (var item in Model)
+		{
+		   <table ><tr><td>@Model.Name</td></tr></table>
+		}
+	-created Shared/_Employee.cshtml
+		@model Mvc4App.Models.Employee
+		 <table ><tr><td>@Model.Name</td></tr></table>	
+	-now replace index.html		 
+		@model IEnumerable<Mvc4App.Models.Employee>
+
+		@foreach (var item in Model)
+		{
+		   @Html.Partial("_Employee",item)
+		}
+
+	- Differences:
+		1. The return type of "RenderPartial" is void, where as "Partial" returns "MvcHtmlString"
+
+		2. Syntax for invoking Partial() and RenderPartial() methods in Razor views
+			@Html.Partial("PartialViewName")	{ Html.RenderPartial("PartialViewName");  }
+			<%: Html.Partial("PartialViewName") %>	<% Html.RenderPartial("PartialViewName"); %> 	
+			
+	- When would you use Partial() over RenderPartial() and vice versa?
+		"RenderPartial()" returns void and the output will be written directly to the output stream, 
+		"Partial()" method returns MvcHtmlString, which can be assigned to a variable and manipulate it if required. 
+		Need to assign the output to a variable for manipulating it, then use Partial(), else use RenderPartial().			
+	- Which one is better for performance?
+		From a performance perspective, rendering directly to the output stream is better. 
+		RenderPartial() does exactly the same thing and is better for performance over Partial(). 		
+
+T4 (Text Template Transformation Toolkit) (Scaffolding) templates , extension .tt
+----------------------------------------------------------------------------------
+	- Scaffolding does the job of writing CRUD operations code for us. Create, Retrieve, Update and Delete.
+	  Scaffolding is basically a Code Generation framework.
+	- used by visual studio to generate code when you add a view or a controller.
+	- located C:\Program Files (x86)\Microsoft Visual Studio 10.0\Common7\IDE\ItemTemplates\CSharp\Web\MVC 4\CodeTemplates
+	- Is it possible to customize T4 templates? Yes, 
+	  if you customized T4 templates on 'C:\Program Files (x86)', it will available for all MVC projects.
+	  for example, List.tt, "<h2><#= mvcHost.ViewName#></h2>" => change to "<h2><b><#= mvcHost.ViewName#></b></h2>" 
+	- If you want to customize T4 templates, only for a specific project, 
+	  then copy "CodeTemplates" folder and paste it in the root directory of your MVC project. 
+	   Right click on the template files(with .tt extension), and select Properties and delete "TextTemplatingFileGenerator".  
+	
+	  By deleting, we are telling VS not to run them during the build. 
+	  They will be manually called when we add a view or a controller using "Add View" and "Add Controller" dialog box.
+	
+	- Is it possible to add your own T4 template to the existing list of templates?
+	  Absolutely, simply create a file with ".tt" file extension in "AddController" folder in "CodeTemplates". 
+	  for example, 	- if copy List, List - Copy.tt will be display on the scaffolding
+	  
+Cross-site scripting (XSS) attack - is a security vulnerability found in Web applications. , ValidateInput
+--------------------									--------------------	
+	- XSS allows hackers to inject client-side script, stealing session cookies into Web pages. 
+	- when i enter html code in @Html.textAreaFor, error throws 
+	  ' A potentially dangerous Request. Form value was detected from the client (Comments="<script").'
+	- if you allow html code, enable [ValidateInput(false)]
+		HttpPost]
+		[ValidateInput(false)]
+		public ActionResult Create(Comment comment) { }	  
+	- Display Html code, will show like string <b>bold</b>, 
+	  so use @Html.Raw(item.commen), it will show like html value "BOLD" means encoding
+	- 2 changes that we have done has opened the doors for XSS.
+		1. By allowing HTML to be submitted on Create.cshtml view
+		2. By disabling HTML encoding on Index.cshtml		  	
+	- if enter <script type="text/javascript">alert('Your site is hacked');</script> in textarefor value,
+	  system will poppuate alert message.
+	- Prevent cross site scripting	  
+	[HttpPost]
+        [ValidateInput(false)] // Input validation is disabled, so the users can submit HTML
+        [ValidateAntiForgeryToken]
+        public ActionResult Edit([Bind(Include = "EmployeeId,Name,Gender,City,DepartmentId,HireDate,Comments")] Employee employee)
+        {
+            StringBuilder sb = new StringBuilder();
+            // Encode the text that is coming from comments textbox
+            sb.Append(HttpUtility.HtmlEncode(employee.Comments));
+            
+            // Only decode bold and underline tags
+            sb.Replace("&lt;b&gt;", "<b>");
+            sb.Replace("&lt;/b&gt;", "</b>");
+            sb.Replace("&lt;u&gt;", "<u>");
+            sb.Replace("&lt;/u&gt;", "</u>");
+
+            employee.Comments = sb.ToString();
+            employee.Name = HttpUtility.HtmlEncode(employee.Name);
+
+            if (ModelState.IsValid) {
+                db.Entry(employee).State = EntityState.Modified;
+                db.SaveChanges();
+                return RedirectToAction("Index");
+            }
+            return View(employee);
+        }	
+
+Razor Views Syntax
+-------------------
+	- Use @ symbol to switch between c# code and html.
+		@for(int i=0;i<10;i++) { <b>@i</b> } => 0 1 2 3 4 5 6 7 8 9
+	- Use @{ } to define a code block.
+		@{
+		    int even = 0;
+		    int odd = 0;
+		    for (int i=0;i<10;i++) {
+			if (i%2==0) { even =even+i; } else { odd =odd+i; }
+		    }
+		}
+		Even Numvber - @even<br /> => Even Numvber - 20
+		Odd Numvber -  @odd	   => Odd Numvber -  25
+	- Use <text> element or @: to switch between c# code and literal text
+		@{				=> no need this line
+		    for (int i = 0; i < 10; i++) {	=> @for
+			<b>@i</b>
+			if (i % 2 == 0) {
+			    //<text> - Even </text> 
+			    @: - Even
+			} else {
+			    //<text> - Odd </text>
+			    @: - Odd
+			}
+			<br />
+		    }
+		}	
+	- Use @* *@ to comment in razor views
+		@*This is a comment
+		in razor views*@		
+	- Transition between c# expressions and literal text
+		@{
+		    int day = 31;
+		    int month = 12;
+		    int year = 2013;
+		}
+
+		Date is @day-@month-@year			
+	- Using explicit code nugget
+		@for (int i = 1; i <= 5; i++)
+		{
+		    <img src="~/Images/@(i).png" />
+		}		
+	- @ symbol is used as code delimiter in razor views. However, razor is smart enough to recognize 
+	  the format of internet email address and not to treat the @ symbol as a code delimiter.
+		This is my email address<br />
+		<b>kudvenkat@gmail.com</b>
+
+	- Use @ symbol to escape @
+		I will meet you @@ office
+
+Layout view (_Layout.cshtml), @RenderBody(), _ViewStart.cshtml
+----------------------------------------------------------------
+	- Advantage - Maintaining consistent look and feel across all the views in an mvc application. 
+	  A typical layout view consists of 1. Header   2. Footer   3. Navigation menu   4. View specific content 
+
+	- Created Views/Shared/_Layout.cshtml, 	@RenderBody()  will render the controller action results
+		<!DOCTYPE html>
+		<html>
+		<head>
+		    <meta name="viewport" content="width=device-width" />
+		    <title>@ViewBag.Title</title>
+		</head>
+		<body>
+		    <div>
+		     <table>
+			 <tr><td>Header</td></tr>
+			 <tr><td>
+			     <table><tr>
+				 <td>Menu</td>
+				 <td>@RenderBody()</td>
+			    </tr></table>
+			 </td></tr>
+			 <tr><td>Footer</td></tr>
+		     </table>   
+		    </div>
+		</body>
+		</html>	
+	- Apply to all the view pages, Layout link		
+		@{
+		    ViewBag.Title = "Index";
+		    Layout="~/Views/Shared/_Layout.cshtml";
+		}	
+	- Adding 'Layout=' is redundant code and overhead maintenance.		
+
+	- _ViewStart.cshtml file? Place Views/_ViewStart.cshtml folder & Specify the Layout property, PartialView
+	 ------------------------ 								   ---------------	
+		 @{
+		     Layout = "~/Views/Shared/_Layout.cshtml";
+		 }
+		- All the views will then use the layout file that is specified in _ViewStart.cshtml. 
+		 So no need to specify Layout property on each and every view.
+		-if place in specific folder in view, it will applicalbe for the specific folder
+		 Views/Employee/_ViewStart.cshtml
+		-if you specify Layout property on view, and also Layout property from 	_Layout.cshtml.
+		 View will override & take the view layout file.
+		 for example, Details.cshtml
+			@model Mvc4App.Models.Employee
+
+			@{
+			    ViewBag.Title = "Details";
+			    Layout = "~/Views/Shared/_DifferentLayout.cshtml";
+			    //the above line will overirde the _ViewStart.cshtml, it take _DifferentLayout.cshtml
+			    //if i comment the above line, it will take _ViewStart.cshtml layout
+			}		 
+		- Where else can I specify a layout file?
+			- Layout in individual view or _ViewStart.html
+			- Layout file can also be specified in a controller action method or in an action filter.			
+			- specified controller action method
+			  public ActionResult Delete(int id = 0){ .. return View(employee); }=> changed
+			  public ActionResult Delete(int id = 0){ ....   return View("Delete","_DeleteLayout",employee);}			
+			  _DeleteLayout created /Shared/_DeleteLayout.cshtml
+			
+		- Can we write some logic in "_ViewStart.cshtml" to dynamically specify which layout file to use?
+			Yes, the following code will change the layout file to use based on the browser type. 
+			Code in "_ViewStart.cshtml" file
+			@{
+			    Layout = Request.Browser.IsBrowser("Chrome") ? "~/Views/Shared/_Layout.cshtml" 
+			    	: "~/Views/Shared/_DifferentLayout.cshtml" ;
+			}
+		- it calling 'Details.cshtml', is uses Changed Details '_ViewStart.cshtml' layout
+			public ActionResult Details(int id = 0){... return View(employee); }
+		  created new partial view 'Views\Employee\_Employee.cshtml', rename 'Details1.cshtml'			
+		  	public ActionResult Details(int id = 0){... return View('_Employee',employee); }
+		  All partial views uses "_ViewStart.cshtml" layout. 
+		  How do I prevent these partial views from using a layout file? Add PartialView
+		  								     ------------	
+		  	public ActionResult Details(int id = 0){... return PartialView('_Employee',employee); }
+		  it won't use  "_ViewStart.cshtml" layout. 			 
+	-Named Sections in Layout, @RenderSection
+	-----------------------------------------
+		- Added section in Edit.cshtml
+			@using (Html.BeginForm()) {
+			    @Html.AntiForgeryToken()
+			    @Html.ValidationSummary(true)
+
+			    @section Menu{
+				@Html.ActionLink("List", "Index")<br />
+				@Html.ActionLink("Details", "Details",new {Id = Model.Id})<br />
+				@Html.ActionLink("Delete", "Delete",new {Id = Model.Id})<br />
+			   }
+			    <fieldset>		
+		- Added in _Layout.cshtml
+			<td>@RenderSection("Menu")</td>
+                 	<td>@RenderBody()</td>		
+		- view edit page, it display with 3 links, 
+		- but if i view details page, it will throw error, because there is not section defined, so avoid the error, add false
+		  <td>@RenderSection("Menu", false)</td> 
+		  now all page will display empty except edit.
+		-Another way check Named Section
+                 <td>@if (IsSectionDefined("Menu"))
+                     {
+                         @RenderSection("Menu", false);
+                     } else {
+                         @Html.ActionLink("List", "Index");
+                     }
+                 </td>
+Multiple Delete - db.Employees.DeleteObject does not support EF5.0, used db.Employees.RemoveRange(...)
+---------------
+
+Areas - is allow to breakdown a large complex application into a several small sections. 
+-----
+	- Simple MVC, Root directory - 1. Models, 2. Views, 3. Controllers folders
+	- Complex or Big MVC, very easily maintained using areas, their own set of 1. Models, 2. Views, 3. Controllers, 4. Routes
+	- For example, Job Portal, Employee Area, Employer Area & Administrator Area 
+	  Add Project -> Area -> 'Employer', it contains Controllers, Views, Modelsfolders and EmployeeAreaRegistration.cs file
+	  so all areas will have on 'xxxxAreaRegistration.cs' file.
+	- EmployeeAreaRegistration.cs - which contains the code to register a route for the area.
+		public override void RegisterArea(AreaRegistrationContext context) {
+		    context.MapRoute(
+			"Employee_default",
+			"Employee/{controller}/{action}/{id}",
+			new { action = "Index", id = UrlParameter.Optional }
+		    );
+		}	
+       
+        	"Employee/{controller}/{action}/{id}", //for Employee
+        	"Admin/{controller}/{action}/{id}", //for Admin
+
+		Global.asax.cs, AreaRegistration.RegisterAllAreas(), code to register all areas in your application.
+		
+	- Project Structure
+		JobPortal\
+			Areas\
+				Administrator\
+					Controllers\HomeController.cs
+					View\Home\Index.cshtml						
+					AdminAreaRegistration.cs
+				Employee\
+					Controllers\HomeController.cs
+					View\Home\Index.cshtml
+					EmployeeAreaRegistration.cs
+				Employer\
+					Controllers\HomeController.cs
+					View\Home\Index.cshtml						
+					EmployerAreaRegistration.cs
+			Controllers\HomeController.cs
+			View\Home\Index.cshtml						
+
+	- when run the project 'http://localhost/JobPortal', i got error
+	  Multiple types were found that match the controller named 'Home'. 
+	  This can happen if the route that services this request ('{controller}/{action}/{id}') does not specify namespaces 
+	  to search for a controller that matches the request. 
+	  If this is the case, register this route by calling an overload of the 'MapRoute' method that takes a 
+	  'namespaces' parameter.	
+
+		The request for 'Home' has found the following matching controllers:
+		JobPortal.Controllers.HomeController
+		JobPortal.Areas.Employer.Controllers.HomeController
+		JobPortal.Areas.Employee.Controllers.HomeController
+		JobPortal.Areas.Administrator.Controllers.HomeController		  
+
+	- To fix the above error, App_start\RouteConfig.cs. Pass the namespace of the HomeController in the 
+	  Main area using namespace parameter.
+		public static void RegisterRoutes(RouteCollection routes) {
+		    routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
+
+		    routes.MapRoute(
+			name: "Default",
+			url: "{controller}/{action}/{id}",
+			defaults: new { controller = "Home", action = "Index", id = UrlParameter.Optional },
+			namespaces: new[] {"JobPortal.Controllers" }
+		    );
+		}			
+	- http://localhost/JobPortal => display "Main Home Page" 		
+	- if type http://localhost/JobPortal/Employee, throws error 'The resource cannot be found.'
+	- To fix the above error, add controller ="Home" on 'EmployeeAreaRegistration.cs' file
+		public override void RegisterArea(AreaRegistrationContext context) {
+		    context.MapRoute(
+			"Employee_default",
+			"Employee/{controller}/{action}/{id}",
+			new {Controller="Home", action = "Index", id = UrlParameter.Optional }
+		    );
+		}	
+		now i can see "Employee Home Page"      	
+		if you get 'System.Web.Optimization' error, install from  
+		Package Manager Console-> type 'Install-Package Microsoft.Web.Optimization -Pre'
+	-Index.cshtml - all 4 views.
+		<table border="1">
+		    <tr>
+			<td>
+			    <b>Main Area Home Page - Links</b>
+			</td>
+		    </tr>
+		    <tr>
+			<td>
+			    @Html.ActionLink("Main Area Home Page", "Index", "Home", new { area = "" }, null)
+			</td>
+		    </tr>
+		    <tr>
+			<td>
+			    @Html.ActionLink("Employee Area Home Page", "Index", "Home", new { area = "Employee" }, null)
+			</td>
+		    </tr>
+		    <tr>
+			<td>
+			    @Html.ActionLink("Employer Area Home Page", "Index", "Home", new { area = "Employer" }, null)
+			</td>
+		    </tr>
+		    <tr>
+			<td>
+			    @Html.ActionLink("Admin Area Home Page", "Index", "Home", new { area = "Administrator" }, null)
+			</td>
+		    </tr>
+		</table>	
+
+ Enable client side validation, Remote Validation, UnobtrusiveJavaScript
+ -----------------------------
+ 	- 1.web.config
+		 <appSettings>
+		   <add key="ClientValidationEnabled" value="true" />
+		   <add key="UnobtrusiveJavaScriptEnabled" value="true" />
+		</appSettings>
+		- Is it possible to turn these features on/off using code? Yes
+			protected void Application_Start() {
+			    HtmlHelper.UnobtrusiveJavaScriptEnabled = true;
+			    HtmlHelper.ClientValidationEnabled = true;
+			}
+		- Is it possible to turn these features on/off for a specific view? Yes
+			@{
+			    Html.EnableClientValidation(true);
+			    Html.EnableUnobtrusiveJavaScript(true);
+			}		
+		
+	- 2.include the script, order is important.
+		<script src="~/Scripts/jquery-1.10.2.min.js" type="text/javascript"></script>
+		<script src="~/Scripts/jquery.validate.min.js" type="text/javascript"></script>
+		<script src="~/Scripts/jquery.validate.unobtrusive.min.js" type="text/javascript"></script>	
+	
+	- Display Validation Or Error Message
+	  ------------------
+	   - @Html.ValidationSummary(false, "List of Errors") - Display all the error messages in the view
+	   - Use ValidationMessageFor or ValidationMessage helper method to display field level error messages in the view.
+	   - Check whether the model is valid before updating in the action method using ModelState.IsValid.
+	   - Enable client side validation to display error messages
+	   - Custom Error Message: [Required(ErrorMessage="Please enter student name.")]
+	   
+	- Unobtrusive JavaScript - it's .js file, Page load time is better. 
+	 ----------------------
+	    - Easy to update the Javascript logic. Better cache support and accessed much faster.	
+
+	-  Obtrusive JavaScript code example
+	    <script>
+		function MoveOver(controlid) { document.getElementById(controlid)style.backgroundColor = "red"; }
+		function MoveOut(controlid) { document.getElementById(controlid)style.backgroundColor = "blue"; }
+	    </script>	
+            <input id="btnsubmit" type="submit" value="Save" onmouseover="MoveOver('btnsubmit')" onmouseout="MoveOut('btnsubmit')"/>	    
+            
+	- Unobtrusive JavaScript code example
+		CustomJavaScript.js
+		$(function () {
+		    $("#btnsubmit").mouseover(function () { $("#btnsubmit").css("background-color", "blue") });
+		    $("#btnsubmit").mouseout(function () { $("#btnsubmit").css("background-color", "red") });
+		});
+
+		<script src="~/Scripts/CustomJavaScript.js" type="text/javascript"></script>
+		<input id="btnsubmit" type="submit" value="Save"/>
+	- Unobtrusive validation implemented
+	------------------------------------
+		- Edit.cshtml view source, data-val
+		    <input id="Name" name="Name" ...
+		    	data-val="true"  //it means unobtrusive validation is turned on for this element
+		    	data-val-length-max="10" data-val-length-min="5" 
+		    	data-val-required="The Name field is required." 
+		    	data-val-length="The field Name must be a string with a minimum length of 5 and a maximum length of 10."  />
+		- if false <add key="UnobtrusiveJavaScriptEnabled" value="false" />, now edit.cshtml
+			 <input text-box single-line" id="Name" name="Name" .. /> //no data-val tags
+		  but bottom of the page, it contains javascript code			 
+			<script type="text/javascript">
+			//<![CDATA[
+			if (!window.mvcClientValidationMetadata) { window.mvcClientValidationMetadata = []; }
+				window.mvcClientValidationMetadata.push({"Fields":[
+				{"FieldName":"Name", "ReplaceValidationMessageContents":false,
+				"ValidationMessageId":"Name_validationMessage",
+				"ValidationRules":[{
+				"ErrorMessage":"The field Name must be a string with a minimum length of 5 and a maximum length of 10.",
+				"ValidationParameters":{"min":5,"max":10},
+				"ValidationType":"length"},{"ErrorMessage":"The Name field is required.",
+				"ValidationParameters":{}, "ValidationType":"required"}]},...
+				);
+			//]]>
+			</script> 
+
+	- Remote Validation only works when javascript is enabled, example, if i create username, check username exits or not
+	------------------
+		EmployeeController.cs
+		public JsonResult isNameAlreadyExist(string Name) { //"Name" must be same name.
+		    return Json(!db.Employees.Any(a => a.Name == Name), JsonRequestBehavior.AllowGet);
+
+		}	
+
+		EmployeeExt.cs
+		[Required]
+		[Remote("isNameAlreadyExist", "Employee",ErrorMessage = "UserName already exist")]
+		public string Name { get; set; }
+
+		<script src="~/Scripts/jquery-1.10.2.min.js" type="text/javascript"></script>
+		<script src="~/Scripts/jquery.validate.min.js" type="text/javascript"></script>
+		<script src="~/Scripts/jquery.validate.unobtrusive.min.js" type="text/javascript"></script>	
+
+		if i type same name, message will throw on client side.	
+	   - if javascript disabled, use server side validation, the above script link disabled.
+	     Add model validation error dynamically in the controller action method	
+		public ActionResult Create(Employee employee) {
+		    if(db.Employees.Any(a => a.Name == employee.Name)){ 
+			ModelState.AddModelError("Name", "User Already Exists");
+		    }	
+	-Both Remote & Client Validation using 'Create a custom remote attribute and override IsValid) method'
+	------------------------------------------------------------------------------------------------------
+		Common/RemoteClientAttribute.cs
+		using System.Web;
+		using System.Web.Mvc;
+		using System.Reflection;
+		using System.ComponentModel.DataAnnotations;
+
+		namespace MVC5EF.Common
+		{
+		    public class RemoteClientAttribute : RemoteAttribute
+		    {
+			//exends RemoteAttribute to get IsValid method, just type override space you will get all override method
+			protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+			{
+			    //GetExecutingAssembly() will get MVC5EF, GetTypes() => like class name, struct name, under the MV5EF...
+			    Type controller = Assembly.GetExecutingAssembly().GetTypes()
+				.FirstOrDefault(type => 
+				    type.Name.ToString().ToLower() == string.Format("{0}controller", this.RouteData["controller"].ToString().ToLower()));
+			    if (controller != null)
+			    {
+				//GetMethods => will get all the methods of the controller
+				MethodInfo method = controller.GetMethods().FirstOrDefault(action 
+				    => action.Name.ToString().ToLower() == this.RouteData["action"].ToString().ToLower());
+				if (method!=null)
+				{
+				    //Active the class means
+				    object instance = Activator.CreateInstance(controller);
+				    //Invoke the mehtod, call isNameAlreadyExist(string Name) with Name (is object value)
+				    object response = method.Invoke(instance, new object[] {value });
+				    //method is returning JsonResult
+				    if (response is JsonResult)
+				    {
+					//output of the jsonresult.data is boolean
+					object jsonData = ((JsonResult)response).Data;
+					//checking if it true pass ValidationResult.success else pass erro
+					return (bool)jsonData ? ValidationResult.Success : new ValidationResult(this.ErrorMessage);
+				    }
+				}
+			    }
+			    //any error pass error message
+			    return new ValidationResult(this.ErrorMessage);
+			}
+
+			//if i decorate [RemoteClient("isNameAlreadyExist", "Employee", ErrorMessage = "UserName already exist")]
+			//i will get error9	'RemoteClientAttribute' does not contain a constructor that takes 2 arguments
+			//to fix the above error, i added below 3 methods
+
+			public RemoteClientAttribute(string routeName):base(routeName) { }
+
+			public RemoteClientAttribute(string action, string controller):base(action, controller) { }
+
+			public RemoteClientAttribute(string action, string controller, string areaName) : base(action, controller, areaName) { }
+
+		    }
+		}
+
+		- EmployeeExt.cs => EmployeeMetaData 		 
+			[Required]
+			//[Remote("isNameAlreadyExist", "Employee",ErrorMessage = "UserName already exist")]
+			[RemoteClient("isNameAlreadyExist", "Employee", ErrorMessage = "UserName already exist")]
+			public string Name { get; set; }
+
+		- removed the   if(db.Employees.Any(a => a.Name == employee.Name)){ } code from Create method
+		- now function will work both javascript and server side validaation, if javascript is disabled, server side
+		  validation will work.
+Ajax - page won't refresh, only contetn
+----
+	- AjaxOptions class - OnBegin , OnComplete , OnSuccess , OnFailure 
+	- install Install-Package Microsoft.jQuery.Unobtrusive.Ajax
+	- @Ajax.ActionLink("All","All", new AjaxOptions {
+		HttpMethod="GET",
+		UpdateTargetId="divEmployees",
+		InsertionMode=InsertionMode.Replace,
+		LoadingElementId = "divLoading",
+		OnBegin = "ClearResult",
+		OnSuccess = "TotalRecords",
+		LoadingElementDuration = 3000
+	}
+
+Bundling & JavaScript minification MVC4
+------------------------------------
+	- Improve request load time. 
+	- Bundling allow us to load the bunch of static files from the server into one http request.
+	  -----------
+	    http://../Javascript1.js
+	B<----------------------------> S   browser sends two separate requests to load two different JavaScript file 
+	R   JavaScript1.js  		E   JavaScript1.js and JavaScript2.js.
+	O				R
+	W   http://../Javascript2.js	V
+	S<----------------------------->E	
+	E   JavaScript2.js		R
+	R
+
+	    http://../js-bundle
+	B--------------------------------> S   Bundling technique allows us to load more than one JavaScript file, 
+	R       		           E   JavaScript1.js and JavaScript2.js in one request.
+	O			           R
+	W   				   V
+	S<-------------------------------->E	
+	E   JavaScript1.js,JavaScript2.js  R
+	R				
+	  	
+	- Bundle Types - Bundle classes in System.web.Optimization namespace:
+	  - ScriptBundle: It is responsible for JavaScript minification of single or multiple script files.
+	  - StyleBundle: It is responsible for CSS minification of single or multiple style sheet files.
+	  - DynamicFolderBundle: Represents a Bundle object that ASP.NET creates from a folder that contains files of the same type.
+
+	- App_Start\BundleConfig.cs		  
+		using System.Web;
+		using System.Web.Optimization;
+
+		public class BundleConfig {
+		    public static void RegisterBundles(BundleCollection bundles){   
+			// create an ScriptBundle object,  specify bundle name (as virtual path) as constructor parameter 
+			ScriptBundle scriptBndl = new ScriptBundle("~/bundles/bootstrap");
+
+			//use Include() method to add all the script files with their paths 
+			scriptBndl.Include(
+					    "~/Scripts/bootstrap.js",
+					    "~/Scripts/respond.js"
+					  );
+
+
+			//Add the bundle into BundleCollection
+			bundles.Add(scriptBndl);
+			
+			//use IncludeDirectory method of bundle class to add all the files under particular directory.
+			//bundles.Add(new ScriptBundle("~/bundles/scripts").IncludeDirectory("~/Scripts/","*.js",true));
+			
+			//Jquery files includes the version in a name. use {version} wildcard to pickup a version 
+			//based on available version.
+			//bundles.Add(new ScriptBundle("~/bundles/jquery").Include( "~/Scripts/jquery-{version}.js"));
+			
+			//Style Bundle
+			//bundles.Add(new StyleBundle("~/bundles/css").Include( "~/Content/bootstrap.css", "~/Content/site.css"));
+
+			BundleTable.EnableOptimizations = true; //enables bundling and minification in debug mode.
+		    }
+		}
+		
+		Global.asax -> Application_Start() { BundleConfig.RegisterBundles(BundleTable.Bundles); }		
+	  
+	- @Scripts.Render("~/bundles/bootstrap") //nclude ScriptBundle in Razor View: 	  
+	  
+	- JavaScript minification is the process of reducing the size of JavaScript file, by removing comments, 
+	  ------------------------
+	  extra white spaces, new line characters and using shorter variable names.
+	- Advantages, Very small file, downloaded much faster and consumes less bandwidth. 
+	  Search engines like google considers page load time as one of the parameters to rank the pages.	  
+	- Tools,  GOOGLE by using "Minify JavaScript"
+	- Downside, Harder to read and debug. so dev use non-minified versions. Prod use minified versions
+
+-----------------------------------------------------------------------------------------
+Remote Validator - the new RemoteAttribute class that enables you to take advantage of the jQuery Validation plug-in's 
+	remote validator support. This enables the client-side validation library to automatically call a custom method that you 
+	define on the server in order to perform validation logic that can only be done server-side.
+	
+	In the following example, the Remote attribute specifies that client validation will call an action named UserNameAvailable 
+	on the UsersController class in order to validate the UserName field.
+	
+	public class User {
+	    [Remote("UserNameAvailable", "Users")]
+	    public string UserName { get; set; }
+	}
+	
+	The following example shows the corresponding controller.
+	
+	public class UsersController { 
+	    public bool UserNameAvailable(string username) { 
+	        if(MyRepository.UserNameExists(username)) { 
+	            return "false"; 
+	        } 
+	        return "true"; 
+	    } 
+	}
+-----------------------------------------------------------------------------------------	
+	
+Unit Testing in ASP.NET MVC Applications
+
+1)Easily implement unit tests for your Web application
+2)ASP.NET MVC has been architected for testability without dependencies on the IIS server, on a database, or on external classes. 
+3)Create a new ASP.NET MVC project, Select the Create Unit Test Project, a test project will be created in your ASP.NET MVC solution 
+  that contains unit tests for the account controller and the home controller.
+4)Unit test calls an action method in a controller, you can validate that the correct view date is returned 
+  (although you do not validate the HTML). Also test whether a method correctly redirects to another controller or view.
+  
+Using TDD(test-driven development) with ASP.NET MVC  
+
+
+To create an MVC application with unit tests
+
+1)Create a new ASP.NET MVC project, Select the Create Unit Test Project,
+2)VS creates a solution that contains two projects, one named MvcContacts and one named MvcContacts.Tests.
+  using Microsoft.VisualStudio.TestTools.UnitTesting; 
+3)On the Test menu, click Run, and then click All Tests in Solution.
+  The results are displayed in the Test Results window. The tests pass.
+  
+  Results -> Test Run, Test Name (Controller Name), Result (Passed, Failed), Duration, Computer Name, Start Time and End Time,
+  	     Error Message (if Failed), Test Files
+  	     
+4)In the Tests project, open and examine the account controller test class (AccountControllerTest) and 
+  the account controller model class (MvcContacts\Models\AccountModels). 
+  
+  These classes provide a good introduction to how to create mock interfaces and to TDD. Mocking is the process of creating simple substitute (mock) objects for the dependencies in a class so you can test the class without the dependencies. To test interfaces, you typically create a mock class that implements the interface you want to test. For example, the MockMembershipService class in the account controller test class implements the IMembershipService interface to mock members that are part of membership classes, such as the ValidateUser, CreateUser, and ChangePassword methods. The MockMembershipService class enables you to test the action methods that create user accounts, validate user registration information, and change a user's password without having to instantiate a membership class like Membership. 
+	
