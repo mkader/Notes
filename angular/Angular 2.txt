@@ -1,0 +1,2242 @@
+Angular 2 (JavaScript Frameworks)
+---------
+Introduction 
+=============
+	- Performance : Angular 2 has faster initial loads, change detection, and improved rendering time, improved modularity, 
+	  	Dependency injection and testability.
+	- Mobile Support.
+	- Component Based Development (future of web development)
+		-Everything in Angular 2 is a component i.e components are the basic building blocks of an Angular application. 
+	- Several languages can use to develop Angular applications - ECMAScript 5/6 (ES 2015 or ES 6), TypeScript, Dart, 
+		PureScript, Elm
+	- Angular 2 itself, is built using TypeScript.
+	- What is ECMAScript - The JavaScript language standard is officially called ECMAScript.
+	- Wha is Type Script : 
+		- open-source developed by Microsoft. It is a superset of JavaScript 
+		  and compiles to JavaScript through a process called transpilation. 
+	  	- Using TypeScript to build angular applications provides several benefits. 
+	  	  1. Intellisense 2. Autocompletion 3. Code navigation 4. Advanced refactoring 5. Strong Typing 6. Supports ES6
+	  	  
+Setting up Angular 2 in VS
+==========================
+	- 1. install node.js (v6.11.3) and npm (3.10.10). Check node installed or not, cmd> node -v and cmd> npm -v . 
+	     https://nodejs.org/en/download/
+	- 2. upgrade VS Ent/Pro/Com 2015 - Update 3
+	- 3. Restart VS, Configure environment settings for node and npm in VS
+		VS -> Tools -> Options ->  Projects and Solutions -> (Web Package Management vs 2017 ->) External Web Tools -> 
+		move the global $(PATH) entry to be above the internal path $(DevEnvDir) entries -> OK.
+		This tells VS to look for external tools (like npm) in the global path before the internal path.			
+		.\node_modeules\.bin
+		$(PATH)
+		$(DevEnvDir)\Extensions\Microsoft\Web Tools\External
+		$(DevEnvDir)\Extensions\Microsoft\Web Tools\External\git
+	- 4. Install TypeScript (need 2.2.0 or later) for VS. Help->About Microsoft Visual Studio->Check TypeScript version.
+		download 
+		https://www.microsoft.com/en-us/download/details.aspx?id=48593 - 2.8.3 (vs 2017)
+		https://www.microsoft.com/en-us/download/details.aspx?id=48593 - 2.5.20
+		
+		install typescrt globally, some time typescipt show older version
+		npm install -g typescript 
+		
+		find out version 
+		npm list  typescript
+	- 5. Create Angular Project
+	 	1. Run Visual Studio as Administrator -> File -> New Project -> Web -> Visual C# -> ASP.NET Web Application -> 
+	 	   Anglar2Demo -> Empty Template -> OK
+	 	2. Download the "Quick Start Files" from the Angular web site, Extract the .ZIP folder. https://github.com/angular/quickstart
+	 	   Copy 'src folder' & its contents, bs-config.json, package.json, tslint.json'  to the web application project.
+	 	   'Include in project' - >  Prompt to "Search for Typescript Typings" click "No" 
+		3. vs 2107 15.7, https://github.com/Microsoft/TypeScript/wiki/Updating-TypeScript-in-Visual-Studio-2017 
+	
+		   no steps like the below, for 15.7	
+		   1- Run command prompt as Administrator
+		   2- go to "C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\Extensions\Microsoft\Web Tools\Editors"
+		   3- npm config set ca=""
+		   4- npm config set strict-ssl false
+		   5- npm install npm -g --ca=null 
+		
+		   Right click on "package.json" file and select "Restore Packages". "VS Output" window -> the restoration is complete, (restore the required packages)
+		   a message "Installing Packages Complete". 
+		   To see all the installed node modules, click on "Show all Files" icon in Solution Explorer. 
+		   DO NOT include "node_modules" folder in the project.	 	   
+		   
+		   not errors, don't worry about it
+		   npm WARN deprecated express@2.5.11: express 2.x series is deprecated
+		   npm WARN deprecated connect@1.9.2: connect 1.x series is deprecated
+		   npm WARN deprecated minimatch@0.3.0: Please update to minimatch 3.0.2 or higher to avoid a RegExp DoS issue
+
+		   
+		   npm ERR! Windows_NT 6.1.7601
+		   npm ERR! argv "C:\\Program Files\\nodejs\\node.exe" "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js" "install"
+		   npm ERR! node v6.11.3
+		   npm ERR! npm  v3.10.10
+		   npm ERR! code UNABLE_TO_GET_ISSUER_CERT_LOCALLY
+		   npm ERR! unable to get local issuer certificate
+		   npm ERR! 
+		   npm ERR! If you need help, you may report this error at:
+		   npm ERR!     <https://github.com/npm/npm/issues>
+		   npm ERR! Please include the following file with any support request:
+		   npm ERR!     C:\MohideenKader\project\angular\Angular2Demo\npm-debug.log
+		   
+
+		   
+		   Re-run "Restore Packages"
+	- 6. Step 9 : Run the project
+		run cmd-> cd C:\Angular2\Angular2Demo -> enter 'npm start'.
+		It aunches the TypeScript compiler (tsc) which compile the application and wait for changes. 
+		It also starts the lite-server and launches the browser where you will see the output - Hello Angular.
+		At this point, open "Solution Explorer\src\app\app.component.ts" file
+		Change "name" value from "Angular" to "Angular 2!", save and changes reflected on the web page automatically.
+		
+Run angular 2 app using f5 from vs
+==================================
+	- src\app\index.html 'set as start page', f5, get the message "Loading AppComponent content here ..." 
+	  (http://localhost:3000/src/index.html)
+	
+	  "404 Not Found" errors for the following files. styles.css, systemjs.config.js, main.js
+	  All these files are present in "src" folder. So to fix these "404 Not Found" errors, in index.html file, 
+	  change <base href="/"> to <base href="/src/"> 
+	
+	  Re load, another set of "404 Not Found" - shim.min.js, zone.js, system.src.js, 
+		<script src="node_modules/core-js/client/shim.min.js"></script>
+		<script src="node_modules/zone.js/dist/zone.js"></script>
+		<script src="node_modules/systemjs/dist/system.src.js"></script>
+	  To fix these errors, in index.html, included "/" just before node_modules
+		<script src="/node_modules/core-js/client/shim.min.js"></script>
+		<script src="/node_modules/zone.js/dist/zone.js"></script>
+		<script src="/node_modules/systemjs/dist/system.src.js"></script>
+	
+	 Also in systemjs.config.js file, CHANGE => 'npm:': 'node_modules/'  TO  'npm:': '/node_modules/' 
+	
+	 Reload the page and you will see "Hello Angular 2!" message without any errors. 
+	
+	 Not be able to run the application using "npm start" command. 
+	
+	 Issue.
+	 1. src\app\app.component.ts\change name="Angular Test" => reload, page won't refresh new content. Stop & Start F5, it will refresh
+	 
+	 So what is the issue?
+	 TypeScript is not complied to JavaScript when we save the file and this the reason we do not see the changes in the browser. 
+	 Pressing F5 from visual studio TypeScript is compiled to JavaScript and we see the changes.
+	
+	 VS to compile TypeScript to JavaScript when the changes are saved, on  the "compileOnSave" features
+	 src\tsconfig.json file
+	 {
+	  "compileOnSave": true,
+	  "compilerOptions": {
+	    ...
+	  }
+	}
+	
+	At this point TypeScript is automatically compiled to JavaScript when the file is saved, 
+	so the changes are reflected in the browser when the page is reloaded.
+	
+	Error =>  Build:Class 'Subject<T>' incorrectly extends base class 'Observable<T>'.
+	fix this issue, add "noStrictGenericChecks": true
+	src\tsconfig.json file
+	{
+	  "compilerOptions": {
+	    "noStrictGenericChecks": true
+	  }
+	}
+	OR
+	C:\DNS\Projects\Angular2\Angular2Demo2015\node_modules\rxjs\Subject.d.ts
+	Please change below in Subject.d.ts file.
+	lift<R>(operator: Operator<T, R>): Observable<T>; to 
+	lift<R>(operator: Operator<T, R>): Observable<R>;
+	The return type should probably be Observable<R> rather than Observable<T>?
+	
+	zone.js:2744 GET http://localhost:16936/src/node_modules/@angular/platform-browser-dynamic/bundles/platform-browser-dynamic.umd.js 404 (Not Found)
+	
+	solution is "ctrl+f5"
+	
+	src/main.ts
+	import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+	
+	import { AppModule } from './app/app.module';
+	
+	platformBrowserDynamic().bootstrapModule(AppModule);
+	
+	after compile, it convert to typescript to javascript
+	
+	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
+	var platform_browser_dynamic_1 = require("@angular/platform-browser-dynamic");
+	var app_module_1 = require("./app/app.module");
+	platform_browser_dynamic_1.platformBrowserDynamic().bootstrapModule(app_module_1.AppModule);
+	//# sourceMappingURL=main.js.map
+
+Angular 2 components
+====================
+	- What is a component in Angular 2 - A component in Angular is a class with a template and a decorator. 
+		So in simple terms a component in Angular is composed of these 3 things
+		Template - Defines the user interface. Contains the HTML, directives and bindings.
+		Class - Contains the code required for template. A class in angular can contain methods and properties. 
+			Properties contain the data that we want to display in the view template and methods contain the logic for the view. 
+			We use TypeScript to create the class.
+		Decorator - We use the Component decorator provided by Angular to add metadata to the class. 
+			A class becomes an Angular component, when it is decorated with the Component decorator.
+
+ 	- Component Example - src\app\app.component.ts file. This file contain a component. The name of the component is AppComponent. 
+ 		The AppComponent is the root component of the application. 
+
+		// 2 write code
+		// Component decorator is provided by the Angular core library, so we have to import it before using it. 
+		//The import keyword = using keyword in C#. Any exported member can be imported using import keyowrd.
+		import { Component } from '@angular/core'; 
+		// "@ intelliense will list all library, 
+		//'Component' righ click go to definition => it contain 2 Componet from directives.d.ts, select 2nd one, 
+		//you can see 'export declare const Component: ComponentDecorator;" , because of export keyword, that is the reason i can import here.
+
+		// 3 write code
+		// The class is decorated with Component decorator which adds metadata to the class. 
+		//We use the @ symbol to apply a decorator to the class 
+		//Applying a decorator on a class = to applying an attribute to a class in C#. 
+		// Component is just one of the several built-in decorators provided by angular.
+		@Component({  //Decorator
+		    // component has several properties. the following URL
+		    // https://angular.io/docs/ts/latest/api/core/index/Component-decorator.html
+		    // To use this component on any HTML page we specify the selector
+		    // This selector becomes the directive <my-app> on the HTML page
+		    // At run time, the directive <my-app> is replaced by the template HTML specified below
+		    selector: 'my-app',
+		    // The template contains the HTML to render. A data-binding expression specified by double curly braces. 
+		    // A defualt value "Angular" assigned to "name" property in the AppComponent class. 
+		    // This will be used at runtime inplace of the data-binding expression
+		    // ` backtick characters
+		    template: `<h1>Hello {{name}}</h1>`, //Template
+		})
+		// 1 write code
+		// export keyword allows this class to be exported, so other components in the application can import and use it if required
+		export class AppComponent { //Class
+		    // it contains property & method
+		    // name is a property and the data type is string and has a default value "angular"
+		    name: string = 'Angular'; 
+		}
+
+		index.html page - used the AppComponent using the directive <my-app>.  
+		At runtime <my-app> directive is replaced with the HTML we specified using the selector property in the component decorator.
+
+		<!DOCTYPE html>
+		<html>
+		....
+		<body>
+		    <my-app>Loading AppComponent content here ...</my-app>  // replace by template.d
+		</body>
+		</html>
+
+		Build the project in VS, TypeScript is compiled to JavaScript which the browser understands and renders. 
+		TypeScript code for this component is present in src\app\app.component.ts file, file is generated on build. 
+		
+template vs templateurl
+========================
+	- if html is single line use single or double 
+	template: "<h1>Hello {{name}}</h1>", OR '<h1>Hello {{name}}</h1>', 
+	
+	- this will error throws - Error: (SystemJS) Invalid or unexpected token
+	template: "<h1>Hello 
+			{{name}}
+		   </h1>",
+	- if html is multi line, use backtick characters. 
+	template: `<h1>
+			Hello {{name}}
+		</h1>`,
+	- create src\app\app.component.html, add the templaete html code here
+	  <h1>
+	  	Hello {{name}}
+	  </h1>
+	  
+	  refer app.component.html in app.component.ts  using templateUrl
+	  @Component({
+	      selector: 'my-app',
+	      templateUrl: 'app/app.component.html'
+	})
+	
+Nested components (including a component inside another component)
+=================
+	Employee Details
+	First Name :	Moh
+	Last Name :	Kad
+	Age :	15
+	Gender :	Male
+
+	- create app/employee/employee.component.html
+		<table>
+		    <tr><td>First Name</td><td>{{firstName}}</td></tr>
+		    ...
+		</table>	
+	- create app/employee/employee.component.ts - It is the child component and displays the Employee details table. It will be nested inside the root AppComponent
+	import { Component } from "@angular/core"
+
+	@Component({
+	    selector: "my-employee",
+	    templateUrl:"app/employee/employee.component.html"
+	})
+	export class EmployeeComponent {
+	    firstName: string = "Moh";
+	    lastName: string = "Kad";
+	    age: number = 15;
+	    gender: string = "Male";
+	}
+	
+	- modify app/app.module.ts
+	 import { NgModule }      from '@angular/core';
+	 import { BrowserModule } from '@angular/platform-browser';
+	 
+	 import { AppComponent }  from './app.component';
+	 import { EmployeeComponent } from './employee/employee.component';  //line added
+	 
+	 @NgModule({
+	   imports:      [ BrowserModule ],
+	   declarations: [ AppComponent,EmployeeComponent ],  //'EmployeeComponent' added
+	   bootstrap:    [ AppComponent ]
+	 })
+	 export class AppModule { }
+	 
+	- AppModule is the root module which bootstraps and launches the angular application. You can name it anything you want, but by convention it is named AppModule.
+	
+	  It imports 2 system modules - BrowserModule and NgModule 
+	   BrowserModule - Every application that runs in a browser needs this module. NgIf and NgFor directives which are also provided by this module.
+   	   NgModule - @component decorator adds metadata to an angular component class, similarly @NgModule decorator adds metadata to the angular module class.
+   	  
+   	  Properties of the @NgModule decorator
+	   imports - Imports the BrowserModule required for an angular application to run in a web browser
+	   declarations - Contains the components registered with this module. In our case we have two - AppComponent and EmployeeComponent
+	   bootstrap - Contains the root component that Angular creates and inserts into the index.html host web page
+	 
+	- modify app/app.compoenet.ts  // the root component and displays just the page header 
+	import { Component } from '@angular/core';
+	
+	@Component({
+	  selector: 'my-app',
+	  template: `<div>
+	                <h1>{{pageHeader}}</h1>
+	                <my-employee></my-employee>
+	            </div>`,
+	})
+	export class AppComponent  {
+	    pageHeader = 'Employee Details';
+	}
+	
+Styling components
+==================
+	- add styles option 1, employee.component.ts
+	@Component({
+	    selector: "my-employee",
+	    templateUrl: "app/employee/employee.component.html",
+	    styles: ['table { color: #369; font-family: ...}']
+	})
+	
+	- option 2, create employee/employee.component.css
+	table { color: #369; font-family: Arial, Helvetica, sans-serif; font-size: large; border-collapse: collapse;} 
+	td {border: 1px solid black; }
+	
+	employee.component.ts
+	@Component({
+	    selector: "my-employee",
+	    templateUrl: "app/employee/employee.component.html",
+	    styleUrls :['app/employee/employee.component.css']
+	})
+	
+clear cache, if not refresh
+  <location path="app">
+    <system.webServer>
+      <staticContent>
+        <clientCache cacheControlMode="DisableCache"/>
+      </staticContent>
+    </system.webServer>
+  </location>
+	
+interpolation - Interpolation is all about data binding. In Angular data-binding can be broadly classified into 3 categories
+==============
+	Data Binding		Description
+	One way data-binding	From Component to View Template
+	One way data-binding	From View Template to Component
+	Two way data-binding	From Component to View Template & From View template to Component
+
+	One way data-binding  - To display read-only data on a view template, we use one-way data binding technique interpolation. 
+	With interpolation, we place the component property name in the view template, enclosed in double curly braces: {{propertyName}}. 
+	
+	template: `<h1>{{ firstName }}</h1>`
+	
+	Template Expression
+	template: `<h1>{{'Name = ' + firstName}}</h1>' => Name = Mak
+	template: `<h1>{{ 10 + 20 + 30 }}</h1>' => 60
+	
+	Template Expression with ternary operator 
+	template: `<h1>{{firstName ? firstName : 'No name specified'}}</h1>`  => if firstName: string = null;, display 'No name specified'
+	
+	use interpolation to set <img> src  
+	template: `<img src='{{imagePath}}'/>` =>imagePath: string = 'http://dns.com/images/logo.jpg';
+	
+	call class methods using interpolation
+	template: `{{'Full Name = ' + getFullName()}}`
+	
+	export class AppComponent {
+	    firstName: string = 'Tom';
+	    lastName: string = 'Hopkins';
+	
+	    getFullName(): string {
+	        return this.firstName + ' ' + this.lastName;
+	    }
+	}
+	
+Property binding (another option) []  - omit [], it treats string
+====================================
+	- <img [src]='imagePath'/>  => <img src={{imagePath}}/> 
+	
+	- Difference between Interpolation and Property binding - Interpolation is a special syntax that Angular converts into 
+	  a property binding. Interpolation is just a convenient alternative to property binding. 
+		
+	- Concatenate strings we have to use interpolation instead of property binding - <img src='http://www.pragimtech.com/{{imagePath}}' />			
+
+	- When setting an element property to a non-string data value, you must use property binding. 
+	  we are disabling a button by binding to the boolean property isDisabled.
+	
+	 isDisabled = true; <button [disabled]='isDisabled'>Click me</button> => button is not enabled
+	 isDisabled = false; <button [disabled]='isDisabled'>Click me</button> => button will be enabled
+	
+	 use interpolation, the button is always disabled 
+	 isDisabled = true; <button disabled={{isDisabled}}>Click me</button> => button is not enabled
+	 isDisabled = false; <button disabled]={{isDisabled}}>Click me</button> => button is not enabled
+	
+	- alternate syntax 'bind- prefix' or cannonical form - <button bind-disabled='isDisabled'>Click me</button>
+	<span bind-innerHtml='pageHeader'></span> or <span [innerHtml]='pageHeader'></span>
+	
+	- From security standpoint, Angular data binding sanitizes malicious content before displaying it on the browser. 
+	  Both interpolation and property binding protects us from malicious content. 
+	  badHtml: string = 'Hello <script>alert("Hacked");</script> World';
+	  
+	  <div>{{badHtml}}</div> =><script>alert('me');</script> => malicious content sanitizes & prints code harmlessly
+	  <div [innerHtml]='badHtml'></div> =>alert('me');
+	  
+html attribute vs dom property
+==============================
+	- Interpolation and  Property binding that deal with binding Component class properties to HTML element properties and not Attributes. 
+	 
+	- DOM (Document Object Model) - When a browser loads a web page, the browser creates a Document Object Model of that page. 
+	
+	 For example, for the HTML => <html><head><title></title></head><body><script></script><div><h1></h1></div></body></html>
+	 The browser creates a Document Object Model of that page as shown below 
+				     
+	 window -> document -> html |-> head -> title 	
+				    |-> body |-> script
+				    	     |-> div -> h1
+				    	    
+	 DOM as an application programming interface (API) for HTML, use JS, or JS frameworks like Angular to access and manipulate the HTML using their corresponding DOM objects. 
+	 DOM contains the HTML elements as objects, their properties, methods and events and it is a standard for accessing, modifying, adding or deleting HTML elements.
+	
+	- Interpolation example => 	<button disabled='{{isDisabled}}'>Click Me</button>
+	  Property binding example => 	<button [disabled]='isDisabled'>Click Me</button>
+	
+	  It look like we are binding to the Button's disabled attribute. but not, we are actually binding to the disabled property of the button object. 
+	  Angular data-binding is all about binding to DOM object properties and not HTML element attributes.
+	
+	- What is the difference between HTML element attribute and DOM property
+	  Attributes are defined by HTML, where as properties are defined by the DOM.
+	  Attributes initialize DOM properties. Once the initialization complete, the attributes job is done.
+	  Property values can change, where as attribute values can't.
+	  
+	  for example - <input id='inputId' type='text' value='Tom'>
+	  Browser 'Console' tab -> inputId.getattribute('value') => 'Tom' 
+	  			   inputId.value => 'Tom' 
+    	  Change the value in the textbox to Mary.
+	  Browser 'Console' tab -> inputId.getattribute('value') => 'Tom'  => attribute values don't.
+	  			   inputId.value => 'Mary'  => Property values change
+	  			   
+	 So it is important to keep in mind that, 
+	  HTML attributes and the DOM properties are different things.
+	  Angular binding works with properties and events, and not attributes.
+	  The role of attributes is to initialize element properties and their job is done.
+	  
+Angular attribute binding
+=========================
+	- colspan and aria attributes does not have corresponding DOM properties. 
+	- Angular provides attribute binding, set the value of an attribute directly use "[attr.colspan]"
+	- Angular recommends use Property binding when possible and use attribute binding only when there is no element property to bind. 
+	
+	- exmple, 
+	employee.component.ts
+	...
+	export class EmployeeComponent {
+    		columnSpan: number = 2;
+    		....
+    	}
+    	
+    	employee.component.html
+	<tr><th colspan={{columnSpan}}>Contact Detail</th></tr> OR <tr><th [colspan]='columnSpan'>Contact Detail</th></tr>
+	throws errro => 
+	Can't bind to 'colspan' since it isn't a known property of 'th'. ("<table>
+	
+	employee.component.html
+	<tr><th [attr.colspan]='columnSpan'>Contact Detail</th></tr> OR <tr><th attr.colspan='{{columnSpan}}'>Contact Detail</th></tr>
+	it will display
+	
+ARIA (Accessible Rich Internet Applications)
+====
+	- http://heydonworks.com/practical_aria_examples/
+	- https://www.sitepoint.com/how-to-use-aria-effectively-with-html5/
+	- https://thesocietea.org/2016/09/aria-roles-and-attributes-how-to-actually-use-them/
+
+Class binding
+=============
+	- index.html referenced style.css, add the styles
+	.boldClass{
+	    font-weight:bold;
+	}
+	
+	.italicsClass{
+	    font-style:italic;
+	}
+	
+	.colorClass{
+	    color:red;
+	}
+	
+	- all changes are in app.component.ts	
+		set the class attribute of the button element to 'colorClass'. 
+			template: `<button class='colorClass'>My Button</button>'  => My Button is red color
+			
+		Replace all the existing css classes with one or more classes
+			template: `<button class='colorClass' [class]='classesToApply'>My Button</button>'  => My Button is bold & italics but not red color
+			
+			export class AppComponent {
+				classesToApply:string ='boldClass italicsClass'
+			}	
+			
+		Adding or removing a single class
+			template: `<button class='colorClass' [class.boldClass]='applyBoldClass'>My Button</button>'  => My Button is red & bold
+			applyBoldClass:boolean = true
+			
+			using !
+			template: `<button class='colorClass' [class.boldClass]='!applyBoldClass'>My Button</button>'  => My Button is red
+			applyBoldClass:boolean = true
+			
+			template: `<button class='colorClass' [class.boldClass]='!applyBoldClass'>My Button</button>'  => My Button is red
+			applyBoldClass:boolean = false
+
+		Removed an existing class that is already applied
+			template: `<button class='boldClass italicsClass colorClass' [class.boldClass]='applyBoldClass'>My Button</button>'  => My Button is red & italics
+			applyBoldClass:boolean = false
+			
+		To add or remove multiple classes use ngClass directive			
+			template: `<button class='boldClass' [ngClass]='applyClasses()'>My Button</button>'  => My Button is red, bold, & italics
+			
+			applyColorClass:boolean = true
+			applyItalicsClass:boolean = true
+			
+			applyClasses(){
+				let classes = {
+					colorClass:this.applyColorClass,
+					italicsClass:this.applyItalicsClass
+				}
+				return classes
+			}
+		included our css classes in a external styleshee (style.css)
+			template: `<button class='colorClass' [ngClass]='addClasses()'>My Button</button>`,
+			    styles: [`
+			            .boldClass{
+			                font-weight:bold;
+			            }
+			
+			            .italicsClass{
+			                font-style:italic;
+			            }
+			
+			            .colorClass{
+			                color:red;
+			            }
+             			`]
+             			
+Style binding
+=============
+	- set the font color of the button using the style attribute. 
+		<button style='color:red'>Style Button</button>
+	- sets a single style (font-weight)
+		<button style='color:red' [style.font-weight]="fontWeightBold?'bold':'normal'">Style Button</button><br>
+		OR
+		<button style='color:red' [style.fontWeight]="fontWeightBold?'bold':'normal'">Style Button</button><br>
+		
+		fontWeightBold: boolean = true;
+	- font-size have a unit extension		
+		<button style='color:red' [style.font-size.px]="fontSize">Style Button</button><br>
+		fontSize: number = 30;
+	- set multiple inline styles use NgStyle directive 	
+		<button style='color:red' [ngStyle]="applyStyles()">Style Button</button><br>
+		    applyStyles() {
+		        let styles = {
+		            'font-weight': this.fontWeightBold?'bold':'normal', //OR fontWeight: this.fontWeightBold
+		            'font-size.px': this.fontSize,
+		        }
+		        return styles
+    		}
+    		
+Event binding & ngIF directive (ngIf structural directive which conditionally adds or removes DOM element)   		
+==============================
+	- binding to the click event of a button
+		<button (click)='onClick()'>Click Me</button> OR <button on-click='onClick()'>Click Me</button>
+		
+		ClickMe(){
+			console.log('hi')
+		}
+			
+	- Page loads to display only the First/Last Name. "Show Details" and 'Hide Details' button show or hide the other info.
+		employee.component.html
+		<tr *ngIf='showDetails'><td>Age</td><td>{{age}}</td></tr>
+		<tr *ngIf='showDetails'><td>Gender</td><td>{{gender}}</td></tr>
+		<tr><td><button (click)="displayDetails()">{{showDetails?'Hide':'Show'}} Details><button></td></tr>
+		
+		showDetails: boolean = false;
+		displayDetails(){
+			this.showDetails = !this.showDetails;
+		}
+	- 
+	
+Two way data binding => [(ngModel)]
+====================
+	- fullName:string ="M K"
+	  <input [value]='fullName'> {{fullName}} => M K is displaye both input and text
+	  
+	- <input [value]='fullName' (input)="fullName=$event.target.value"> {{fullName}} 
+		- M K is displaye both input and text, if type anythink in text box, that value displayed in {{fullName}}
+		- [value]='fullName' => This property binding flows data from the component class to element property 	
+		  (input)="fullName=$event.target.value" = > it flows opposite direction, data from element property to component class property "fullName"
+		- $event - Is exposed by angular event binding, and contains the event data. To retrieve the value from the input element - $event.target.value.					  	
+		- In short two-way data binding in Angular is a combination of both Property Binding and Event Binding.
+			
+	- <input [(ngModel)]='fullName'>  replace of <input [value]='fullName' (input)="fullName=$event.target.value">
+		- reload the browser, you will get the following error Template parse errors: Can't bind to 'ngModel' since it isn't a known property of 'input' 
+		- app.component.ts
+			import {FormsModule} from "@angular/forms"
+			import: {BrowserModule, FormsModule}
+ngFor directive
+===============
+	- employee/employeelist.component.ts
+		import {Component} from "@angular/core"
+		@Component({
+			selector:"list-employee",
+			templateUrl :"app/employee/employeelist.component.html",
+			styleUrl:['app/employee/employeelist.component.css']
+		})
+		export Class EmployeeListComponent{
+			employees : any[] = [
+				{code:1, name:"Name 1", dateOfBirth: "01/06/2011", salary:1234.45},
+				{code:2, name:"Name 2", dateOfBirth: "02/07/2012", salary:1234.45},
+				{code:3, name:"Name 3", dateOfBirth: "03/08/2013", salary:1234.45},
+				{code:4, name:"Name 4", dateOfBirth: "04/09/2014", salary:1234.45},
+				{code:5, name:"Name 5", dateOfBirth: "05/10/2015", salary:1234.45}
+			]
+		}
+	- employee/employeelist.component.html
+		<tr *ngFor = "let employee of employees">
+			<td>{{employee.code}}</td>
+			<td>{{employee.name}}</td>
+			<td>{{employee.dateOfBirth}}</td>
+			<td>{{employee.salary}}</td>
+		</tr>
+		<tr *ngIf="!employees || employees.length==0"><td>No Data Found</td></tr>
+	- employee/employeelist.component.css
+	- app.module.ts
+		import {EmployeeListComponent} from "./employe/employeelist.component"
+		declarations : {EmployeeComponent, EmployeeListComponet}
+	- app.component.ts
+		template: `<div><list-employee></list-employee><div>`
+	- ngFor is usually used to display an array of items, ngFor is a structural directive it is prefixed with *
+	
+ngFor trackBy
+=============
+	- employee/employeelist.component.html
+		<tr *ngFor=let employee of employees;>..</tr>
+		...
+		<tr><td><button (click)="getEmployees()">Refresh Employees</button></td></tr>
+
+	- employee/employeelist.component.ts
+		...
+		export Class EmployeeListComponent{
+			employees:any[];
+			constructor(){
+				this.employees = [
+					{code:1, name:"Name 1", dateOfBirth: "01/06/2011", salary:1234.45},
+					{code:2, name:"Name 2", dateOfBirth: "02/07/2012", salary:1234.45},
+					{code:3, name:"Name 3", dateOfBirth: "03/08/2013", salary:1234.45},
+					{code:4, name:"Name 4", dateOfBirth: "04/09/2014", salary:1234.45}
+				]				
+			}
+			getEmployees(){
+				this.employees = [
+					{code:1, name:"Name 1", dateOfBirth: "01/06/2011", salary:1234.45},
+					{code:2, name:"Name 2", dateOfBirth: "02/07/2012", salary:1234.45},
+					{code:3, name:"Name 32", dateOfBirth: "03/08/2013", salary:1234.45},
+					{code:4, name:"Name 4", dateOfBirth: "04/09/2014", salary:1234.45},
+					{code:5, name:"Name 5", dateOfBirth: "05/09/2015", salary:1234.45}
+				]				
+			}
+			trackByEmployeeCode(index : number, employees: any ):string{
+				return employees.code;
+			}
+		}
+		
+	- intitally constructor will load, press 'Refresh Employees' getEmployees() function call, entire table will replace
+	  It looks like it just added code 5 row. That's not true, it effectively teared down all the <tr> and <td> elements of all the employees and recreated them.
+	  This happens because Angular by default keeps track of objects using the object references. When we click "Refresh Employees" 
+	  button we get different object references and as a result Angular has no choice but to tear down all the old DOM elements and insert the new DOM elements.
+	
+	-  <tr *ngFor=let employee of employees; trackBy:trackByEmployeeCode>..</tr>
+           intitally constructor will load, press getEmployees(), only modified content will replace, here code 5 will add
+           & code 3 ;name will be replace
+ 	
+ 	- ngFor directive may perform poorly with large lists, 
+ 	  A small change to the list like, adding a new item or removing an existing item may trigger a cascade of DOM manipulations		
+ 	  if not 'trackBy:trackByEmployeeCode' , refresh button will add fifth employee & update 3 employee name only.
+ 	  
+	- Get the index of an item in a collection
+	  ----------------------------------------
+		- using the index property of the ngFor directive to store the index in a template input variable "i".
+		- employee/employeelist.component.html
+			...
+			<tr *ngFor = "let employee of employees; trackBy:trackByEmployeeCode; let i=index">
+				<td>{{employee.code}}</td>
+				<td>{{employee.name}}</td>
+				<td>{{employee.dateOfBirth}}</td>
+				<td>{{employee.salary}}</td>
+				<td>{{i}}</td>
+			</tr>
+			...
+	- Identifying the first and the last element in a collection - Use the first and last properties of the ngFor directive to find if an element is the first or last element respectively. 
+	-----------------------------------------------------------
+			<tr *ngFor = "let employee of employees; trackBy:trackByEmployeeCode; let i=index; let isFirst=first; let isLast =last">
+			...
+			<td>{{isFirst}</td>
+			<td>{{isLast}</td>
+			
+			1	Name 1	31	12/12/2011	1500.12	0	[true]	false
+			...
+			4	Name 4	34	13/13/2014	4400.34	3	false	[true]
+			
+	- Identifying even and odd element in a collection			
+	-------------------------------------------------
+			<tr *ngFor = "let employee of employees; trackBy; let isEven=even; let isOdd =odd">
+			...
+			<td>{{isEven}</td>
+			<td>{{isOdd}</td>	
+			1	Name 1	31	12/12/2011	1500.12	0	true	false	true	false
+			2	Name 2	32	12/12/2012	2500.45	1	false	false	false	true
+			3	Name 3	33	13/13/2013	3300.67	2	false	false	true	false
+			4	Name 4	34	13/13/2014	4400.34	3	false	true	false	true			
+Angular pipes (|)
+=============
+	- Transform data before display
+	- Built in pipes include lowercase, uppercase, decimal, date, percent, currency etc
+	- To apply a pipe on a bound property use the pipe character " | "
+	  <td>{{employee.code | uppercase}}</td> - converts to upper case
+	  <td>{{employee.dateOfBirth | date:'fullDate' | uppercase }}</td> - chain pipes
+	- Pass parameters to pipe using colon " : "
+	   <td>{{employee.annualSalary | currency:'USD':true:'1.3-3'}}</td> - passing 3 parameters to the currency pipe, 
+	   	1st is the currencyCode
+		2nd is boolean - True to display currency symbol
+		3rd is ('1.3-3') specifies the number of integer and fractional digits
+	   <td>{{employee.dateOfBirth | date:'dd/MM/y'}}</td>
+	- Custom pipes can be created
+	- To read more about angular built-in pipes
+		Pipe		URL
+		Date		https://angular.io/api/common/DatePipe
+		Decimal		https://angular.io/api/common/DecimalPipe
+		Currency	https://angular.io/api/common/CurrencyPipe
+		Percent		https://angular.io/api/common/PercentPipe
+	- Please note : If you get the error "InvalidPipeArgument: '14/10/1980' for pipe 'DatePipe' ", your date is not in mm/dd/yyyy format. change the date format to mm/dd/yyyy or create a custom pipe.
+	- Angular custom pipe
+	----------------------
+		employeeTitle.pipe.ts
+		---------------------
+		import {Pipe, PipeTransform} from "@angular/core"
+		
+		@Pipe({
+			name:"employeeTitle"  //name property of the pipe decorator is set to employeeTitle. 
+		})
+		//EmployeeTitlePipe class implements the PipeTransform interface. This interface has one method transform() which needs to be implemented.
+		export class EmployeeTitlePipe implements PipeTransform{ //"EmployeeTitlePipe" class is decorated with Pipe decorator to make it an Angular pipe
+			//value parameter will receive the name and gender parameter receives the gender of the employee. 	
+			transform(value:string, gender:string):string{
+				if(gender.toLowerCase()=='male'){
+					return "Mr. "+ value;
+				}
+				return "Miss. "+ value;
+			}
+		}
+		
+		app.module.ts
+		-------------
+		import {EmployeeTitlePipe} from "./employee/employeeTitle.pipe"
+		
+		declarations: [...,EmployyeeTitlePipe]
+		
+		employeeList.component.html 
+		---------------------------
+		{{employee.name | employeeTitle:employee.gender | uppercase}}
+		
+Container and nested components		
+===============================
+	Creating custom events using EventEmitter class
+	What is ng-container directive and it's use
+	
+	- What is a container and nested component & Passing data from the nested component to container component & vice-versa
+	-------------------------------------------------------------------------------------------------------------------------
+		- 1st component displays the list of employees (EmployeeListComponent).
+		- 2nd component gender count of the employees (EmployeeListComponent.
+		- Nest EmployeeCountComponent in EmployeeListComponent. 
+			So EmployeeCountComponent becomes the nested component or child component and EmployeeListComponent becomes the container component or parent component. 
+		- employeeCount.component.ts
+			import { Component } from '@angular/core';
+
+			@Component({
+			    selector: 'employee-count',
+			    templateUrl: 'app/employee/employeeCount.component.html',
+			    styleUrls: ['app/employee/employeeCount.component.css']
+			})
+			export class EmployeeCountComponent {
+			    all: number = 10;
+			    male: number = 5;
+			    female: number = 5;
+			}
+
+		- employeeCount.component.css 
+	
+		- employeeCount.component.html (Nested Component)
+
+			<span class="radioClass">Show : </span>
+		
+			<input type="radio" name="options" />
+			<span class="radioClass">{{"All(" + all + ")"}}</span>
+		
+			<input name="options" type="radio">
+			<span class="radioClass">{{"Male(" + male + ")"}}</span>
+
+			<input name="options" type="radio">
+			<span class="radioClass">{{"Female(" + female + ")"}}</span>
+	
+		- employeeList.component.html , add a directive <employee-count></employee-count> [container component]
+	
+		- app.module.ts file. 
+			import { EmployeeCountComponent } from './employee/employeeCount.component';
+			declarations: [... EmployeeCountComponent],
+			    bootstrap: [AppComponent]
+			})
+
+			export class AppModule { }
+	-Passing data from the nested component to container component & vice-versa using Component input properties
+	-----------------------------------------------------------------------------------------------------------
+		  - employeeCount.component.ts
+			Convert a component property to an input property using @Input decorator.
+			Pass the values for these 3 properties from the container component to the nested component, decorate the properties with @Input() decorator. 
+		
+			import { Component, Input } from '@angular/core';
+
+			...
+			export class EmployeeCountComponent {
+			    @Input()
+			    all: number;
+
+			    @Input()
+			    male: number;
+
+			    @Input()
+			    female: number;
+			}
+		 - employeeList.component.ts
+		     getTotalEmployeesCount(): number {
+		        return this.employees.length;
+		    }
+		
+		    getMaleEmployeesCount(): number {
+		        return this.employees.filter(e => e.gender === 'Male').length;
+		    }
+		
+		    getFemaleEmployeesCount(): number {
+		        return this.employees.filter(e => e.gender === 'Female').length;
+		    }
+
+		   Operator	Use to
+		   =		Assign a value
+	 	   ==		Compare two values
+		   ===		Compare two values and their types
+
+		  - employeeList.component.html 
+			<employee-count [all]="getTotalEmployeesCount()" [male]="getMaleEmployeesCount()" [female]="getFemaleEmployeesCount()"></employee-count>
+			
+	- Component output properties & Creating custom events using EventEmitter class & ng-container directive x
+	--------------------------------------------------------------------------------------------------------
+		- employeeCount.component.ts
+			 import {...,Output, EventEmitter} ...
+			 ...
+
+			 selectedRadioButtonValue:string="All"; // Holds the selected value of the radio button
+
+			// The Output decorator makes the property an Output property. EventEmitter class is used to create the custom event
+			// When the radio button selection changes, the selected radio button value which is a string gets passed to the
+			// event handler method. Hence, the event payload is string. this is custom event
+			 @Output()
+			 countRadioButtonSelectionChanged:EventEmitter<string>= new EventEmitter<string>();
+			
+			//this method raise custom event.
+			 onRadioButtonSelectionChange(){
+				this.countRadioButtonSelectionChanged.emit(this.selectedRadioButtonValue);
+			 }
+		 
+		- employeeCount.component.html
+			//value attribute is set to (All, Male or Female)
+			//Implemented 2 way data-binding using the ngModel directive. 
+			//onRadioButtonSelectionChange() method is binded to "change" event of the radio button. 
+			
+			<span class="radioClass">Show : </span>
+		
+			<input type="radio" name="options" value='All' [(ngModel)] ="selectedRadioButtonValue" (change)='onRadioButtonSelectionChange()' />
+			<span class="radioClass">{{"All(" + all + ")"}}</span>
+		
+			<input name="options" type="radio" value='Male' [(ngModel)] ="selectedRadioButtonValue" (change)='onRadioButtonSelectionChange()' />
+			<span class="radioClass">{{"Male(" + male + ")"}}</span>
+
+			<input name="options" type="radio" value='Female' [(ngModel)] ="selectedRadioButtonValue" (change)='onRadioButtonSelectionChange()' />
+			<span class="radioClass">{{"Female(" + female + ")"}}</span>		 
+		
+		- employeeList.component.html 
+			<employee-count [all]="getTotalEmployeesCount()" [male]="getMaleEmployeesCount()" [female]="getFemaleEmployeesCount()"
+				(countRadioButtonSelectionChanged)="onEmployeeCountRadioButtonChange($event)"></employee-count>
+			<ng-container *ngFor="let employee of employees; trackBy:trackByEmployeeCode; let i=index; let isFirst=first; let isLast=last; let isEven=even; let isOdd=odd">
+            			<tr  *ngIf="selectedEmployeeCountRadioButton=='All' || selectedEmployeeCountRadioButton==employee.gender">
+        			...
+				</tr>
+			</ng-container>					
+			
+		- employeeList.component.ts
+			
+			// This property keeps track of which radio button is selected
+			selectedEmployeeCountRadioButton: string = 'All';
+			
+			// this method updates selectedEmployeeCountRadioButton property declared
+			// This method is called when the child component (EmployeeCountComponent)
+			// raises the custom event - countRadioButtonSelectionChanged
+			onEmployeeCountRadioButtonChange(selectedRadioButtonValue: string): void {
+				this.selectedEmployeeCountRadioButton = selectedRadioButtonValue;
+			}
+		- onEmployeeCountRadioButtonChange($event) method is bound to the custom event - countRadioButtonSelectionChanged. 
+		  The $event object will have the selected radio button value as that is what is passed as the event payload from the nested component. 
+		  The event handler method (onEmployeeCountRadioButtonChange()) in the component class updates the property "selectedEmployeeCountRadioButton". 
+		  This property is then used along with *ngIf structural directive to decide which employee objects to display in the table.
+
+		- Angular does not allow multiple structural directives to be placed on one element as shown below.  
+		  <tr *ngFor="let employee of employees;" *ngIf="selectedEmployeeCountRadioButton=='All' || selectedEmployeeCountRadioButton==employee.gender">			
+		  Error => Can't have multiple template bindings on one element. Use only one attribute named 'template' or prefixed with *
+		  so <ng-container> element will help to allow multiple structural directives .
+
+Interfaces x
+==========
+	- TypeScript is a strongly typed language. 
+		This means every property we define in a TypeScript class has a type associated with it. 
+		Similarly every method parameter and return type has a type. 
+
+	- TypeScript has several built-in pre-defined types like string, number, boolean etc. 
+		Like Employee, Customer, Order, Invoice objects etc, does not have a pre-defined type. 
+		In this case, we can use an interface to create a custom type for our business object.
+
+	- EmployeeListComponent class. The property "employees" is defined as an array of any type employees: any[]; it is not strongle typed (won't get intellisense) 
+		There are 2 problems with the above line of code
+			1. For the object properties in the array we do not get intellisense angular interface example  
+				getMaleEmployeesCount(): number {
+				        return this.employees.filter(e => e.(we do not get intellisense).gender === 'Male').length;
+		    		}
+			2. We make typo erro
+		
+	- employee.ts - create a Type for employee using an interface as shown below.
+		export interface IEmployee {
+		    code: string;
+		    name: string;
+		    gender: string;
+		    annualSalary: number;
+		    dateOfBirth: string;
+		    
+		    // A class that implements this interface need not provide implementation for this property
+	    	    department?: string;  // To make a property optional use a ?
+	    
+		    computeMonthlySalary(annualSalary: number): number; //method 
+		}
+
+	- EmployeeListComponent, 
+		import { IEmployee } from './employee';
+
+		export class EmployeeListComponent {
+		    employees: IEmployee[];
+		}
+		 - we now get intellisense for the object properties in the array  angular define interface 
+		 - { code: "1", nam: "Name 1", => it will give immediate red line error intellisense
+
+
+	- employee.ts 
+		class Employee implements IEmployee {
+		      --------(red line will display => property of code is missing...	
+		}
+		
+		error will go away, when you add declare the IEmployee property, 
+		export class Employee implements IEmployee {
+		   // All the interface mandatory properties are defined  		
+		    public code: string;
+		    public name: string;
+  		    ...		
+  		    		      
+		      // Implementation of the interface method
+		    computeMonthlySalary(annualSalary: number): number {
+			return annualSalary / 12;
+		    }
+
+		}
+		
+	-  constructor
+		 export class Employee implements IEmployee {
+		    public code: string;
+		    ...
+
+		    constructor(code: string, name: string, gender: string,
+			annualSalary: number, dateOfBirth: string) {
+			this.code = code;
+			...
+		    }
+		  }
+
+		   OR replace shorthand code 
+		   export class Employee implements IEmployee {
+
+		     constructor(public code: string, public name: string, public gender: string,
+			 public annualSalary: number, public dateOfBirth: string) {
+		     }
+		   }
+	
+	- private also work
+		export class Employee {
+		    private firstName: string;
+		    private lastName: string;
+	
+		    constructor(firstName1: string, lastName1: string) {
+			this.firstName = firstName1;
+			this.lastName = lastName1;
+		    }
+		}
+		
+		Replace shorthand code
+		export class Employee {
+		    constructor(private firstName: string, private lastName: string) {
+		    }
+		}
+
+	- It is common to prefix the interface name with capital letter "I". 
+		However, some interfaces in Angular does not have the prefix "I". For example, OnInit interface.
+	- Interface members are public by default and does not require explicit access modifiers. 
+		It is a compile time error => public modifier cannot appear on a type member.
+		export interface IEmployee {
+		    public code: string; => error
+
+component lifecycle hooks x
+========================= 
+	- A component has a lifecycle managed by Angular. Angular
+		1. Creates the component
+		2. Renders the component
+		3. Creates and renders the component children
+		4. Checks when the component data-bound properties change, and 
+		5. Destroys the component before removing it from the DOM
+
+ 	-  angular offers several lifecycle hooks as shown in the image below.  
+		ngOnChanges
+		ngOnInit
+		ngOnCheck
+			ngAfterContentInit
+			ngAfterContentChecked
+			ngAfterViewInit
+			ngAfterViewChecked
+		ngOnDestory
+	 	
+	- The 3 most commonly used hooks are 
+		Life Cycle Hook	Purpose
+		ngOnChanges	Executes, every time the value of an input property changes. The hook method receives a SimpleChanges 
+				object containing current and previous property values. This is called before ngOnInit
+		ngOnInit	Executes after the constructor and after ngOnChange hook for the first time. 
+				It is most commonly used for component initialisation and retrieving data from a database
+		ngOnDestroy	Executes just before angular destroys the component and generally used for performing cleanup
+
+	- There are 3 simple steps to use the Life Cycle Hooks
+		Step 1 : Import the Life Cycle Hook interface. For example, to use ngOnInit() life cycle hook, import OnInit interface.
+		import { OnInit } from '@angular/core';
+
+		Step 2 : Make the component class implement the Life Cycle Hook interface, using the implements keyword. 
+		This step is optional, but good to have so you will get editor show intellisense.
+		export class SimpleComponent implements OnInit { }
+
+		Step 3 : Write the implementation code for the life cycle interface method. Each interface has a single hook method whose name is the interface name prefixed with ng.
+		ngOnInit() {
+		    console.log('OnInit Life Cycle Hook');
+		}
+
+	- ngOnChanges life cycle hook. Example capture the current and previous value.
+	  ngOnChanges, is called every time the value of an input property of a component changes. 
+
+	-  app\other\simple.component.ts.
+
+		// Step 1 : Import OnChanges and SimpleChanges
+		import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+
+		@Component({
+		    selector: 'simple',
+		    template: `You entered : {{simpleInput}}`
+		})
+		// Step 2 : Implement OnChanges Life Cycle Hook interface
+		export class SimpleComponent implements OnChanges {
+		    // when 'simpleInput' this property changes ngOnChanges life cycle hook method is called
+		    @Input() simpleInput: string;
+
+		    // Step 3 : Implementation for the hook method 
+		    ngOnChanges(changes: SimpleChanges) {
+			for (let propertyName in changes) {
+			    let change = changes[propertyName];
+			    let current = JSON.stringify(change.currentValue);
+			    let previous = JSON.stringify(change.previousValue);
+			    console.log(propertyName + ': currentValue = '
+				+ current + ', previousValue = ' + previous);
+			    // rewritten using placeholder syntax as shown below
+			    // console.log(`${propertyName}: currentValue = ${current }, previousValue = ${previous }`);
+			}
+		    }
+		}
+	-  app.component.ts
+
+		import { Component } from '@angular/core';
+
+		// "userText" using 2 way data binding
+		// bound userText property of this component to the input property of the SimpleComponent
+		@Component({
+		    selector: 'my-app',
+		    template: `Your Text : <input type='text' [(ngModel)]='userText'/>
+			       <br/><br/>
+			       <simple [simpleInput]='userText'></simple>
+			      `
+		})
+		export class AppComponent {
+		    userText: string = 'Pragim';
+		}
+services 
+========
+	- Why do we need a service in Angular
+		A service in Angular is generally used when you need to reuse data or logic across multiple components. 
+		The logic or data access is implemented once in a service, and the service can be used across all the components in our application. 
+		
+	- our employee list component, the employee's data hard-coded instead retrieving employee's data to a separate service and 
+	  this component can call that service to retrieve the employees data 
+	
+	- Creating a service in Angular employee.service.ts. 
+
+		import { Injectable } from '@angular/core';
+		import { IEmployee } from './employee';
+
+		// The @Injectable() decorator is used to inject other dependencies into this service. 
+		// As our service does not have any dependencies at the moment, 
+		// we may remove the @Injectable() decorator and the service works exactly the same way. However, 
+		// Angular recomends to always use @Injectable() decorator to ensures consistency
+		@Injectable()
+		export class EmployeeService {
+		    getEmployees(): IEmployee[] {
+			return [
+			    {
+				code: 'emp101', name: 'Tom', gender: 'Male',
+				annualSalary: 5500, dateOfBirth: '6/25/1988'
+			    },
+			    {
+				code: 'emp102', name: 'Alex', gender: 'Male',
+				annualSalary: 5700.95, dateOfBirth: '9/6/1982'
+			    },
+			    {
+				code: 'emp103', name: 'Mike', gender: 'Male',
+				annualSalary: 5900, dateOfBirth: '12/8/1979'
+			    },
+			    {
+				code: 'emp104', name: 'Mary', gender: 'Female',
+				annualSalary: 6500.826, dateOfBirth: '10/14/1980'
+			    },
+			    {
+				code: 'emp105', name: 'Nancy', gender: 'Female',
+				annualSalary: 6700.826, dateOfBirth: '12/15/1982'
+			    },
+			    {
+				code: 'emp106', name: 'Steve', gender: 'Male',
+				annualSalary: 7700.481, dateOfBirth: '11/18/1979'
+			    },
+			];
+		    }
+		}
+
+	- Dependency Injecting and using the service  (EmployeeListComponent) 
+
+		import { Component } from '@angular/core';
+		import { IEmployee } from './employee';
+		import { EmployeeService } from './employee.service'; // Import EmployeeService
+
+		@Component({
+		    selector: 'list-employee',
+		    templateUrl: 'app/employee/employeeList.component.html',
+		    styleUrls: ['app/employee/employeeList.component.css'],
+		    // if no providers, throws error => ERROR Error: No provider for EmployeeService!
+		    providers: [EmployeeService]  // Register EmployeeService in this component by declaring it in the providers array
+		})
+		export class EmployeeListComponent{
+		    employees: IEmployee[];
+
+		    // Inject EmployeeService using the constructor
+		    // The private variable _employeeService which points to
+		    // EmployeeService singelton instance is then available throughout this class
+		    constructor(private _employeeService: EmployeeService) {
+		    	this.employees = this._employeeService.getEmployees(); //if ngOnInit use command this line
+		    }
+		    ......
+
+	    }
+		    
+	- implement OnInit interface
+
+		import { Component, OnInit } from '@angular/core'; // Import OnInit Life Cycle Hook interface
+		...
+		
+		@Component({
+		    ...
+		})
+		// Make the class implement OnInit interface
+		export class EmployeeListComponent implements OnInit {
+		    ...
+		    
+		    ngOnInit() {
+			this.employees = this._employeeService.getEmployees();
+		    }
+		 ...									    
+
+		}
+
+	- Both constructor and OnInit works exactly the same way
+	- Difference between constructor and ngOnInit 
+		A class constructor is automatically called when an instance of the class is created. It is generally used to initialise the fields of the class and it's sub classes. 
+
+		ngOnInit is called after the constructor and is generally used to perform tasks related to Angular bindings. 
+		For example, ngOnInit used to call a service method to fetch data from a remote server. 
+		But tasks that are time consuming should use ngOnInit instead of the constructor. 
+
+Http service
+=============
+	- Step 1 - Import the angular HTTP module 
+
+		import { HttpModule } from '@angular/http';
+
+		@NgModule({
+		    imports: [..,	HttpModule],
+			...
+
+	- Step 2 - employee.service.ts file. (GET request using the http )
+	
+		- What is an Observable 
+			Observable is an asynchronous pattern. In the Observable pattern we have an Observable and an Observer. 
+			Observer (Subscriber) observes the Observable.An Observable can have many Observers.
+			
+			Observable emits items or notifications over time to which an Observer can subscribe.
+			
+			When a subscriber subscribes to an Observable, the subscriber also specifies a callback function.
+			
+			This subscriber callback function is notified as and when the Observable emits items or notifications.
+			
+			Within this callback function we write code to handle data itmes or notifications received from the Observable.
+			
+					|Observer
+					|	
+			Observable------|Observer
+					|
+					|Observer
+
+		import { Injectable } from '@angular/core';
+		import { IEmployee } from './employee';
+		// Import Http & Response from angular HTTP module
+		import { Http, Response } from '@angular/http';
+		// Import Observable from rxjs/Observable
+		import { Observable } from 'rxjs/Observable';
+		// Import the map operator
+		import 'rxjs/add/operator/map';
+
+		//This class has an injected dependency, @Injectable() decorator is required. If No injectable dependencies, may omit the decorator, 
+		//but angular strongly recomends to use the decorator irrespective of there are injectible dependencies or not for consistency and future proof.
+		@Injectable()
+		export class EmployeeService {
+
+		    // Inject Angular http service. It can then be used anywhere in this class to call a web service over http. 
+		    constructor(private _http: Http) { }
+		
+ 		    // _http.get() method return Observable<Response>.			
+		    // Observable<Response> is not that useful to us, set the return type is Observable<IEmployee[]>
+		    // IEmployee is going to be observer (subscriber)
+		    getEmployees(): Observable<IEmployee[]> {
+		    	// using the map operator provided by rxjs, to convert Observable<Response> to Observable<IEmployee[]>
+			return this._http.get('http://localhost:24535/api/employees')
+			    .map((response: Response) => <IEmployee[]>response.json());
+		    }
+		}
+
+	- Step 3 Subscribe to the Observable returned by angular EmployeeService : EmployeeListComponent needs the employees data returned by the service. 
+		ngOnInit() {
+		    this._employeeService.getEmployees()
+			.subscribe(employeesData => this.employees = employeesData);  //only used onNext() callback method.
+		}
+
+		- This arrow function (employeesData => ) is called when the Observable emits an item.(the Observable emits an array of IEmployee objects). 
+		  employeesData parameter receives the array of IEmployee objects.
+
+		- We can specify upto 3 callback functions as parameters to the subscribe() method as shown below. 
+
+		Callback Method		Purpose
+		onNext			The Observable calls this method whenever the Observable emits an item. The emitted item is passed as a parameter to this method
+		onError			The Observable calls this method if there is an error
+		onCompleted		The Observable calls this method after it has emitted all items, i.e after it has called onNext for the final time
+
+
+	- Run the application. error => Cannot read property 'length' of undefined - at EmployeeListComponent.getTotalEmployeesCount 
+
+		Reson for the above error : in employeeList.component.html, binding to the input properties (all, male and female) of <employee-count> component. 
+
+		<employee-count [all]="getTotalEmployeesCount()" ...></employee-count>
+
+		The Web API call to retrieve is in ngOnInit(). Before the service call can initialise "employees" property 
+		of the EmployeeListComponent class, getTotalEmployeesCount() method is trying to access "length" property 
+		of "employees" property. "employees" property is still undefined at that point, so we get the error - Cannot read property 'length' of undefined. 
+
+		- To fix this error, use angular structural directive *ngIf. It will delay the initialization of employee-count component until "employees" property is initialised. 
+
+		<employee-count *ngIf="employees" [all]="getTotalEmployeesCount()" ...</employee-count>
+
+        - If the web service takes time to return data, the message in this <tr> is displayed. 
+          When the service call returns this message disappears and the employees data is displayed
+		<tr *ngIf="!employees">
+		    <td colspan="5">
+			Loading data. Please wait...
+		    </td>
+		</tr>
+        - This message is displayed if the web services does not return any data
+		<tr *ngIf="employees && employees.length==0">
+		    <td colspan="5">
+			No employee records to display
+		    </td>
+		</tr>
+
+	- We can also use promises instead of Observables.
+
+http error handling
+===================
+	- employee.service.ts
+	  import 'rxjs/add/operator/catch'; - to catch any exceptions that occur. 
+	
+	- The catch operator can then be chained to the map operator.
+		return this._http.get('http://localhost:24535/api/employeess')
+		    .map((response: Response) => <IEmployee[]>response.json())
+		    .catch(this.handleError);
+
+	- This handleError() method is called when there is an exception.
+		handleError(error: Response) {
+		    console.error(error);
+		    return Observable.throw(error);
+		}
+
+	- Throwing(.throw) the error back, so the components that use this service are 
+	  notified about the error condition, so they can display a meaningful error message to the user.
+   	  import 'rxjs/add/Observable/throw';
+
+	- EmployeeListComponent
+		statusMessage: string = 'Loading data. Please wait...';
+		
+		ngOnInit() {
+		    this._employeeService.getEmployees().subscribe(employeesData => this.employees = employeesData,
+			error => {
+			    console.error(error);
+			    this.statusMessage = 'Problem with the service. Please try again after sometime';
+			});
+		} 
+
+	- Change the url from  http://localhost:24535/api/employees1
+
+	- employeeList.component.html) bind to statusMessage property
+
+		<tr *ngIf="!employees">
+		    <td colspan="5">
+			{{statusMessage}}
+		    </td>
+		</tr>
+
+Using Bootstrap install
+======================
+	- Way 1, install, Open Node.js->node.js command prompt window -> select "Run as administrator".
+		- Navigate to angular project and type "npm install bootstrap@3 jquery --save" 
+		  C:\MohideenKader\project\Angular2\Angular2Demo\node_modules\boostrap & \jquery files are copied
+
+		- package.json file is also automatically updated with both the dependencies (Bootstrap and jQuery) 
+
+		- index.html file add the links
+			<script src="/node_modules/jquery/dist/jquery.min.js"></script>
+			<link href="/node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+			<script src="/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+
+		- <button class=""></button>
+		                 |
+				 V no intellisense for Bootstrap CSS classes is not working in index.html, or any of the components html or stylesheet files. 
+		- Enable intellisense
+			- VS, select the Angular project-> "Show All Files"->"node_modules"->"bootstrap"->"Include In Project"
+			- now bootstrap intellisense will work, if not restart VS. 
+		
+	- Way 2, using VS NuGet package manager. To install Bootstrap using NuGet package manager follow these steps. 
+		- VS Solution Explorer -> Project -> select "Manage NuGet Packages" -> Browse -> type "Bootstrap" -> Install.
+		- The required CSS and JS files are placed in Content and Script folders. 
+		  Finally place the required CSS and JS files in index.html page to start using Bootstrap. 
+		  If you install Bootstrap using NuGet you don't have to do anything else to get bootstrap intellisense. 
+		  
+	- Way 3, no download bootstrap, use CDN links. You can find the official Bootstrap CDN links at the following page.
+		http://getbootstrap.com/getting-started/
+
+Routing - Routing allows users to navigate from one view to another view. 
+========
+	- create app/home/home.compoenent.ts
+		- No 'selector' property in the @component decorator. 
+		  The selector is only required if we are going to embed this component inside another component using the selector as a directive. 
+		  Instead we are going to use the router to navigate to this component. 
+
+		import { Component } from '@angular/core';
+
+		@Component({
+		    template: '<h1>This is the home page</h1>'
+		})
+		export class HomeComponent {
+		}
+	- create app/other/pageNotFound.component.ts. 
+		
+		import { Component } from '@angular/core';
+		
+		@Component({
+		    template: '<h1>The page you are looking for does not exist</h1>'
+		})
+		export class PageNotFoundComponent {
+		}
+	- app.module.ts, import HomeComponent, PageNotFoundComponent
+
+		import { RouterModule, Routes } from '@angular/router';
+		
+		// Routes is an array of Route objects. Each route maps a URL path to a component
+		const appRoutes: Routes = [
+		    { path: 'home', component: HomeComponent },
+		    { path: 'employees', component: EmployeeListComponent },
+		    { path: '', redirectTo: '/home', pathMatch: 'full' },  // The route to redirect to(/home) if the path is empty.
+		    { path: '**', component: PageNotFoundComponent } //(**) is the wildcard route. if the requested URL doesn't match any other routes already defined
+		];
+
+		// To let the router know about the routes defined above, pass "appRoutes" constant to forRoot(appRoutes) method
+		@NgModule({
+		    imports: [RouterModule.forRoot(appRoutes),... ],
+		....
+		- Important: The order of the routes is very important. When matching routes, Angular router uses first-match wins strategy. 
+		  So more specific routes should be placed above less specific routes. In the configuration above, 
+		  routes with a static path are listed first, followed by an empty path route, that matches the default route. 
+		  The wildcard route comes last because it matches every URL and should be selected only if no other routes are matched first. 
+
+
+	- Set <base href> in the application host page which is index.html. The <base href> tells the angular router how to compose navigation URLs. <base href="/src/">
+
+	- app.component.ts
+		using Bootstrap nav component to create the menu.
+		The routerLink directive tells the router where to navigate when the user clicks the link.
+		The routerLinkActive directive is used to add the active bootstrap class to the HTML navigation element whose route matches the active route.
+		The router-outlet directive is used to specify the location where we want the routed component's view template to be displayed.
+		The routerLink, routerLinkActive and router-outlet directives are provided by the RouterModule which we have imported in our application root module.
+		If you forget to specify the router-outlet directive, you will get and error stating - cannot find primary outlet to load component.
+		
+		import { Component } from '@angular/core';
+
+		@Component({
+		    selector: 'my-app',
+		    template: `
+				    <div style="padding:5px">
+					<ul class="nav nav-tabs">
+					    <li routerLinkActive="active">
+						<a routerLink="home">Home</a>
+					    </li>
+					    <li routerLinkActive="active">
+						<a routerLink="employees">Employees</a>
+					    </li>
+					</ul>
+					<br/>
+					<router-outlet></router-outlet>
+				    </div>
+			      `
+		})
+		export class AppComponent {
+		}
+
+	- web.config 
+		- Include the following url-rewrite rule to tell IIS how to handle routes. 
+		  The match url, <match url=".*" />, will rewrite every request. 
+		  The URL in <action type="Rewrite" url="/src/"/> should match the base href in index.html. 
+
+		<system.webServer>
+		  <rewrite>
+		    <rules>
+		      <rule name="Angular Routes" stopProcessing="true">
+			<match url=".*" />
+			<conditions logicalGrouping="MatchAll">
+			  <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+			  <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
+			</conditions>
+			<action type="Rewrite" url="/src/" />
+		      </rule>
+		    </rules>
+		  </rewrite>
+		</system.webServer>
+
+		- If you do not have the above url rewrite rule, when you referesh the page you will 404 page not found error. 
+		
+		http://localhost:57731/src/home
+			Home Users
+			----
+			This is home page
+		http://localhost:57731/src/user
+			Home Users
+			     ----- 	
+			This is users page
+		http://localhost:57731/src/ => redirect to 	http://localhost:57731/src/home
+		http://localhost:57731/src/asdasdsa
+			Home Users
+
+			Page not found
+
+	- use "hash style" urls instead of HTML5 style url's, Set useHash property to true
+		RouterModule.forRoot(appRoutes, { useHash: true }) //app.module.ts
+
+		If you are using "hash style" routes, we don't need the URL rewrite rule in web.config file. 		
+
+		http://localhost:57731/src/#/home
+			Home Users
+			----
+			This is home page
+		http://localhost:57731/src/#/user
+			Home Users
+			     ----- 	
+			This is users page
+		http://localhost:57731/src/ => redirect to 	http://localhost:57731/src/#/home
+		http://localhost:57731/src/#/asdasdsa
+			Home Users
+
+			Page not found
+
+Route parameters
+================
+	- app.module.ts, include the following route.
+		{ path: 'employees/:code', component: EmployeeComponent } //navigates to a URL like (http://localhost:12345/employees/EMP101)
+
+	- EmployeeListComponent
+		<td>
+		    <a [routerLink]="['/employees',employee.code]">
+			{{employee.code | uppercase}}
+		    </a>
+
+		</td>
+
+		Explanation of the above code:
+		Binding routerLink directive to an array. This array is called link parameters array.
+		The first element in the array is the path of the route to the destination component.
+		The second element in the array is the route parameter, in our case the employee code.
+		
+	-employee.service.ts)
+
+		getEmployeeByCode(empCode: string): Observable<IEmployee> {
+		    return this._http.get("http://localhost:31324/api/employees/" + empCode)
+			.map((response: Response) => <IEmployee>response.json())
+			.catch(this.handleError);
+		}
+
+	- employee.component.ts
+
+		import { Component, OnInit } from '@angular/core';
+		import { IEmployee } from './employee';
+		import { EmployeeService } from './employee.service';
+		import { ActivatedRoute } from '@angular/router';
+
+		@Component({
+		    selector: 'my-employee',
+		    templateUrl: 'app/employee/employee.component.html',
+		    styleUrls: ['app/employee/employee.component.css']
+		})
+		export class EmployeeComponent implements OnInit {
+		    employee: IEmployee;
+		    statusMessage: string = 'Loading data. Please wait...';
+
+		    constructor(private _employeeService: EmployeeService,
+			private _activatedRoute: ActivatedRoute) { }
+
+		    ngOnInit() {
+		    	//To retrieve the parameter from the URL we are using the ActivatedRoute service provided by Angular 
+		    	//Since ActivatedRoute is provided as a service inject it into the constructor just like how we have injected EmployeeService
+		    	//There are different approaches to retrieve route parameters values.
+			let empCode: string = this._activatedRoute.snapshot.params['code'];
+			this._employeeService.getEmployeeByCode(empCode)
+			    .subscribe((employeeData) => {
+				if (employeeData == null) {
+				    this.statusMessage =
+					'Employee with the specified Employee Code does not exist';
+				}
+				else {
+				    this.employee = employeeData;
+				}
+			    },
+			    (error) => {
+				this.statusMessage =
+				    'Problem with the service. Please try again after sometime';
+				console.error(error);
+			    });
+		    }
+		}
+		
+	- employee.component.html 
+
+		<table *ngIf="employee">
+		    <thead>
+			<tr>
+			    <th colspan="2">
+				Employee Details
+			    </th>
+			</tr>
+		    </thead>
+		    <tbody>
+			<tr>
+			    <td>Employee Code</td>
+			    <td>{{employee.code}}</td>
+			</tr>
+			<tr>
+			    <td>Name</td>
+			    <td>{{employee.name}}</td>
+			</tr>
+			<tr>
+			    <td>Gender</td>
+			    <td>{{employee.gender}}</td>
+			</tr>
+			<tr>
+			    <td>Annual Salary</td>
+			    <td>{{employee.annualSalary}}</td>
+			</tr>
+			<tr>
+			    <td>Date of Birth</td>
+			    <td>{{employee.dateOfBirth}}</td>
+			</tr>
+		    </tbody>
+		</table>
+		<div *ngIf="!employee">
+		    {{statusMessage}}
+		</div>
+
+	- EmployeeService both in EmployeeListComponent and EmployeeComponent, let's register it in the root module so we get a singleton instead of multiple instances of the service.  
+
+	- regsiter the EmployeeService in application root module (app.module.ts)
+
+		@NgModule({
+		    ...
+		    providers: [EmployeeService]
+		    ...
+
+Angular dependency injection
+=============================
+	export class EmployeeListComponent implements OnInit {
+
+	    private _employeeService: EmployeeService;
+
+	    constructor(_employeeService: EmployeeService) {
+		this._employeeService = _employeeService;
+	    }
+	    
+	    //OR EQUAL TO constructor(private _employeeService: EmployeeService) {
+
+	    ngOnInit() {
+		this._employeeService.getEmployees()
+		    .subscribe(
+		    employeesData => this.employees = employeesData,
+		    error => this.statusMessage = 'Error');
+	    }
+	    ...
+	}
+ 
+	- In EmployeeListComponent we need an instance of EmployeeService, so we use getEmployees() method to get records.
+	  But the EmployeeListComponent is not creating an instance of EmployeeService.
+	  private "_employeeService" is calling getEmployees(), ?how are we getting an instance of the EmployeeService class.
+	  who is creating and providing the instance to the constructor?
+	  
+	- Answer is the Angular Injector. 
+	  When an instance of EmployeeListComponent is created, the angular injector creates an instance of the 
+	  EmployeeService class and provides it to the EmployeeListComponent constructor. 
+	  
+	  The constructor then assigns that instance to the private field _employeeService. 
+	  We then use this private field _employeeService to call the EmployeeService method getEmployees().
+	  
+	- How does the angular injector knows about EmployeeService?
+	  Register the EmployeeService with the Angular Injector by using the providers property 
+	  of @Component decorator or @NgModule decorator.
+
+	  Register @Component decorator, then we are registering the service with an angular injector at the component level. 
+	  The service is then available to that component and all of it's children. 
+	  
+	  Register @NgModule decorator, then we are registering the service with an angular injector at the module level 
+	  which is the root injector. It will available to all the component accross the entire application.
+	  
+	- So the component which is dependent on a service instance, receives the instance from an external source 
+	  rather than creating it itself. This is called Dependency Injection.
+	  		
+	  		Angular Injector
+	  		
+	  		[Service Instance]
+	  			|
+				| Injects the Dependency
+				V	
+	  		Component
+	  		
+	  		export class EmployeeListComponet(){ ... }
+	  
+	- What is Dependency Injection
+	  It's a coding pattern in which a class receives its dependencies from an external source rather than creating them itself.  
+
+	- The EmployeeListComponent receives the dependency instance (i.e EmployeeService instance) from the the external source 
+	  (i.e the angular injector) rather than creating the instance itself.
+
+dependency injection
+=====================
+	- Example, Build a Computer, need several objects like processor, ram, hard-disk drive etc. 
+		export class Computer {
+		    private processor: Processor;
+		    constructor() {this.processor = new Processor();    }
+		}
+
+		export class Processor {   constructor() { }}
+
+	- Notice at the moment, we are not using dependency injection. 
+	  To build a Computer, need a Processor object and the Computer class is creating an instance of the Processor class it needs. 
+	  Most of them use this kind of programming style. 
+	
+	- But there are 3 fundamental problems with this code
+		- 1. This code is difficult to maintain over time
+		- Instances of dependencies created by a class that needs those dependencies  are local to the class and cannot share data and logic.
+		- Hard to unit test
+
+	- 1. why this code is difficult to maintain. 
+	   The Processor class needs the speed of the processor to be able to create an instance of it. 
+	   By passing the processor speed as a parameter to the constructor of the Processor class as shown below. 
+
+		export class Processor { constructor(speed: number) {}}
+
+	   This change in the Processor class breaks the Computer class. 
+	   So every time the Processor class changes, the Computer class also needs to be changed. 
+
+	   Reason, we have this problem is because the Computer class itself is creating the instance of the Processor class. 
+	   Instead if an external source can create the processor instance and provide it to the computer class, 
+	   then this problem can be very easily solved and that's exactly what dependency injection does. 
+	  
+	   Rewritten the above code using DI.
+
+		export class Computer {
+		    private processor: Processor;
+		    constructor(processor: Processor) {        this.processor = processor;    }}
+
+		export class Processor {     constructor(speed: number) {   } }
+
+	   The Computer class is not creating the instance of the Processor class itself. 
+	   Instead, the Computer class has a dependency on Processor class using the constructor. 
+	   Now, when we create an instance of the Computer class, an external source i.e the Angular Injector 
+	   will provide the instance of the Processor class to the Computer class. 
+	   
+	   Now the the Angular injector is creating the DI, the Computer class need not change when the Processor class changes.
+
+	- 2. Instances of dependencies created by a class that needs those dependencies are local to the class 
+	     and cannot share data and logic. 
+	     
+	     The Processor class instance created in the Computer class is local to the Computer class and cannot be shared. 
+	     Sharing a processor instance does not make that much sense, so let's understand this with another example. 
+
+	     export class UserPreferencesService {
+	     	color:string;
+	     	fontSize:number;
+	     }
+	     
+	     We want this data to be shared with all the other components in our application. 
+	     
+	     export class ComponetClass{
+	     	userPreferencesService: UserPreferencesService;
+	     	constructor(){
+	     		this.UserPreferencesService = new UserPreferencesService();
+	     	}
+	     }
+	     
+	     Create an instance of this UserPreferenceService class in every component class like computer class, 
+	     the service instance is local to the component and  the data cannot be shared with other components. 
+	     
+	     Need this UserPreferencesService in 10 different components, end up creating 10 instances of the service, one for each component. 
+	     This instance is local to the component, the data that local service instance has cannot be shared by other components. 
+	     
+	     Use Dependency Injection (DI), the angular injector provides a Singleton i.e a single instance of the 
+	     service so the data and logic can be shared very easily across all the components.
+	     
+	     export class ComponetClass{ constructor(userPreferencesService: UserPreferencesService;){ }  }
+		     	Angular Injector
+		     	    [UP1]
+		-----------------------------------	     	    
+		|		|		|
+		Component_1	Component_2	Component_3
+		 UP1		UP1		UP3
+	     
+	     
+	     Example a component called component_1, which needs an instance of userPreferencesService, 
+	     now the  component itself is not going to create an instance of that service because we are using 
+	     dependency injection so the angular injector is going to create and inject the service instance into component 
+	     
+	     First thing the angular injector will check if i already have an userPreferencesService instance, in this case 'no',
+	     because this is the first component that has requested it so the angular injector is going to create an
+	     instance of the userPreferencesService and inject that into component one.
+	     
+	     Now component_2, which needs an instance of userPreferencesService, so the angular injector again
+	     does the same check do I already have an existing instance in this case it does 
+	     so it's going to provide that existing instance to component_2
+	     
+	     so in this case the same service instance is being shared by all the components, 
+	     so sharing data and logic becomes much  easier.
+
+Angular singleton service
+=========================
+	- One of the benefits of dependency injection is that it allows us to share data 
+	  and functionality easily as the angular injector provides a Singleton i.e a single instance of the service. 
+
+	- employee\userPreferences.service.ts
+
+		import { Injectable } from '@angular/core';
+
+		@Injectable()
+		export class UserPreferencesService {
+		    colourPreference: string = 'orange';
+		    constructor() {
+			console.log('New Instance of Service Created');
+		    }
+		}
+
+	- home.component.ts file
+
+		import { Component } from '@angular/core';
+		import { UserPreferencesService } from '../employee/userPreferences.service';
+
+		// 2 way binding - the colour property
+		@Component({
+		    template: `
+			    <h1>This is the home page</h1>
+			    <div>
+				Colour Preference :
+				<input type='text' [(ngModel)]='colour' [style.background]="colour"/>
+			    </div>`
+		})
+		export class HomeComponent {
+
+		    // Create a private variable to hold an instance of the UserPreferencesService
+		    private _userPreferencesService: UserPreferencesService;
+
+		    // creating an instance of the UserPreferencesService using the new keyword. 
+		    //So this instance is local to this component and no share data.
+		    constructor() {
+			this._userPreferencesService = new UserPreferencesService();
+		    }
+
+		    // Implement a getter to retrieve the colourPreference value from the service
+		    get colour(): string {
+			return this._userPreferencesService.colourPreference;
+		    }
+
+		    // Implement a setter to change the colourPreference value of the service
+		    set colour(value: string) {
+			this._userPreferencesService.colourPreference = value;
+		    }
+		}
+
+	- employeeList.component.html
+		<div>
+		    Colour Preference :
+		    <input type="text" [(ngModel)]="colour" [style.background]="colour" />
+		</div>
+
+	- employeeList.component.ts
+		same code home.component.ts
+
+	- Run, both "HomeComponent" and "EmployeeListComponent" dispaly orange color text box,
+	  If type red on home, text background color change to red, but employeelist will still orange, click back to home, 
+	  red change to orange, so every time 'New Instance of Service Created' will fire. So date is not shared
+	  
+	- Create a Singleton i.e a single instance of the UserPreferencesService 
+	  and use that single instance to share data (colourPreference property value) between 
+	  the 2 components (HomeComponent & EmployeeListComponent) using dependency injection.
+
+	- 1. Register the service using the Providers property of @NgModule() decorator in app.module.ts file 
+
+		import { UserPreferencesService } from './employee/userPreferences.service';
+
+		@NgModule({
+		   providers: [UserPreferencesService]
+		   ...
+		})
+	- 2.  Specify the dependency on UserPreferencesService using the constructor of HomeComponent & EmployeeListComponent.
+
+
+		    constructor(private _userPreferencesService: UserPreferencesService) {
+		    }
+	-Run, navigate, type differenet  color. color will change, instance not loaded every time
+
+Angular Injector
+================
+	- Angular 1 has only one global injector 
+	- Angular 2 we have one injector at the application root level and hierarchical injectors that parallel an application's component tree.
+	
+		Root App Injector	(app.module.ts)	-> @NgModule({ providers: [UserPreferencesService]} - available for all components including
+	-------------------------------------------								including the components in lazy loaded modules
+Hir		AppComponent [Injector]			 	
+arc		------------
+ichal			|
+			|				-> @Component({ providers: [UserPreferencesService]}
+i	 ----------------------------------------
+n	 |					|	
+j	 |					|
+e	 Comp X[Injector] (registered)		Comp A [Injector]
+c	 ---------------   availabe y & Z
+t	 	|
+o	 	|
+r	------------------	 	
+	Comp Y         Comp Z
+	[Injector]	[Injector]
+
+Angular root injector
+=====================
+	- app/test.module.ts, remove from UserPreferencesService EmployeList, home
+		import { NgModule } from '@angular/core';
+		import { UserPreferencesService } from './employee/userPreferences.service';
+
+		@NgModule({
+		    providers: [UserPreferencesService]
+		})
+		export class TestModule { }
+		
+	- app.module.ts
+		import { TestModule } from './test.module';
+
+	@NgModule({
+	    imports: [
+		TestModule,...
+	    ],
+
+Angular router navigate method
+==============================
+	- employee.component.html
+		<div style="margin-top:5px">
+		    <input type="button" class="btn btn-primary" value="Back to Employees List"
+			   (click)="onBackButtonClick()"/>
+		</div>
+
+	- employee.component.ts
+		import { Router } from '@angular/router';
+
+		constructor(private _router: Router) {}
+
+		onBackButtonClick() :void {
+		    this._router.navigate(['/employees']);
+		} 
+
+Promises
+========
+	- In Angular we can use either Promises or Observables. 
+	- By default the Angular Http service returns an Observable. 
+	- employee.service.ts
+
+		// import toPromise operator
+		import 'rxjs/add/operator/toPromise';
+
+		@Injectable()
+		export class EmployeeService {
+		    ...
+		    
+		    //changed the return type of the method to Promise<IEmployee> from Observable<IEmployee>. 
+		    // using toPromise() operator to return a Promise. When an exception is thrown 
+		    //handlePromiseError() logs the error to the console and throws the exception again
+		    getEmployeeByCode(empCode: string): Promise<IEmployee> {
+			return this._http.get("http://localhost:24535/api/employees/" + empCode)
+			    .map((response: Response) => response.json()) //<IEmployee>response.json()) not working
+			    						  // throws error Type 'Promise<void | >' is not assignable to type 'Promise<>'.		 
+			    .toPromise()
+			    .catch(this.handlePromiseError);
+		    }
+
+		    // This method is introduced to handle exceptions
+		    handlePromiseError(error: Response) {
+			console.error(error);
+			throw (error);
+		    }
+		}
+
+	- employee.component.ts
+
+	export class EmployeeComponent implements OnInit {
+		...
+	    ngOnInit() {
+		//usethen() method instead of subscribe() method
+		this._employeeService.getEmployeeByCode(empCode)
+		    .then((employeeData) => {
+			if (employeeData == null) {
+			    this.statusMessage =
+				'Employee with the specified Employee Code does not exist';
+			}
+			else {
+			    this.employee = employeeData;
+			}
+		    },
+		    (error) => {
+			this.statusMessage =
+			    'Problem with the service. Please try again after sometime';
+			console.error(error);
+		    });
+		    
+		    OR apply catch
+			this._employeeService.getEmployeeByCode(empCode)
+		    .then((employeeData) => {
+			if (employeeData == null) {
+			    this.statusMessage =
+				'Employee with the specified Employee Code does not exist';
+			}
+			else {
+			    this.employee = employeeData;
+			}
+		    }
+		    ).catch((error) => {
+			this.statusMessage =
+			    'Problem with the service. Please try again after sometime';
+			console.error(error);
+		    });		    
+	    }
+	   
+	}
+
+Angular promises vs observables
+================================
+		Promise			Observable
+	1. 	Emits a single value	Emits multiple values over a period of time
+	2. 	Not Lazy		Lazy. An Observable is not called until we subscribe to the Observable
+	3. 	Cannot be cancelled	Can be cancelled using the unsubscribe() method
+					Observable provides operators like map, forEach, filter, reduce, retry, retryWhen etc.
+
+	- 1. A Promise emits a single value where as an Observable emits multiple values over a period of time. 
+		Observable=>subscribe(next?: (value: T) => void, error?: (error: any) => void, complete?: () => void): Subscription;
+			- get more resultset by next, complete is last one.
+		Promise= > then<TResult1 = T, TResult2 = never>(onfulfilled?:..., onrejected?: ...>;
+			- a single value, no next
+	- A Promise is not lazy where as an Observable is Lazy. 
+		- lazy observable 
+			With an example, employee.service.ts. Notice this method returns an Observable. 
+
+			this._employeeService.getEmployees()
+			    .subscribe((employeeData) => this.employees = employeeData,
+			    (error) => {       this.errorStatus = "Service Error";        console.error(error);    }); 
+
+			To prove this => F12= > Netword => Filter textbox, type "api/employees" => /api/employees/ will show
+
+			now comment
+			this._employeeService.getEmployees()
+			    //.subscribe((employeeData) => this.employees = employeeData,
+			    //(error) => {       this.errorStatus = "Service Error";        console.error(error);    }); 
+
+			To prove this => F12= > Netword => Filter textbox, type "api/employees" =>  will not be show
+
+			So this proves that an Observable is lazy and won't be called unless we subscribe using the subscribe() method.
+		
+		- Not Lazy Promise
+			this._employeeService.getEmployeeByCode(empCode)
+				.then((employeeData) => {...)},
+				(error) => {...	);
+				To prove this => F12= > Netword => Filter textbox, type "api/employees" => /api/employees/emp104 will show
+
+			this._employeeService.getEmployeeByCode(empCode)
+				//.then((employeeData) => {...)},
+				//(error) => {...	);
+			To prove this => F12= > Netword => Filter textbox, type "api/employees" => /api/employees/emp104 still it will show
+
+
+			Since a Promise is NOT LAZY, Irrespective of whether you have then() method or not, 
+			calling getEmployeeByCode(empCode) will immediately fire off a request across the network to the EmployeeService.
+
+Observable retry on error
+=========================
+	- stop the Web API Service. navigate to http://localhost:12345/src/employees/emp101, 
+	  The application display "Problem with the service. Please try again after sometime."
+	  In the "Console" tab of the "Browser Developer Tools" you will see - ERR_CONNECTION_REFUSED. 
+	  
+	- employee.component.ts.
+
+		// Import rxjs retry operator
+		import 'rxjs/add/operator/retry';
+
+		export class EmployeeComponent implements OnInit {
+			...
+		    ngOnInit() {
+		
+			this._employeeService.getEmployeeByCode(empCode)
+			    // Chain the retry operator to retry on error.
+			    .retry()
+			    .subscribe((employeeData) => {
+				if (employeeData == null) {
+				    this.statusMessage =
+					'Employee with the specified Employee Code does not exist';
+				}
+				else {
+				    this.employee = employeeData;
+				}
+			    },
+			    (error) => {
+				this.statusMessage =
+				    'Problem with the service. Please try again after sometime';
+				console.error(error);
+			    });
+		    }
+			...
+		}
+
+	- The downside of this approach is that the application keeps on retrying forever. 
+	  Start theAPI service, the call succeeds and the observable completes with employee data displayed on the web page.
+
+	- Retry for a specific number of times.  Retry only 3 times if there is an error
+        	.retry(3)
+
+	- Retry after a short delay.
+
+		import 'rxjs/add/operator/retrywhen';
+		import 'rxjs/add/operator/delay';
+
+	        // Retry with a delay of 1000 milliseconds (i.e 1 second)
+	        .retryWhen((err) => err.delay(1000))
+
+	- Can't use delay opertor with retry operator. The delay operator will not work with retry
+	        .retry().delay(5000)
+
+	- Retry every 1000 milli-seconds only for a miximum of 5 times
+
+		import 'rxjs/add/operator/retrywhen';
+		import 'rxjs/add/operator/delay';
+		import 'rxjs/add/operator/scan';
+
+		    // Retry 5 times maximum with a delay of 1 second between each retry attempt
+		    .retryWhen((err) => {
+			return err.scan((retryCount, val) => {
+			    retryCount += 1;
+			    if (retryCount < 6) {
+				this.statusMessage = 'Retrying...Attempt #' + retryCount;
+				return retryCount;
+			    }
+			    else {
+				throw (err);
+			    }
+			}, 0).delay(1000)
+		    })
+
+observable unsubscribe
+======================
+	- employee.component.html file. 
+	  if the subscription is not closed (!subscription.closed), meaning only when there is a request to the Observable is in progress.  
+
+		<div style="margin-top:5px" *ngIf="!subscription.closed">
+		    <input type="button" class="btn btn-primary" value="Cancel Request"
+			   (click)="onCancelButtonClick()" />
+		</div>
+
+	- employee.component.ts
+
+		...
+		import { ISubscription } from "rxjs/Subscription"; // import ISubscription.
+
+		export class EmployeeComponent implements OnInit {
+		    subscription: ISubscription;
+
+		    ngOnInit() {
+			this.subscription = this._employeeService.getEmployeeByCode(empCode)
+			    .retryWhen((err) => {
+				return err.scan((retryCount, val) => {
+				    retryCount += 1;
+				 ...
+		    }
+
+		    onCancelButtonClick(): void {
+			this.statusMessage = 'Request cancelled';
+			this.subscription.unsubscribe();
+		    }
+		}
+
+Difference between AngularJS, Angular 2 and Angular 4
+=====================================================
+	- Google has released 3 versions
+		Version		Year
+		AngularJS	2010
+		Angular 2	2016
+		Angular 4	2017
+
+	- Difference between AngularJS and Angular 2
+		- The 1st of Angular is called AngularJS. Angular 1 OR officially called AngularJS.  
+		
+		- Angular 2 is not a simple upgrade from angular 1. Angular 2 is completely rewritten.  
+		
+		- AngularJS applications revolve around the concept of controllers. 
+		  To glue a controller and a view in AngularJS we use $scope. 
+		
+		- With Angular 2 both controllers and $scope are gone. Angular 2 is entirely component based, 
+		  which means we create a set of independent or loosely coupled components and put them together 
+		  to create an Angular 2 application. The advantage is that facilitates greater code reuse. 
+		  For example, if you have a rating component, you may use it on an employee page to rate an employee 
+		  or on a product page to rate a product.
+
+		- From a performance standpoint, Angular 2 is 5 times faster compared to AngularJS.
+
+		- AngularJS was not built for mobile devices. Angular 2 is supported for mobile. 
+
+		- With Angular 2 we have more language choices. 
+		  In additon to nativa JavaScript we can use TypeScript, Dart, PureScript, Elm, etc. 
+		  Among all these languages, TypeScript is the most popular language for developing 
+		  Angular 2 applications as it provides the following benefits.
+			1. Intellisense 
+			2. Autocompletion
+			3. Code navigation
+			4. Advanced refactoring
+			5. Strong Typing
+			6. Supports ES 2015 (also called ES 6) features like classes, interfaces and inheritance. 
+
+	- Difference between Angular 2 and Angular 4
+		- Angular 4 will simply be a change in some core libraries.
+		- Angular 4 is backwards compatible with Angular 2 for most applications.
+
+	- What has changed and what is new in Angular 4
+		- Some under the hood changes to reduce the size of the AOT (Ahead-of-Time) compiler generated code. 
+		
+		- Migrating to Angular 4 may reduce the production bundles by hundreds of kilobytes. 
+		
+		- TypeScript 2.1 and 2.2 compatibility. Angular is updated with a more recent version of TypeScript.
+
+		- Animation features are pulled out of @angular/core and are moved into their own package.
+		
+		- use an if/else style syntax with *ngIf structural directive. 
+
+	- What happened to Angular 3.
+		- Except the Router library, all the other Angular core libraries are versioned 
+		  the same way and are shipped as NPM packages as you can see below.
+		  
+		  @angular/core		v2.3.0
+		  @angular/compiler	v2.3.0
+		  @angular/compiler-cli	v2.3.0
+		  @angular/http		v2.3.0
+		  @angular/router	v3.3.0
+	- why angular 3 is not released 
+		Due to this misalignment of the router package’s version, the angular team decided to go straight for Angular v4. 
+		
+	- Do I have to learn Angular 2 before learning Angular 4
+		From a developer standpoint, building an application using Angular 2 and Angular 4 is not very different. 
+		We still use the same concepts, APIs and patterns. Angular 4 is simply, 
+		the next version of Angular 2 and contains a few changes and enhancements as discussed above.

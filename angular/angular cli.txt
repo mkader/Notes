@@ -1,0 +1,1093 @@
+https://www.sitepoint.com/ultimate-angular-cli-reference/
+https://loiane.com/2017/08/how-to-add-bootstrap-to-an-angular-cli-project/
+https://www.techiediaries.com/angular-bootstrap/
+https://codingthesmartway.com/using-bootstrap-with-angular/
+
+Angular CLI (Command Line Interface) - cli 6.03/node 8.11.1/anguar 6.0.2
+===========
+	Why should we use Angular CLI and what problems it solves. 
+		- If you have any experience with Angular, then you already know manually setting up an Angular application from scratch is a laborious and time consuming process. 
+			- Create a separate application folder and add the package definition file ( ie. package.json) and other configuration files.
+			- Install the packages using NPM
+			- Create the root application component (i.e AppComponent) as every angular application should have atleast one component which is the root component. 
+			  This root component bootstraps the angular application. 
+			- Create the root application module (AppModule) as every angular application should have atleast one module which is the root module
+			- Create main.ts file which is the entry point to the application. The code in this file, loads the angular root module - AppModule
+			- Create index.html which hosts our application
+		- In a real world, we usually have more than one developer working on a given angular project. While all these developers are creating 
+		  these different files and writing the required boiler plate code, are they following the angular teams best practices and conventions. 
+		  What if the developers are not following them. How do we enforce them. Well, one way to enforce these is by manual code reviews. 
+		  Code reviews are not only time consuming but also error prone. 
+
+	What is Angular CLI
+		- It's a tool & help us create angular applications, components, modules, pipes, directives, services and much more with faster and great consistency
+		- Create code for TypeScript features like classes, interfaces, enums etc.
+		- It follows angular best practices and conventions out of the box -> Run Unit and End-to-End (e2e) tests
+		- Create optimised builds for deployment to production
+
+Installing Angular CLI
+======================
+	- Prerequisites for installing Angular CLI : installed Node 6.9.0 or higher, and NPM 3 or higher 
+	- to check version in a command window, node -v , npm -v
+	- Get the latest version of Node and NPM - https://nodejs.org/en/download/ 
+	- Cmd Prompt as an administrator and execute the following command. Flag -g installs Angular CLI globally on your machine.
+		- "npm install -g @angular/cli" or "npm i -g @angular/cli" 
+		- see a tree structure as shown below, you have Angular CLI installed successfully.  
+		- To verify the version of Angular CLI installed, execute the following command "ng -v" 
+		- don't worrt about warning
+	- Any problems installing Angular CLI, follow these steps and hopefully Angular CLI will be installed successfully. 
+		- Step 1 : Delete "npm" folder from the following path, C:\Users\Your_UserName\AppData\Roaming - "Show hidden files, folders, and drives" 
+		- Step 2 : Once you have the "npm" folder deleted, uninstall node.js.  
+		- Step 3 : Reinstall Node.js , https://nodejs.org/en/download/ 
+		- install Angular CLI again using the following command.
+		
+Angular CLI Create new project
+==============================
+	- Visual Studio Code is free, download https://code.visualstudio.com/download 
+	- To create a new Angular Project, Cmd Prompt as an Administrator and execute the following command. 
+		- This command creates all the required files and also installs all the required packages. c:\>ng new MyFirstApp
+			- ng is the Angular CLI
+			- new for creating a new application
+			- MyFirstApp is the name of your angular application
+			- completed successfully, msg is
+				- Installed packages for tooling via npm.
+				- Project 'MyFirstApp' successfully created. 
+
+		- So what did this "ng new" command do
+			- A new folder with name MyFirstApp is created
+			- All the required configuration and source files are created.
+			- All the npm dependencies are installed in node_modules folder
+			- Unit and end-to-end tests are created
+			- The Karma unit test runner is configured
+			- The Protractor end-to-end test framework is configured
+			
+		- Now, go to the folder (MyFirstApp) that contains our angular project, type "code ." open the VS code with project
+		- To run the project using Angular CLI, "ng serve --open"
+			- This command builds the application and opens it in our default browser. 
+			-- "serve" serve the application 
+			- The flag --open, launches our default browser and runs the application. By default the application runs on port 4200. 
+			- At the moment, the angular development server is running in watch mode, 
+				- meaning when a file changes, those changes are automatically detected, compiled and the browser reloads to reflect the changes. 
+				  This is called live reload. We can turn this live reload functionality off, if required. 
+			- To stop the server, press CTRL + C while you are on the command prompt and then "Y" and ENTER key. This will stop the server.
+		- To run all the unit tests, use the following command "ng test"
+		- To run all the end-to-end tests, use the following command "ng e2e"
+	- help cmd 
+		- "ng --help"
+		- ng generate --help
+		- ng --help | clip
+		- ng --help >MyTextDoc.txt|doc
+
+
+Angular CLI ng new options  - "ng new MyFirstApp --dry-run or -d"
+==========================
+	The table below shows the common options, their data types, default values, alias and a short description of what they do. 
+	Flag			Type	Default	Alias	Purpose
+	--dry-run		Boolean	false	-d	Run through without making any changes. Just reports the files that will be created
+	--skip-install		Boolean	false	-si	Skip installing packages, not install node-modules
+	--skip-tests		Boolean	false	-st	Skip creating tests, like no e2e, app.component.spec.ts
+	--inline-style		Boolean	false	-is	Use inline styles when generating the new application, no app.component.html
+	--inline-template	Boolean	false	-it	Use inline templates when generating the new project, no app.component.css
+	
+	usage: ng new <name> [options]
+	options:
+	  --collection (-c)
+	    Schematics collection to use.
+	  --directory 
+	    The directory name to create the workspace in.
+	  --dry-run (-d)
+	    Run through without making any changes.
+	  --force (-f)
+	    Forces overwriting of files.
+	  --inline-style (-s)
+	    Specifies if the style will be in the ts file.
+	  --inline-template (-t)
+	    Specifies if the template will be in the ts file.
+	  --new-project-root 
+	    The path where new projects will be created.
+	  --prefix (-p)
+	    The prefix to apply to generated selectors.
+	  --routing 
+	    Generates a routing module.
+	  --skip-git (-g)
+	    Skip initializing a git repository.
+	  --skip-install 
+	    Skip installing dependency packages.
+	  --skip-tests (-S)
+	    Skip creating spec files.
+	  --style 
+	    The file extension to be used for style files.
+	  --verbose (-v)
+	    Adds more details to output logging.
+	  --view-encapsulation 
+	    Specifies the view encapsulation strategy.
+
+Angular CLI configuration file (.angular-cli.json)
+================================
+	Angular CLI configuration file 
+	{
+	  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+	  "version": 1,
+	  "newProjectRoot": "projects",
+	  "projects": {
+	    "MyFirstApp": {   //project name
+	      "root": "",
+	      
+	      "sourceRoot": "src", //The root directory of the application.
+	      
+	      "projectType": "application",
+	      
+	      //The selector prefix to apply for the generated components. Default is "app". This can be changed by using the "prefix" option 
+	      //when generating a new angular project using the "ng new" command
+	      "prefix": "app",
+	      
+	      "schematics": {},
+	      "architect": {
+		"build": {
+		  "builder": "@angular-devkit/build-angular:browser",
+		  "options": {
+		    
+		    "outputPath": "dist/MyFirstApp", //The output directory for build results. Default is dist
+		    
+		    "index": "src/index.html", //The name of the start HTML file which is index.html by default
+		    
+		    "main": "src/main.ts", //The name of the main entry-point file. main.ts by default
+		    
+		    //The name of the polyfills file. Angular is built on the latest standards of the web platform. Targeting such a wide range of 
+		    //browsers is challenging because not all browsers support all features of modern browsers. This can be compensated by using 
+		    //polyfill scripts that implement missing features in JavaScript
+		    "polyfills": "src/polyfills.ts", 
+		    
+		    "tsConfig": "src/tsconfig.app.json", //it contains the typescript compiler configuration for our angular application 
+		    
+		    //List of application assets that you want to copy when building your project. 
+		    //By default, the src/assets/ folder and src/favicon.ico are copied over
+		    "assets": [ 
+		      "src/favicon.ico",
+		      "src/assets"
+		    ],
+		    
+		    //Global styles to be included in the build. Default is styles.css. We can also use less or scss. To change to less or scss, 
+		    //use the "style" option when generating a new angular project using the "ng new App1 --style scss" command, so it is src/styles.scss. 
+		    "styles": [ 
+		      "src/styles.css"
+		    ],
+		    
+		    "scripts": []
+		  },
+		  "configurations": {
+		    "production": {
+		      "fileReplacements": [
+			{
+			  "replace": "src/environments/environment.ts",
+			  "with": "src/environments/environment.prod.ts"
+			}
+		      ],
+		      "optimization": true,
+		      "outputHashing": "all",
+		      "sourceMap": false,
+		      "extractCss": true,
+		      "namedChunks": false,
+		      "aot": true,
+		      "extractLicenses": true,
+		      "vendorChunk": false,
+		      "buildOptimizer": true
+		    }
+		  }
+		},
+		"serve": {
+		  "builder": "@angular-devkit/build-angular:dev-server",
+		  "options": {
+		    "browserTarget": "MyFirstApp:build"
+		  },
+		  "configurations": {
+		    "production": {
+		      "browserTarget": "MyFirstApp:build:production"
+		    }
+		  }
+		},
+		"extract-i18n": {
+		  "builder": "@angular-devkit/build-angular:extract-i18n",
+		  "options": {
+		    "browserTarget": "MyFirstApp:build"
+		  }
+		},
+		"test": {
+		  "builder": "@angular-devkit/build-angular:karma",
+		  "options": {
+		  
+		    "main": "src/test.ts", //The name of test file & it's the main entry point for unit tests ,it loads all the dots spec and framework files
+		  
+		  "polyfills": "src/polyfills.ts",
+		  
+		    "tsConfig": "src/tsconfig.spec.json", //it contains the typescript compiler configuration for unit test
+		    
+		    "karmaConfig": "src/karma.conf.js",
+		    "styles": [
+		      "src/styles.css"
+		    ],
+		    "scripts": [],
+		    "assets": [
+		      "src/favicon.ico",
+		      "src/assets"
+		    ]
+		  }
+		},
+		"lint": {
+		  "builder": "@angular-devkit/build-angular:tslint",
+		  "options": {
+		    "tsConfig": [
+		      "src/tsconfig.app.json",
+		      "src/tsconfig.spec.json"
+		    ],
+		    "exclude": [
+		      "**/node_modules/**"
+		    ]
+		  }
+		}
+	      }
+	    },
+	    "MyFirstApp-e2e": {
+	      "root": "e2e/",
+	      "projectType": "application",
+	      "architect": {
+		"e2e": {
+		  "builder": "@angular-devkit/build-angular:protractor",
+		  "options": {
+		    "protractorConfig": "e2e/protractor.conf.js",
+		    "devServerTarget": "MyFirstApp:serve"
+		  }
+		},
+		"lint": {
+		  "builder": "@angular-devkit/build-angular:tslint",
+		  "options": {
+		    "tsConfig": "e2e/tsconfig.e2e.json",
+		    "exclude": [
+		      "**/node_modules/**"
+		    ]
+		  }
+		}
+	      }
+	    }
+	  },
+	  "defaultProject": "MyFirstApp"
+	}
+
+	- The settings from this file are used when we 
+		- Generate angular features likes components, pipes, services etc
+		- Run unit and end-to-end tests
+		- Build the application etc.
+	-The table below shows some of the settings and their purpose. (some of them Angular 2)
+	Setting		Purpose
+	project : name	Name of the project
+	apps: root	The root directory of the application. Default is src. We can change this using the 
+			"source-dir" option when generating a new angular project using the "ng new" command
+	apps: outDir	The output directory for build results. Default is dist
+	apps: assets	List of application assets that you want to copy when building your project. 
+			By default, the src/assets/ folder and src/favicon.ico are copied over
+	apps: index	The name of the start HTML file which is index.html by default
+	apps: main	The name of the main entry-point file. main.ts by default
+	apps: polyfills	The name of the polyfills file. Angular is built on the latest standards of the web platform. 
+			Targeting such a wide range of browsers is challenging because not all browsers support all features of modern browsers. 
+			This can be compensated by using polyfill scripts that implement missing features in JavaScript
+	apps: styles	Global styles to be included in the build. Default is styles.css. We can also use less or scss. 
+			To change to less or scss, use the "style" option when generating a new angular project 
+			using the "ng new App1 --style scss" command, so it is src/styles.scss. 
+	apps: prefix	The selector prefix to apply for the generated components. Default is "app". This can be changed by using the "prefix" option when generating a new angular project using the "ng new" command
+	apps: test	The name of test file & it's the main entry point for unit tests,it loads all the dots spec and framework files
+	apps:tsconfig	it contains the typescript compiler configuration for our angular application 
+	tsconfig.spec	it contains the typescript compiler configuration for unit test
+	
+	- creating with prefix code
+		- ng new App2 --prefix solera
+			- app.componet.ts
+				import { Component } from '@angular/core';
+				
+				@Component({
+				  selector: 'solera-root',
+				  templateUrl: './app.component.html',
+				  styleUrls: ['./app.component.css']
+				})
+				export class AppComponent {
+				  title = 'solera';
+				}
+			- angular.json file contains prefix
+				"prefix": "solera",
+			- App2>ng g c abc, abc.component.ts contains with => "selector: 'solera-abc',"
+			- App2>ng g c xyz --prefix tech, xyz.component.ts contains with => "selector: 'tech-abc',"
+				
+	
+Angular CLI project structure
+=============================
+	File / Folder		Purpose
+	package.json		This file contains the packages to build and run our application. It contains two sets of packages, dependencies and devDependencies. 
+				The dependencies are essential for running the application. The devDependencies are only required to develop the application (not for production). 
+				These packages are installed into the node_modules folder by the Node Package Manager (npm), when npm install commaned is excuted. 
+				You can also add your own custom scripts here. 
+					- "scripts" property in package.json file contains the useful npm commands. 
+					- Notice we have "start": "ng serve". This means when we execute npm start it executes ng serve which builds and starts the server. 
+					- In addition if you also want to launch the browser and open the application CHANGE "start": "ng serve" TO "start": "ng serve --open"
+
+				{
+				  "name": "my-first-app",
+				  "version": "0.0.0",
+				  "scripts": {
+				    "ng": "ng",
+				    "start": "ng serve", = > "ng serve --open"
+				    ...	
+				  },
+				  "private": true,
+				  "dependencies": {
+				    "@angular/animations": "^6.0.2",
+				    "@angular/common": "^6.0.2",
+				    ...
+				  },
+				  "devDependencies": {
+				    "@angular/compiler-cli": "^6.0.2",
+				    "@angular-devkit/build-angular": "~0.6.3",
+				    ...
+				  }
+				}
+
+
+	node_modules		The packages specified in package.json file are installed into this folder when we run npm install command
+					node_modules\
+							@augular\
+								animations
+							@angular-dev
+
+	e2e Folder		Contains end-to-end tests and their configuration files.
+	
+	.angular-cli.json	This is the Angular CLI configuration file.
+
+	.editorconfig		Configuration file for Visual Studio Code. The settings in this file let you set certain code style guidelines. 
+				For example what indent_style do you want - spaces or tabs and what should be the indent size etc. 
+				You can share this editorconfig file with other developers to maintain consistent coding styles. 
+				To read more about editor configuration please visit http://editorconfig.org
+				
+					# Editor configuration, see http://editorconfig.org
+					root = true
+					
+					[*]
+					charset = utf-8
+					indent_style = space
+					indent_size = 2
+					insert_final_newline = true
+					trim_trailing_whitespace = true
+					
+					[*.md]
+					max_line_length = off
+					trim_trailing_whitespace = false
+				
+				
+	.gitignore		This file is used to determine files and folders you don't want to check in to source control. 
+				For example one of the folders we do not want to check in to source control is /dist folder 
+				which is auto generated when we build the application. So this folder is listed in this file. So, all the 
+				files and folders listed in this file are ignored, when a change set is checked in to source control.
+					# See http://help.github.com/ignore-files/ for more about ignoring files.
+					
+					# compiled output
+					/dist
+					/tmp
+					/out-tsc
+					...
+				
+	src\karma.conf.js	Karma is the unit test runner for angular applications. As the name implies, karma.conf.js is the configuration file for Karma.
+	
+	protractor.conf.js	Protractor is an end-to-end test framework for Angular applications. As the name implies, protractor.conf.js is the configuration file for Protractor.
+	
+	README.md		This is a README file which contains the commonly used Angular CLI commands out of the box. 
+				You may enhance it with your own project documentation so that anyone checking out the repo knows the commands to use to build, run and test your app.
+	
+	tsconfig.json		This is the TypeScript compiler configuration file. This file has several TypeScript compiler configuration settings. 
+				For example, to compile TypeScript to JavaScript on saving a TypeScript file set compileOnSave setting to true. 
+				If you do not want .map files to be generated, set sourceMap to false. .map files are used for debugging your application.
+	
+	tslint.json		Angular has a linting tool that checks our TypeScript code for programmatic and stylistic errors as well as non-adherence to coding 
+				standards and conventions. tslint.json is the configuration file for linting.
+
+Angular CLI project structure (src)
+===================================
+	File / Folder	Purpose
+	src folder	As the name implies, this folder contains all our angular project source code. Components, templates, pipes, services, images, styles etc 
+			that our angular application needs are present in this folder. The rest of the files and folders that are present outside this folder, 
+			are there to support building our angular application
+	
+	assets		As the name implies, the assets folder contains the assets of your application like images and anything else to be copied when you build your application
+	
+	environments	This folder contains the environment files. By default we have 2 environment files. 
+				- environment.ts is for for development environment. Notice production property in this file is set to false. 
+					export const environment = {
+					  production: false
+					};
+				- environment.prod.ts is for production. Notice in this file production property is set to true as expected. 
+				- The build system defaults to the dev environment which uses `environment.ts`, but if we do a production build environment.prod.ts will be used. 
+				- The file and environment mapping is in Angular CLI configuration file (.angular-cli.json)
+					"fileReplacements": [
+					                {
+					                  "replace": "src/environments/environment.ts",
+					                  "with": "src/environments/environment.prod.ts"
+					                }
+              				],
+	
+	favicon.ico	This is the favorite icon for your application, You may replace this favicon with your own company favicon
+	
+	index.html	The main HTML page that is served when someone visits your site
+	
+	main.ts		The main entry point for the application. This file contains the code to bootstrap the application root module (AppModule)
+				platformBrowserDynamic().bootstrapModule(AppModule).catch(err => console.log(err));
+				
+	polyfills.ts	This is the polyfills file. Angular is built on the latest standards of the web platform. 
+			Targeting such a wide range of browsers is challenging because not all browsers support all features of modern browsers. 
+			This can be compensated by using polyfill scripts as they implement the missing features in JavaScript. 
+			So these polyfills allow us to use an API regardless of whether it is supported by a browser or not
+			
+	styles.css	the global styles of our application. Styles that are local and defined in the component
+	
+	test.ts		This file is the main entry point for unit tests and loads all the .spec and framework files
+	
+	tsconfig.app.json	TypeScript compiler configuration for the Angular app, "extends": "../tsconfig.json",
+	
+	tsconfig.spec.json	TypeScript compiler configuration for the unit tests, "extends": "../tsconfig.json",
+				- both are extends "extends": "../tsconfig.json",
+	
+	typings.d.ts	This is the TypeScript typings file. Many JavaScript libraries, such as jQuery, Angular etc extend the JavaScript environment 
+			with features and syntax that the TypeScript compiler doesn't recognize natively. When the typeScript compiler doesn't recognize something, 
+			it throws an error. So, we use TypeScript type definition files to tell the compiler about those libraries. 
+			These TypeScript type definition files have the extension d.ts. TypeScript editors leverage these type definition files to display type information 
+				- Many libraries include type definition files in their npm packages. Angular is one such library. For example, 
+				- if you look inside node_modules/@angular/core/ folder in an Angular application, it already contains 
+				- the type definition files. All the files that have the extenstion d.ts are the type definition files. 
+	app.component.
+	{ts,html,css,spec.ts}	The root component (AppComponent) TypeScript, HTML template, StyleSheet and Spec files
+	
+	app.module.ts	This is the root application module (AppModule)
+
+
+Angular cli generate component (ng generate component ComponentName or ng g c ComponentName)
+==============================
+	- ng new myProject -si  => create project withour npm modules, if run "ng g c xyz" throws error, so install 'npm install'
+	- When we execute this command (ng g c abc) , several things happen
+		- A folder with name abc is created
+		- The component files (Component class, View template, CSS file and the spec file ) are created and placed inside the folder "abc"
+		- The root module file (app.module.ts) is also updated with our new component i.e the required import statement to import the abc component 
+		  from the component file is included and the component is also declared in the declarations array of the @NgModule() decorator
+		- use MyFirstApp>ng generate component abc or ng g c abc
+			CREATE src/app/abc/abc.component.html (22 bytes)
+			CREATE src/app/abc/abc.component.spec.ts (607 bytes)
+			CREATE src/app/abc/abc.component.ts (257 bytes)
+			CREATE src/app/abc/abc.component.css (0 bytes)
+			UPDATE src/app/app.module.ts (384 bytes)
+	- Placing the generated component folder in a different folder : By default a separate folder is created for every new component 
+		- ng g c abc/xyz => xyz folder create under abc folder
+	- Generating a new component without a folder,  use --flat option 
+		- ng g c pqr --flat => pqr files created under app folder
+			CREATE src/app/pqr.component.html (22 bytes)
+			CREATE src/app/pqr.component.spec.ts (607 bytes)
+			CREATE src/app/pqr.component.ts (257 bytes)
+			CREATE src/app/pqr.component.css (0 bytes)
+			UPDATE src/app/app.module.ts (384 bytes)
+	- Placing the flat component files in a different folder other than app
+		- ng g c abc/xyz --flat => xyz folder create under abc folder
+
+	- Using --dry-run flag with component generation, it reports the files and folders that will be generated, without actually generating them
+		--ng g c xyz --dry--run
+	- If you want an inline template and styles instead of an external template and stylesheet, 
+		- use -it flag for inline template and -is flag for inline styles. 
+		- if you do not want a spec file use --spec=false. 
+		- ng g c -it -is --spec=false
+	- To use sass instead of CSS with your component, use the --style=scss flag with ng generate command. If you want less use --style=less 
+		- ng g c xyz2 --style scss
+			CREATE src/app/xyz2/xyz2.component.html (23 bytes)
+			CREATE src/app/xyz2/xyz2.component.spec.ts (614 bytes)
+			CREATE src/app/xyz2/xyz2.component.ts (261 bytes)
+			CREATE src/app/xyz2/xyz2.component.css (0 bytes)
+			UPDATE src/app/app.module.ts (602 bytes)	
+			
+Angular cli generate service (ng generate service serviceName OR ng g s serviceName )
+=============================
+	- To generate a customer service we use the following command. 
+		- ng generate service customer 
+			- C:\MAK\net\Angular CLI\MyFirstApp>ng generate service customer
+			  CREATE src/app/customer.service.spec.ts (386 bytes)
+			  CREATE src/app/customer.service.ts (137 bytes)
+			- The above command generates the service and the spec file. What it does not do is register the service. 
+			  Remember for us to be able to use the service, we must register the service.  
+		-  do it manually after creating the service or tell Angular CLI to register our service with a module, using --module (alias -m) option.
+			- The following command generates employee service & it also registers our service witht the AppModule
+				- ng g s employee --module=app.module or  ng g s employee -m=app.module 
+		- use the --dry-run flag => ng g s student -d 
+		- NO spec file, simply set --spec=false => ng g s student -d --spec=false 
+		- Creaete folder, (default creates a folder for the component not for service) 
+			- ng g s student -d --spec=false --flat=false 
+
+Angular cli generate module (ng generate module moduleName OR ng g m moduleName)
+===========================
+	- to generate a students module we could use => ng generate module students -d OR ng g m students -d 
+	- do it manually after creating the module or tell Angular CLI to import our newly generated module into the root module using --module (alias -m) option
+		- The following command generates students module & also imports it into the root module (AppModule)
+			- ng g m students -d -m=app.module
+	- no spec file => ng g m students -d -m=app.module --spec=false
+	- Angular CLI by default creates a folder for the module and places the module files in that folder. no folder
+		- ng g m students -d -m=app.module --spec=true --flat=true
+	- cmd creates the students module, it also imports it into the root module (AppModule). If we look inside app.module.ts file, notice
+		  imports: [
+		    BrowserModule,
+		    StudentsModule,
+		    VotersModule
+  		],
+ 
+ angular cli generate directives, pipes and routing guards
+ ==========================================================
+	Angular Feature		Complete Command			Alias
+ 	Directive		ng generate directive directiveName	ng g d directiveName
+ 	Pipe			ng generate pipe pipeName		ng g p pipeName
+ 	Routing Guard		ng generate guard guardName		ng g g guardName
+ 
+ 	- Please note : When you try to generate a directive, pipe or a component, and if you have multiple modules in your angular project you may get the following error
+ 		- "More than one module matches. Use skip-import option to skip importing the component into the closest module." 
+ 		-  The reason we are getting this error is we have more than one module in our angular project, so Angular CLI does not 
+ 		   know with which module the newly generated directive, pipe or component should be registered. So we have 2 options here.
+ 			- Use --skip-import option to tell Angular CLI not to import and register the generated component, directive or pipe    
+ 				- ng g d directiveName --skip-import -d
+ 			- Use --module (-m) option, tell Angular CLI the module with which we want our newly generated component, directive or pipe should be registered.    
+ 				- ng g d directiveName -m=app.module -d
+ 	- If you have just one module in your Angular project, then you wouldn't get this error, as the angular cli will automatically import 
+ 	  and register the newly generated component, directive or pipe with that one existing module.
+ 	- When genearting certain angular features like services or routing guards, you will not get this error, 
+ 	  even when you have multiple modules in your project, because by default, Angular CLI does not try to import and register these features. 
+ 	- use the following options to customise the generation of directives, pipes and routing guards using the Angular CLI. 
+		Option	Purpose
+		flat	Specifies if a dedicated folder should be created
+		module	Specifies the module with which the newly generated angular feature should be rigstered
+		spec	Specifies if a spec file should be generated
+
+Angular cli generate class, interface and enum
+==============================================
+	- To generate a class use => ng generate class className or ng g cl className 
+	- For example, to generate an employee class use => ng g cl employee or ng g cl employee/employee  (different folder)
+	- By default, a spec file is not created for the class. file to be generated set --spec option to true. => ng g cl employee/employee --spec=true 
+	- To generate an interface use => ng generate interface interfaceName or ng g i interfaceName 
+ 	- To generate an enum use => ng generate enum enumName or ng g e enumName 
+
+Linting TypeScript (ng lint) for angular <6, use "ng lint [projectname]"
+===================
+	- Angular has a linting tool that checks our TypeScript code for programmatic and stylistic errors as well as non-adherence to coding standards and conventions. 
+	- tslint.json is the configuration file for linting. This file contains all the default rules for linting our code. 
+	- Use the following command to lint the code => "ng lint"
+	- A new angular project and all the code in the project is auto-generated, we do not have any linting errors and we get the message - All files pass linting.
+	- NOT For Angular >6
+		- We also see the following warning
+		  Warning: The 'no-use-before-declare' rule requires type checking
+		- Basically this warning is saying, if 'no-use-before-declare' rule is enabled we need to use --type-check option with the ng lint command
+			- ng lint --type-check
+	- 'no-use-before-declare' rule is enabled out of the box and it disallows usage of variables before their declaration. 
+	   To understand what this means, place the following sayHello() function in AppComponent class in app.component.ts file. 
+		sayHello() {
+		  var message = 'Hello';
+		  message = message + ' Pragim';
+		  console.log(message);
+		}
+	   Run "ng lint", i got the below error
+		ERROR: C:/MAK/net/Angular CLI/MyFirstApp/src/app/app.component.ts[12, 5]: Forbidden 'var' keyword, use 'let' or 'const' instead
+		ERROR: C:/MAK/net/Angular CLI/MyFirstApp/src/app/app.component.ts[12, 5]: Forbidden 'var' keyword, use 'let' or 'const' instead
+
+		Lint errors found in the listed files.
+	- "--type-check" option used by "ng lint [projectname] --type-check 
+		- also giving the same error above
+	- if use MyFirstApp>ng lint --type-check you will get error message
+	   Architect commands with multiple targets cannot specify overrides.'lint' would be run on the following projects: MyFirstApp,MyFirstApp-e2e
+	   Error: Architect commands with multiple targets cannot specify overrides.'lint' would be run on the following projects: MyFirstApp,MyFirstApp-e2e
+	    at LintCommand.validate (C:\MAK\net\Angular CLI\MyFirstApp\node_modules\@angular\cli\models\architect-command.js:75:23)
+	- "no-var-keyword" rule is also enabled by default. set to false in tslint.json "no-var-keyword": true 
+		- Run "ng lint" or "ng lint [projectname_case sensitive] --type-check" command  
+		- no error  "All files pass linting."
+	- now change to
+		sayHello() {
+		  message = message + ' Pragim';
+		  console.log(message);
+		  var message = 'Hello';
+		  
+		}
+	  Run "ng lint", i got error because of 'no-use-before-declare' enabled
+	  	
+		C:\MAK\net\Angular CLI\MyFirstApp>ng lint
+		
+		ERROR: C:/MAK/net/Angular CLI/MyFirstApp/src/app/app.component.ts[12, 17]: variable 'message' used before declaration
+		ERROR: C:/MAK/net/Angular CLI/MyFirstApp/src/app/app.component.ts[12, 17]: variable 'message' used before declaration
+		ERROR: C:/MAK/net/Angular CLI/MyFirstApp/src/app/app.component.ts[15, 1]: trailing whitespace
+		ERROR: C:/MAK/net/Angular CLI/MyFirstApp/src/app/app.component.ts[15, 1]: trailing whitespace
+		
+		Lint errors found in the listed files.
+	  - if code contains
+		sayHello() {
+		  console.log(message);
+		}
+	    system intelligence will show red under "message", the erroe message is  "[ts] can not find 'message'...."	
+	    but if change back to
+	  	sayHello() {
+		  console.log(message);
+	          var message = 'Hello';
+		  message = message + ' Pragim';
+		}
+	   system intelligence will not show any red under "message", no error message	
+ 	    but if change back to use let
+	  	sayHello() {
+		  console.log(message);
+	          let message = 'Hello';
+		  message = message + ' Pragim';
+		} 	
+  	   system intelligence will show red under "message", the erroe message is  "[ts] block-scope variable 'message' user before declaration"	
+
+Angular tslint rules
+====================
+	Here are some of the common linting rules 
+	quotemark rule 	 		specifies whether you want single or double quotes
+		    "quotemark": [
+		      true,
+		      "single"
+    		    ],
+	no-trailing-whitespace rule 	disallows trailing whitespace at the end of a line
+	semicolon rule 			specifies that a line should be terminated with a semicolon = > "no-trailing-whitespace": true,
+	comment-format rule 		specifies that all single-line comments must begin with a space
+		    "comment-format": [
+		      true,
+		      "check-space"
+    		    ],
+	component-class-suffix rule 	enforces that a component class should end with the suffix Component => "component-class-suffix": true,
+	use-life-cycle-interface rule 	enforces that you add the implements keyword for every lifecycle hook you use =>"use-life-cycle-interface": true,
+ 
+ 
+	import { Component, OnInit } from '@angular/core';
+
+	@Component({
+	  selector: 'app-root',
+	  templateUrl: './app.component.html',
+	  styleUrls: ['./app.component.css']
+	})
+	export class App  {	//component-class-suffix rule 'App' instead of 'AppComponent', use-life-cycle-interface rule, removed "implements OnInit". 	 
+	  title = "app";			//quotemark rule
+
+	  ngOnInit(): void {
+	  }
+
+	  //this is comment			//comment-format rule
+	  sayHello() {
+	    let message = 'Hello'; 		//no-trailing-whitespace rule
+	    message = message + ' Solera'	//semicolon rule 		
+	    console.log(message);
+	  }
+	}
+ 
+ 
+	 - C:\MAK\net\Angular CLI\MyFirstApp>ng lint
+
+	 ERROR: C:/MAK/net/Angular CLI/MyFirstApp/src/app/app.component.ts[8, 14]: The name of the class App should end with the suffix Component (https://angular.io/styleguide#style-02-03)
+	 ERROR: C:/MAK/net/Angular CLI/MyFirstApp/src/app/app.component.ts[8, 14]: The name of the class App should end with the suffix Component (https://angular.io/styleguide#style-02-03)
+	 ERROR: C:/MAK/net/Angular CLI/MyFirstApp/src/app/app.component.ts[9, 11]: " should be '
+	 ERROR: C:/MAK/net/Angular CLI/MyFirstApp/src/app/app.component.ts[9, 11]: " should be '
+	 ERROR: C:/MAK/net/Angular CLI/MyFirstApp/src/app/app.component.ts[14, 5]: comment must start with a space
+	 ERROR: C:/MAK/net/Angular CLI/MyFirstApp/src/app/app.component.ts[14, 5]: comment must start with a space
+	 ERROR: C:/MAK/net/Angular CLI/MyFirstApp/src/app/app.component.ts[16, 27]: trailing whitespace
+	 ERROR: C:/MAK/net/Angular CLI/MyFirstApp/src/app/app.component.ts[16, 27]: trailing whitespace
+	 ERROR: C:/MAK/net/Angular CLI/MyFirstApp/src/app/app.component.ts[17, 34]: Missing semicolon
+	 ERROR: C:/MAK/net/Angular CLI/MyFirstApp/src/app/app.component.ts[17, 34]: Missing semicolon
+
+	 Lint errors found in the listed files.
+
+	- Some of the linting errors support automatic fix. To have these linting errors fixed automatically, run ng lint command with the --fix option.
+		- ng lint [projectname] --fix
+		
+		C:\MAK\net\Angular CLI\MyFirstApp>ng lint MyFirstApp --fix
+		Fixed 3 error(s) in C:/MAK/net/Angular CLI/MyFirstApp/src/app/app.component.ts
+
+		ERROR: C:/MAK/net/Angular CLI/MyFirstApp/src/app/app.component.ts[8, 14]: The name of the class App should end with the suffix Component (https://angular.io/styleguide#style-02-03)
+		ERROR: C:/MAK/net/Angular CLI/MyFirstApp/src/app/app.component.ts[8, 14]: The name of the class App should end with the suffix Component (https://angular.io/styleguide#style-02-03)
+		ERROR: C:/MAK/net/Angular CLI/MyFirstApp/src/app/app.component.ts[14, 5]: comment must start with a space
+		ERROR: C:/MAK/net/Angular CLI/MyFirstApp/src/app/app.component.ts[14, 5]: comment must start with a space
+
+		Lint errors found in the listed files.		
+
+	- To see the options that can be used with ng lint command, use
+		 -- ng lint --help
+
+	- At the moment, Visual Studio Code is not able to show any linting rule violations.
+
+TSLint in Visual Studio Code
+============================
+	- Display linting errors in Visual Studio Code 
+	- VS Code does not show linting errors. To achieve this install Visual Studio Code extension - TSLint. 
+		- "View" menu-> select "Extensions" -> in the "Search Extensions in Marketplace" -> type TSLint -> install -> restart vs code
+	- At this point, in VS Code we will be able to see linting errors. 
+		- a light bulb appears on the left margin and when you click on the light bulb you will see 1 to 3 options 
+			- fix: " should be '
+			  Fix all auto-fixable problems => it will fix all problems
+			  Disable rule "qutomark"  for this line
+			  Show documentation for "qutomark"
+			  
+	- To disable linting in VS code 
+		- "View" -> "Extensions" -> "INSTALLED" section -> TSLint "SETTINGS" icon  -> Select "Disable (Always)" -> Restart VS Code
+
+Angular Routing
+=================
+	- Implementing routing in an Angular application involves many small steps. 
+	- Angular CLI does these routing steps implemented out of the box by just using --routing option. 
+	- Setup routing manually
+		- Using the following command, first create a brand new Angular project using the Angular CLI. 
+			- ng new employeeManagement 
+			- Component				Purpose	Route
+			  home	(ng g c home)			This is the home component	/home
+			  employees (ng g c employees)		This component displays the list of employees	/employees
+			  pageNotFound	(ng g c pageNotFound)	This component is used when a user tries to navigate to a route that does not exist	/nonExistingRoute
+			- ng serve --open => This builds and launches the application and you will see the following page. 
+		- Here are the steps to implement routing in Angular
+			- 1 : Set <base href> in the application host page which is index.html. The <base href> tells the angular 
+			  router how to compose navigation URLs. This is already done for us by the Angular CLI, when we created this project.
+			  <base href="/">
+			- 2 : Import the RouterModule into the application root module AppModule. The Router Module contains the Router service 
+			  and Router directives such as (RouterLink, RouterLinkActive, RouterOutlet etc). So for us to be able to implement routing, 
+			  we first need to import the Router Module in our AppModule. So in app.module.ts make the following 2 changes 
+				// Import RouterModule
+				import { RouterModule } from '@angular/router';
+
+				// Include RouterModule in the "imports" array of the @NgModule() decorator
+				@NgModule({
+				  ...
+				  imports: [
+				    BrowserModule,
+				    RouterModule
+				  ],
+				  ...
+			- 3 : Configure the application routes. 
+				-  1: import Routes type from '@angular/router'. If you look at the definition of Routes type, 
+				   it is actually an array of Route objects. This Routes type is not required for the application to work.
+				   However, using it provides us intellisense and compile time checking. For example, mis-spelled properties 
+				   of the Route object will be reported as errors.
+					import { RouterModule, Routes } from '@angular/router';
+
+					// Each route maps a URL path to a component
+					// The 3rd route specifies the route to redirect to if the path
+					// is empty. In our case we are redirecting to /home
+					// The 4th route (**) is the wildcard route. This route is used
+					// if the requested URL doesn't match any other routes already defined
+					const appRoutes: Routes = [
+					  { path: 'home', component: HomeComponent },
+					  { path: 'employees', component: EmployeesComponent },
+					  { path: '', redirectTo: '/home', pathMatch: 'full' },
+					  { path: '**', component: PageNotFoundComponent }
+					];
+
+					// To let the router know about the routes configured above,
+					// pass "appRoutes" constant to forRoot(appRoutes) method
+					// We also have forChild() method. We will discuss the difference
+					// and when to use one over the other in our upcoming videos
+					@NgModule({
+					declarations: [...
+					],
+					imports: [
+					  BrowserModule,
+					  RouterModule.forRoot(appRoutes)
+					],
+					providers: [],
+					bootstrap: [AppComponent]
+					})
+					export class AppModule { }
+			- 4: Specify where you want the routed component view template to be displayed using the <router-outlet> directive. 
+			    In our case we want them to be displayed in the root component AppComponent. So in the root component view template 
+			    i.e in app.component.html, replace all the existing HTML with <router-outlet></router-outlet>
+				- At this point we should have routing working in our application. Build and run the application using the Angular CLI command : ng serve --open 
+				  /home in the URL and we see 'home works'! displayed.
+				  '/employees' and press the enter key. Notice the message 'employees works!' is displayed.
+				  '/abc' and press the enter key. '/abc' is not a valid route so the message 'page-not-found works!' is displayed.
+				  press the enter key. Notice we are redirected to '/home' (the default route) and 'home works'! is displayed.
+			-5 : Tie the routes to application menu. Routing is working as expected, but we have to manually type the URL in the address bar. 
+			 Instead let's include links to our home and employees routes. Let's do this in the Root component(AppComponent). 
+			 Include the following HTML in app.component.html.
+				- The routerLink directive tells the router where to navigate when the user clicks the link.
+				- The routerLinkActive directive is used to add the active bootstrap class to the HTML navigation element whose route matches the active route.
+					<div style="padding:5px">
+					    <ul class="nav nav-tabs">
+						<li routerLinkActive="active">
+						    <a routerLink="home">Home</a>
+						</li>
+						<li routerLinkActive="active">
+						    <a routerLink="employees">Employees</a>
+						</li>
+					    </ul>
+					    <br/>
+					    <router-outlet></router-outlet>
+					</div>
+			- We are using Bootstrap nav component to create the menu. To install bootstrap execute the following npm command
+				- npm install bootstrap@3 --save
+				- Once Bootstrap is installed, open .angular-cli.json file and specify the path to the Bootstrap stylesheet in the styles property as shown below.
+					"styles": [
+					  "../node_modules/bootstrap/dist/css/bootstrap.min.css",
+					  "styles.css"]
+			- At this point build and run the application using the following Angular CLI command. Routing should be working as expected. ng serve --open
+			- The following are the directives provided by the RouterModule
+				- routerLink
+					Tells the router where to navigate when the user clicks the navigation link
+				- routerLinkActive  
+					- When a route is active the routerLinkActive directive adds the active CSS class. 
+					- When a route becomes inactive, the routerLinkActive directive removes the active CSS class. 
+					- The routerLinkActive directive can be applied on the link element itself or it's parent. 
+					- In this example, for the active route styling to work correctly, routerLinkActive directive 
+					  must be applied on the <li> element and not the <a> element.
+				- router-outlet
+					- Specifies the location at which the routed component view template should be displayed 
+
+			- At the moment routing is implemented in the root module - AppModule. However, for separation of concerns and maintainability, 
+			  it is better to implement routing in a separate Routing module and then import that routing module in the AppModule.
+
+Running angular app locally
+===========================
+	- How to compile and run an angular application locally on your development machine
+	- What happens behind the scenes when we compile and run an angular application
+	- What is bundling and why is it important for performance
+	- So far in this video series we have been using the following command to build and run our angular application.
+		- ng serve --open
+	- Have you ever thought about what happens behind the scenes when we execute this command. Behind the scenes, 
+	  Angular CLI runs Webpack to build and bundle all JavaScript and CSS code. The following are the bundles. 
+		Bundle File		What it contains
+		inline.bundle.js	WebPack runtime. Required for WebPack to do it's job
+		main.bundle.js		All our application code that we write
+		polyfills.bundle.js	Browser Polyfills, Angular builds latest of web platforms, targeting wide range of browsers is chalenging, 
+					becaz not all browsers support all features of modern, this is will be compensate of implement of missing features 
+		styles.bundle.js	Styles used by the application
+		vendor.bundle.js	Angular and 3rd party vendor files
+	- What is bundling and why is it important for performance
+		- A typical real world angular application is made up of many components. Each component code is in it's own .ts file which gets 
+		  transpiled to JavaScript i.e to a .js file. Along the same lines, a component may also have it's own .css file for styles.  So our 
+		  angular application code is in many small files. In addition to our application code files, we also have vendor code files like Angular, jQuery etc.  
+		- Web browsers have a limit on how many scripts or CSS files they can download simultaneously. 
+		- Because of this browser limitation, your application may suffer from performance perspective, if it has many JavaScript and CSS files to download. 
+		- Bundling can solve this problem by combining many small application and library files into a few bundles. As mentioned before, Angular 
+		  CLI runs WebPack for building and bundling angular applications.
+	- There are several ways to see these generated bundles.
+		- 1. If you have executed the "ng serve --open" command in a command prompt window, upon build completion you can see the 
+		  generated bundles in the command prompt window as shown in the image below. 
+		  	C:\MAK\net\Angular CLI\employeeManagment>ng serve --open
+			** Angular Live Development Server is listening on localhost:4200, open your browser on http://localhost:4200/ **
+			
+			Date: 2018-05-20T19:41:57.353Z
+			Hash: de50f8a87b0610fe0881
+			Time: 10920ms
+			chunk {main} main.js, main.js.map (main) 19.8 kB [initial] [rendered]
+			chunk {polyfills} polyfills.js, polyfills.js.map (polyfills) 227 kB [initial] [rendered]
+			chunk {runtime} runtime.js, runtime.js.map (runtime) 5.22 kB [entry] [rendered]
+			chunk {styles} styles.js, styles.js.map (styles) 159 kB [initial] [rendered]
+			chunk {vendor} vendor.js, vendor.js.map (vendor) 3.62 MB [initial] [rendered]
+			Compiled successfully.
+		- 2. vs code -> view ->Integrated Terminal ->excute the "ng serve --open" command
+		- 3. You can see the the generated bundles on the "Elements" or "Sources" or with their sizes click on the Network tab in Browser Developer Tools. 
+		- In addition to bundling, we can also use other optimisation techniques like 
+			- Ahead-of-Time (AOT) Compilation, Minification, Uglification and TreeShaking to improve performance. 
+		- The ng serve command builds and serves the application from memory for a faster development experience. 
+		  It does not write the build artefacts to the disk, so we cannot use this command if you want to deploy the build to another server. 
+		  For example, if you want to deploy your angular application to a test/production server, we cannot use ng serve. We instead use ng build. 
+Angular cli ng serve options
+=============================
+	- To see the list of all options that we can use with "ng serve" command use --help option
+		- ng serve --help 
+	- The following page also shows all the options that can be used with ng serve
+		- https://github.com/angular/angular-cli/wiki/serve 
+	- The following command, builds and launches the application in your default browser.
+		- ng serve --open or ng serve -o
+	- The following table shows the common options, alias, default value & their purpose 
+		Option		Alias	Default	Purpose
+		--watch		-w	true	Run build when files change, automatically refresh the page with new changes
+		--live-reload	-lr	true	Whether to reload the page on change, you have to refresh the page to see the changes
+		--open		-o	false	Opens the url in default browser
+		--port		-p	4200	The port on which the server is listening
+		
+Compile angular app (ng build) default for development, ng build --prod
+===================
+	- When we execute ng build command it creates a folder with name "dist/[project_name]" and copies all the build files into that folder. 
+		- it's specified in angular.json configuration file => "outputPath": "dist/employeeManagment","
+	- The development build is not optimised for production use. The development build is typically used for testing. 
+	  With a development build it is easier to debug as the development build contains source map files.
+		-  As you can see in the "dist" folder we have 
+			- 1. The favicon
+			- 2. Glyphicon files
+			- 3. Our host page index.html
+			- 4. Bundle files(main.js,polyfills,..) and their corresponding source map files(main.js.map,polyfills,..)
+	- The bundle files (inline, main, polyfills,styles, & vendor) generated by the development build are not optimised, 
+	  meaning the bundles are not minified or treeshaked to remove the code that is not being used. 
+	  A production build on the other hand will have all the performance optimisation techniques like Ahead-of-time (AOT) compilation, 
+	  minification, uglification and treeshaking implemented. 
+	  So the sizes of the bundles that the production build produces will be significantly less than the sizes of the bundles that a dev build produces. 
+	- ng build --prod
+		- the file sizes are significantly less than the file sizes in the development build. 
+		- With the production build, by default, we do not get the source map files because we usually do not need them on a production server. 
+		- Also notice, Production build extracts css from global styles into a css file instead of js ones.
+	-file size
+	C:\MAK\net\angular\Angular CLI\employeeManagment>ng build
+		chunk {main} main.js, main.js.map (main) 18.6 kB [initial] [rendered]
+		chunk {polyfills} polyfills.js, polyfills.js.map (polyfills) 227 kB [initial] [rendered]
+		chunk {runtime} runtime.js, runtime.js.map (runtime) 5.22 kB [entry] [rendered]
+		chunk {styles} styles.js, styles.js.map (styles) 159 kB [initial] [rendered]
+		chunk {vendor} vendor.js, vendor.js.map (vendor) 3.29 MB [initial] [rendered]
+
+		C:\MAK\net\angular\Angular CLI\employeeManagment>ng build --prod
+		chunk {0} runtime.a66f828dca56eeb90e02.js (runtime) 1.05 kB [entry] [rendered]
+		chunk {1} styles.26c3cb0ce34ee2fa5b92.css (styles) 140 kB [initial] [rendered]
+		chunk {2} polyfills.a8e1fcb1caf2b6c7cdae.js (polyfills) 59.6 kB [initial] [rendered]
+		chunk {3} main.cfa48c1bb6db39d713f2.js (main) 239 kB [initial] [rendered]
+	- ng serve vs ng build 
+		- ng serve 
+			- Compiles and serves the application from memory
+			- Does not write the build files to the disk
+			- Typically used to run the application on local development machine
+			- Cannot be used for deploying the build to another server (Ex. Testing, Staging or Production server)
+		- ng build 
+			- Compiles the application to the "dist" folder
+			- Can be used to produce both development & production builds
+			- Typically used to deploy the application on another server
+	--extract-css
+		- Extract css from global styles onto css files instead of js ones
+		  <script type="text/javascript" src="styles.js"> change to <script type="text/javascript" src="styles.js">
+Angular dev build vs prod build
+==================================
+	- To generate a development build we can use ng build 
+	- To generate a production build we use ng build --prod 
+	- Here are some of the differences between a development build and a production build in angular.
+		-  Source Maps : Development build generate Source Maps where as production build does not. 
+			- What are Source Maps
+				To improve the performance, the application's JavaScript and CSS files are combined and compressed. 
+				It is extremely difficult to debug those compressed files. A source map holds information about the 
+				original files and can be used to map the code within a compressed file back to it’s original position 
+				in a source file. So with the help of these source maps we can easily debug our applications even 
+				after the the files are compressed and combined.
+			- By default, a development build produce source maps where as a production build does not. By --source-map
+				- Build without source maps, ng build --dev --source-map false or ng build --dev --source-map true (prod inculde)
+		- Extracts CSS : With the dev build global styles are extracted to .js files where as with the prod build they are extracted to .css files. 
+			- To change this default behaviour use --extract-css option, ng build --dev -ec true
+		- Minification & Uglification : A Prod Build is both minified and uglified, where as a Dev Build is not.
+			- What is Minification 
+				- The process of removing excess whitespace, comments, and optional tokens like curly brackets and semicolons is called Minification. 
+			- What is Uglification
+				- The process of transforming code to use short variable and function names is called uglification.
+			- The minified and uglified version of the file is smaller in size than the full version, resulting in faster response times and lower bandwidth costs.
+	
+			- dev main.js, you can see without mini & ugly
+			    //This is constructor
+			    function EmployeesComponent() {
+			    }
+			    EmployeesComponent.prototype.ngOnInit = function () {
+			    };
+			    EmployeesComponent.prototype.addNumbers = function (firstNumber, secondNumber) {
+				var result = firstNumber + secondNumber;
+				return result;
+			    };			
+			- prod maing.ccccccc.js
+				commend removed & function is changed to min & ugly e.prototype.addNumbers=function(e,t){return e+t}
+		- Tree Shaking : A Prod build is Tree Shaked, where as a Dev build is not.
+			- What is Tree Shaking
+				- Tree shaking is the process of removing any code that we are not actually using in our application from the final bundle. 
+				  It's one of the most effective techniques to reduce the application size.
+			- Added new xxx component & not used /referenced 
+				- in dev, xxx component included in main.js => search by module.exports = "<p>\n  xxx works!\n</p>\n"
+				- in prod it removed
+			- the bundles are significantly less in size compared with the bundles generated by the development build. 
+			  This is beacause with the production build the code is tree shaked to remove dead code i.e the code that is not referenced by the application.
+
+		- Ahead-of-Time (AOT) Compilation : With a production build we get AOT (Ahead-of-Time) compilation, 
+		  i.e the Angular component templates are pre-compiled, where as with a development build they are not. 
+		- The following table summarises the differences between a development build and a production build
+			Feature		Development Build	Production Build
+			Source Maps	Yes			No
+			Extracts CSS	.js file		.css file
+			Minifaction	No			Yes
+			Uglification	No			Yes
+			Tree Shaking	No			Yes
+			AOT		No			Yes
+
+Angular AOT vs JIT - Ahead-of-Time compilation and Just-in-Time compilation
+==================
+	- In Angular we have 2 models of compilation 
+		- JIT - Just-in-Time Compilation : JIT compilation as the name implies, compiles the application Just-in-Time in the browser at runtime.
+		- AOT - Ahead-of-Time Compilation : AOT compilation compiles the application at build time.
+	- By default, with the development build we get JIT compilation. This is how it works. The application code along with the angular compiler 
+	  is downloaded by the browser. At run-time, when a request is issued to the application, the JIT-compiler in the browser compiles the 
+	  application code before it is executed. This means our user who made that first request has to wait for the application to compile first. 
+	- when we build our angular application, the following JavaScript bundles are generated ( Inline, Main, Polyfills, Styles, Vendor)
+		- The vendor bundle contains the compiler along with the angular framework. The compiler code is roughly half of the Angular framework.
+	- A tool called source-map-explorer that we can use to inspect the JavaScript bundles. 
+	  This tool analyzes the source map generated with the bundle and draws a map of all dependencies.
+		- To install this tool, execute the following command "npm install source-map-explorer --save-dev"
+		- build the project ng build, run cmd "node_modules\.bin\source-map-explorer dist\employeeManagment\vendor.js"
+		  The above command runs the source-map-explorer against the vendor bundle and we see the graph of it as shown below. 
+		  Notice the angular compiler is around 45% percent of the bundle size. As this is development build and not optimised, 
+		  notice the total size of the bundle is 2.19 MB. 
+	- With AOT compilation the angular application is pre-compiled. So this means the browser loads executable code so 
+	  it can render the application immediately, without waiting to compile the application first. 
+	  This also mean with AOT, as the application is already pre-compiled, there is also no need for the browser to download the Angular compiler. 
+	  As we already know, the compiler code is roughly half of the Angular framework, so omitting it dramatically reduces the application size.
+	  By default, the production build is Ahead-of-Time compiled. So there is no need to bundle up the angular compiler code in the vendor bundle. 
+	  This brings down the vendor bundle size by almost 50%. In addition it is also minified, uglified and tree-shaked to remove any 
+	  code that we are not referencing in our application. So the bundler size is further reduced.
+	  	- Now, execute the command ng build --prod -source-map true, run cmd, "node_modules\.bin\source-map-explorer dist\employeeManagment\main.8ec344afbe420e1800a0.js"
+	 	- The bundle size is just 313 KB. 
+	 	- For prod builds the vendor bundle is integrated in your main bundle, because it is using the build optimizer per default.
+	- The AOT compiler also detects and reports template binding errors at build time itself. Let us understand this with an example.
+		- Include the following function HomeComponent class in home.component.ts file
+			getText(): string {
+			  return 'Hello Pragim';
+			}
+
+			In home.component.html include the following <div> element. Notice I have deliberately mis-spelled the getText() function name.
+			<div [innerText]='getTex()'>
+
+		- Save changes, and execute the cmd "ng serve", At the moment we are not using AOT, 
+		  so we will not know about the template binding error that is introduced above. Notice at build time we do not see any errors.
+			- we see the "home works" message as expected. However, we do not see the message returned by getText() function. 
+			  This is because we deliberately mis-spelled the getText() function name. 
+			  We will see this error in the browser developer tools. So this proves that, with JIT compilation we 
+			  will only come to know about the template binding errors at runtime.
+			  	- HomeComponent.html:6 ERROR TypeError: _co.getTex is not a function
+				    at Object.eval [as updateRenderer] (HomeComponent.html:6)
+			
+		- With AOT compilation, template binding errors are detected and reported at build time itself as apposed to runtime. 
+		  To prove this, execute the following command. 
+		  	- Notice we are using --aot option for pre-compiling our in-memory build. ng serve --aot
+			- The build completes with the following error. So this proves that, with AOT compilation, 
+			  template binding errors are detected and reported at build time itself as apposed to runtime 
+	- By default, the following 2 commands use JIT compilation, ng build, ng serve
+		- use --aot option to turn on Ahead-of-Time compilation, ng build --aot or ng serve --aot
+	- The production build uses AOT by default. If you want to turn off AOT for the production build, ng build --prod --aot false
+		- At this point, we cannot use source-map-explorer to check if the angular compiler is in the vendor bundle because we do not have sourcemap files.
+
+Deploy angular app to IIS
+==========================
+	- Step 1 : Build your angular application. 
+		- The base-href option on the build command sets the base-href element in index.html to "/ePortal/" instaed of "/". 
+		  In the IIS server, we will create an application with name "ePortal" in just a bit.
+			- ng build --base-href /ePortal/ 
+		- production build cmd "ng build --prod --base-href /ePortal/"
+	- Step 2 : Create a folder on the server ("ProductionBuild"), copy the contents of the "dist" folder into "ProductionBuild" folder
+	- Step 3 : Create an application in IIS. Name it "ePortal". This name has to match the value we have specified for the --base-href option in Step 1.  
+		-  if you launch the browser and navigate to http://localhost/ePortal/home, you will see the "home works" message as expected
+		- However, when you "Refresh" the page by pressing F5, you will see the following HTTP 404 error 
+	- Step 4 :  To fix this Page Refresh issue in Angular, include the following URL rewrite rule in you web.config file. 
+		<?xml version="1.0" encoding="utf-8"?>
+		<configuration>
+		  <system.webServer>
+		    <rewrite>
+		      <rules>
+			<rule name="AngularJS Routes" stopProcessing="true">
+			  <match url=".*" />
+			  <conditions logicalGrouping="MatchAll">
+			    <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+			    <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
+			    <add input="{REQUEST_URI}" pattern="^/(api)" negate="true" />
+			  </conditions>
+			  <action type="Rewrite" url="/ePortal" />
+			</rule>
+		      </rules>
+		    </rewrite>
+		  </system.webServer>
+		</configuration>
+	- still error
+		You may not have IIS URL Rewrite extension installed on your machine. This is the most likely cause of this error. 
+		Please download and install URL Rewrite extension from the following URL. Hope this helps. Please let us know if this has fixed the issue.
+		https://www.iis.net/downloads/microsoft/url-rewrite
