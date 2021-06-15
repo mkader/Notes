@@ -1,0 +1,82 @@
+- Replica Sets and Sharding are important MongoDB features.
+	- By using replica sets, MongoDB is able to create recoverable and highly durable clusters.
+	- By using sharding, MongoDB is able to meet the demands of data growth and horizontal scaling.
+Sharding
+	Limitations of Replica Sets
+		- Replica sets gave us the ability to hold data in multiple databases and thus, give us a certain level of fault tolerance and data duration.
+		- It has certain limitations. All write operations go to the primary node, which makes it the bottleneck of the system. If the system grows, 
+		  the primary node will be overused and, eventually, it will be limited with hardware limitations like RAM, the number of CPUs, and disk space.
+	Scaling - two scaling methods used to address this issue:
+		- Vertical scaling 
+			– It increasing the performance of the server, on which the primary node is running, by adding more RAM or increasing the disk space. 
+			- It's very expensive and not the best solution for distributed systems.
+		- Horizontal scaling – It dividing data and loading it onto multiple servers.
+	Sharding 
+		- Horizontal scaling in MongoDB is done by sharding.
+		- The main goal of sharding is to provide us with something like this:
+				     Client Application
+				     Driver
+					|
+			----------------------------------
+			|		|		 |
+			V		V		 V
+		       Primary		Primary		 Prim   ary
+		       |     |		|     |		 |        |   
+		       V     V		V     V		 V        V
+		Secondary Secondary Secondary Secondary Secondary Secondary 
+
+		- The idea is to have multiple replica sets, with multiple primaries, that will divide data and load it among themselves. 
+		  Each of these replica sets is called a [shard], but multiple shards are not enough to achieve the proper functionality of this kind of system.
+
+	Sharding Cluster
+		- A router will route queries and operations to the proper shard. For these purposes, MongoDB provides a new daemon process called [mongos].
+		- Also, this system needs to know which part of the data is in which shard; this is done by an additional replica set called [configuration server].
+		- The combination of multiple shards, mongos processes, and configuration servers is called a [sharding cluster], and it looks something like this:
+				     Client Application			   |Configuration Server	
+				     Driver				   |
+				     Mongos------------------------------->|Prim   ary
+					|				   | 	|       |
+			----------------------------------		   |	V       V
+			|		|		 |		   |  Secondary Secondary
+			V		V		 V
+		       Primary		Primary		 Prim   ary
+		       |     |		|     |		 |        |   
+		       V     V		V     V		 V        V
+		Secondary Secondary Secondary Secondary Secondary Secondary 
+
+		- Sharding itself is done on a collection level, means that a defined collection is distributed among shards, not the whole database, 
+		  	- sh.shardCollection(“DATABASE_NAME.COLLECTION_NAME”, SHARD_KEY)
+			- Once this command is run, the defined collection is distributed among different shards. Each shard will contain a range of data of a defined collection, 
+			  and the mongos process will send queries to the proper shards.
+
+Types of NoSQL Databases
+	- NoSQL no longer use a relational data model.
+	- A database model is a model through which we perceive data in the database.
+	- A relational database model can be visualized as a set of tables in which each row represents a different record, a different entity.
+	- Types of NoSQL Databases
+		- Key-Value Stores
+		- Column Stores
+		- Graph Stores
+		- Document Stores
+		- Multi-Model Databases
+	- Key-Value Stores - it's a single key lookup, that's a dictionary. (Redis)
+		- Read very quickly, but these databases are not so good for reverse lookups or additional analytics.
+	- Column Stores - is the subset of NoSQL databases that kept, somewhat, to the tabular form. (Cassandra)
+		- Column Stores vs Relational Databases
+			- Relational Database Approach
+				- All data stored in tabular form (every row represents one entity). Every row is saved separately on the disk, ie., rows align the data.
+				- When reading, it always reads the whole row, even if not all of the data is necessary (i.e., if want one column of values).
+			- Column Store Approach
+				- they store data in so-called columned families (i.e., in column order).
+				- For example:
+					- First, Ids of all records are saved.
+					- Then, all of their names, etc.
+			- Why is this a big deal? Get the whole column in a more efficient manner instead of all of the rows and had to pull specific values from each one
+			- Get more information from the database in a single seek. these databases can be easily compressed and writes are very expensive.
+	- Graph Stores - use graph structures for queries, with nodes, edges, and properties, to represent and store data. (AllegroGraph)
+		- They are used for storing a network of connections or relationships (e.g., social networks).
+		- They have a number of small records with a lot of relationships between them.
+	- Document Stores - One of the most popular types, which revolves around the concept of a document. (MongoDB, Couchbase)
+		- Documents are self-describing structures and usually similar to each other, but they don’t have to be the same.
+		- Every row has to follow the same schema, documents can vary from each other and still belong to the same collection.
+	- Multi-Model Databases -  are designed to handle multiple data models against a single integrated backend.

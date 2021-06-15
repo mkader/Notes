@@ -1,0 +1,31 @@
+Types of NoSQL Databases
+	- NoSQL no longer use a relational data model.
+	- A database model is a model through which we perceive data in the database.
+	- A relational database model can be visualized as a set of tables in which each row represents a different record, a different entity.
+	- Types of NoSQL Databases
+		- Key-Value Stores
+		- Column Stores
+		- Graph Stores
+		- Document Stores
+		- Multi-Model Databases
+	- Key-Value Stores - it's a single key lookup, that's a dictionary. (Redis)
+		- Read very quickly, but these databases are not so good for reverse lookups or additional analytics.
+	- Column Stores - is the subset of NoSQL databases that kept, somewhat, to the tabular form. (Cassandra)
+		- Column Stores vs Relational Databases
+			- Relational Database Approach
+				- All data stored in tabular form (every row represents one entity). Every row is saved separately on the disk, ie., rows align the data.
+				- When reading, it always reads the whole row, even if not all of the data is necessary (i.e., if want one column of values).
+			- Column Store Approach
+				- they store data in so-called columned families (i.e., in column order).
+				- For example:
+					- First, Ids of all records are saved.
+					- Then, all of their names, etc.
+			- Why is this a big deal? Get the whole column in a more efficient manner instead of all of the rows and had to pull specific values from each one
+			- Get more information from the database in a single seek. these databases can be easily compressed and writes are very expensive.
+	- Graph Stores - use graph structures for queries, with nodes, edges, and properties, to represent and store data. (AllegroGraph)
+		- They are used for storing a network of connections or relationships (e.g., social networks).
+		- They have a number of small records with a lot of relationships between them.
+	- Document Stores - One of the most popular types, which revolves around the concept of a document. (MongoDB, Couchbase)
+		- Documents are self-describing structures and usually similar to each other, but they don’t have to be the same.
+		- Every row has to follow the same schema, documents can vary from each other and still belong to the same collection.
+Multi-Model Databases -  are designed to handle multiple data models against a single integrated backend.
