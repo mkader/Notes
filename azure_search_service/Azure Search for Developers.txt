@@ -1,0 +1,579 @@
+https://docs.microsoft.com/en-us/azure/search/
+Azure Search for Developers
+Search Fundamentas -> Precision vs. recall
+	- Whenever we talk about any search engine, precision is a very important aspect. 
+	- Precision means the fraction of retrieved instances that are relevant.
+	- Recall is the fraction of relevant instances that are retrieved. 
+	- ---------------|	----------------------------|
+	  |  Query	 |	|Data Store		    |	 
+	  |		 |---->	|    			    |
+	  |Company:Solera|<-----|Relevant results:25	    |	
+	  ---------------| 	|Irrelevant results:120,000 |
+	  			|Total results: 120,025     |
+	  			----------------------------|
+	  	         
+	  	         Reterieved Results:15
+	  	         Relevant results:12
+	  	         Precision:12/15
+	  	         Recall:15/25
+	  	         
+	- 1 Example, query for a Solera company. Search engine talking to a data store. Data store has 120,025 results for company 25 relevant results, 120,000 irrelevant results. 
+		- we made the call, retrieved only 15 out of 25 relevant results, we missed 10 relevant results. So our recall, in this case, is just 15 by 25.
+	- 2 Example, we made the query and the retrieved results were 15, but only 12 out of them were relevant results. In that case, our precision cannot be 100%. It will be 12 by 15.
+		- For 100%, it should have been 15/15, that means retrieved 15 records, and all 15 of them should have been relevant to our query, which in this case is Solera.
+	- Which one should we go after? Well, that totally depends on your business. 
+		- The higher the numbers on recall and precision, the better the search engine. 
+		- [Database]	Search Results
+		   Labtops	 Labtops		Laptops	----> -$	
+		     15		  12			 -3 
+		- The higher numbers of precision and recall, and the reason is simple. 3. Example, e-commerce engine, trying to sell laptops, desktops, and other electronic items. 
+			- What happens if 15 laptops in db and only 12 showed up when user searched?. And what if the not showed 3 records that user wanted to buy
+			- Serious loss of business for the company, and that's not a very good thing. 
+		- So precision and recall are very important, and that's one of the reasons a lot of companies will make sure that they do point queries.
+	- when they do point queries? -> Using a robust backend that will give them 100% relevancy in that case. 
+	- Precision and relevancy become more important when we're doing unstructured search. 
+		- An unstructured search is where we're making a call to the database, which may not have the data in a very structured fashion. 
+		- Can use a data store that may not be an RDBMS and like a NoSQL,  could be scaled out very easily.
+Inverted index
+	- 1. Example, Every book has an index towards the end of it. Looking for a word "electronics.", it tells me that the word "electronics" is used in page 6, 24 and 40
+	- Same concept is used in case of search engines. How it works?, take the data we need to index, and then create an inverted index out of it. Do the search using the index.
+	- Searching the index data is a very tedious and a very expensive operation. 
+	- 2. Example,an inverted index. As you can see the sentences
+		0. "Solera.com has the best developers in the world." 
+		1. "Best developers are passionate about code." 
+		2. "Software development is super cool." 
+		3. "Development or creation of anything is a cool feeling." 
+	- One thing to keep in mind, don't create index for every single thing, that's not important.
+	- Forget about the lowercase or uppercase or anything like that because that's something that an analyzer can handle
+	- "developers" : {(0,4), (1,1))} -  a JSON object it's just a description of the inverted index.
+	  "is": {(2,2), (3,5)}
+	  "cool": {(2,4), (3,7)}
+	  "Development":{(2,1), (3,0)}
+	- Users searches for, "development is cool." In this case, two records that need to be returned, line number 2 and 3.  Taking 3 different words and giving 3 reults
+	- These three words could be completely out of order in this case, and that's why we do an unstructured search. This is one of the benefits.
+	- Downsides of an unstructured search. If you had to specifically search for a phrase, you would have had to index that phrase as it is. 
+		- Search for a phrase that's "development is super," return only in line 3, well in that case we would have had only one index.
+
+Query and index
+	--------------------------
+	|     Document		 |
+	|Name:Mohideen Kader	 |
+	|Company:Solera		 |	-------------------------
+	|Skills:ASP.NET Core, C#,| 	|	Query		|
+	|Angular, React, Azure,  |	|			|
+	|Redis, SQl Server	 |	|   Company:Soerla	|
+	--------------------------	-------------------------
+		|				|  ^
+		|				|  |  Matching 
+		V				V  |  Documents
+	-------------------------	-------------------------	
+	|	Index Writer	|	| Index Searcher/Reader	|	
+	-------------------------	-------------------------
+			      |		  ^  |
+		Analysis      |	Analysisi |  |   Matching 
+			      V		  |  V   Documents
+			    --------------------  
+			    | 	I n d e x      |
+			    --------------------				
+	- An Index Writer, analyzes the document. 
+		- Analyzer is something that we can either create on our own or reuse one of the existing ones that are part of a search engine.
+		- For example, if we want to use a stop word (a,an,the) or case (lower,) analyzer, we can take the entire data and remove all the stop words. 
+	- User is going to query your index, not the actual data. When we query, we have the index searcher or the reader which is smart 
+	  enough to use the same analyzer which was used to create that index, and then present that data in a format that's better for the user to understand. 
+		- This query could be done by a client which could also be a client like ASP.NET Core
+	- The retrieval from the index is going to be a set of matching documents,  like some kind of ranking algorithm to return to the user what you want to return. 
+		- Example, where you get 100 thousand records back. You have to have some way of ordering it or presenting it to the user in a fashion that makes sense for him.
+
+Documents and fields
+	- Field options
+		- Analysis, which literally means indexing. 
+			- An index is nothing more than a map or a dictionary, from terms to documents.
+			- The analysis option controls how the field will be indexed, and therefore how it will be searched. 
+			- The field options for analysis. 
+				- Index.ANALYZED -> field will be indexed and then it'll be analyzed. 
+				- Index.NOT_ANALYZED -> field will be indexed, the analyzer does not perform any different kind of analysis on it because keep the value as it is. 
+				- Index.NO -> it won't be indexed, so it won't be searchable
+				- Index.ANALYZED_NO_FORMS
+				- Index.NOT_ANALYZED_NO_FORMS
+		- Storing
+			- The storing option also makes a decision as to are we going to store the actual data in the index or not.
+			- The field options on storing. 
+				- Store.YES -> the value is stored in the index
+				- Store.NO, the value isn't stored. 
+		- Term vectors 
+			- The term vector, just like storing, can be stored, but it stores meta data, which is generated by indexing. 
+			- the term vector is also a map or a dictionary. 
+			-  The field options on term vectors
+				- TermVectos.YES
+				- TermVectos.WITH_POSITIONS
+				- TermVectos.WITH_OFFSETS
+				- TermVectos.WITH_POSITION_OFFSETS
+				- TermVectos.No
+			- The term vector helps us find the position of that particular word or phrase in the entire blob of data that we have. 
+				- Using the positions and the offsets, term vector helps us get the data we need that is being requested.
+			- And then we also have an option to say TermVector equals no. 
+		- field options used in combination
+			- Store.YES + Index.ANALYZED -> we have an index, analyze it, but also store the data as it is. 
+			- Store.NO + Index.ANALYZED
+			- Store.YES + Index.NOT_ANALYZED
+			- Index.ANALYZED + TermVector.WITH_POSITION_OFFSETS				
+Search components
+	- A typical search process has the following components:
+	- Acquire Content --> Build Document --> Analyse --> Index Document --> Index	
+		- 1. acquiring content -> you have an RDBMS or a document database that is the actual source of record. 
+			- Treating search engines as a source of record is usually a bad idea. 
+		- 2. building the document -> A document is a unit of search. 
+		- 3. analyze the data
+		- 4. create the indices for the documents that need to be searched upon. 
+			- Every document has certain properties and fields (different data types such as numbers, strings, your locations, and date-time,...)
+	- When it comes to analyzing the document, tokenizer is what splits the text into tokens. 
+		- Different kind of analyzers can use different kind of tokenizers. 
+		- Example, One analyzer is Keyword Analyzer. It does not actually split the text at all and takes all the field as a single token. 
+			- "good developers are very passionate" - single token
+		- Example, another one which is Standard Analyzer. It would create split points on spaces and as well as on punctuation marks.
+			- "good developers are very passionate" - multiple token, "good","developers", "are","very", "passionate"
+	- Finally, we index the document and store it into database, files or RAMS. 
+		- A lot of search engines will use the RAM, because the queries are a lot faster. 
+	- Workflow for querying a document.
+		- Browser --> Build Query --> Run Query --> Index --> Results -- Browser
+	- MVC architechure with search
+		- Browser --> Controller --> Run Query --> Index --> Model -- Browser
+		
+Azure Search overview -  AS is platform as a service (PAAS), very high performance, horizontally scalable, administration using the Management Portal, an API used for billing.
+	- Querying options, Data import, Completely REST API, support client library (C#, java,...)
+	- API keys for security (2 types of keys, 1.admin keys ( power to do anything), 2.read-only options)
+	- Pros - > Easy to use, set up & scalable
+	- Cosn -> requires a schema, is missing native suppor for complex deta types, Query Syntex 
+
+Index parts
+	- what's an index? Index is an entity. Example, an accounts JSON file has a list of accounts for a person (first & last name, address,). Entity account could be an index. 
+	- Creating the index happens with HTTP POST
+		- https://searchservice.search.windows.net/indexes/[index name]?api-version=2016-09-01 - index nam is account
+	- Parts of an index
+		- name -> set the name of the field
+		- type
+		- Searchable -> Mark the field as a full text searchable field. Anything marked searchable will be split into tokens ,actually enables full text search
+			- Example "developers are cool" searchable, behind the scenes Azure Search will break it down into 3 words. If I search for are, cool, developers it'll show up.
+			- Downside -> expensive operation because consume extra space
+		- Filterable -> similar to searchable but it does not consume extra space. Search by the exact value. if I search for "developers are" , no result. Not full text searchable
+		- Sortable - Default sort is by score, Allows for sorting by other fields 
+		- Facetable -> example buy a laptop, selecting different price ranges (like <$500, between $500 to $800,). 2 different facets. It's price facet, same like memory facet
+			- faceting is very easy when it's a search engine like Azure Search
+		- key -> only one field can be the key inside a document. keys can only be used to look up the documents, type is edm.string. 
+		- Retrievable -> if you mark this true that particular field can be retrieved in a search result. 
+			- When you want to use something for a filtering, sorting or scoring mechanism. But you don't want the field to be visible to the end user. Mark as false
+		- Aanalyzer - boosting
+		- searchAnalyzers 
+			- Example, search analyzer will set the name of the analyzer used at the search time for that particular field. this can only be used by searchable fields. 
+		- indexAnalyzer will set the name of the analyzer that's going to be used at the index time.
+
+Documents and simple query
+	- Index Structure:Filed and Suggesters
+		- http://[your search index name].search.windows.net
+		  /indexex/[index_name]/docs/index?api-version=2016-09-01
+		  {
+		   "value":{
+		   	"account_number":865,
+		   	"balance":10574,
+		   	"firstname":"Mohideen:,
+		   	"lastname":"Kader",
+		   	"age":28,
+		   	"gender":"F",
+		   	"address":"865 Lincoln Terrace",
+		   	"employer":"Solera",
+		   	"email":"mohideen.kader@solera.com",
+		   	"city":"Irving",
+		   	"state":"TX"
+		   }
+		  }
+		- simple json array, just passing one value at this point in time. 
+	- Searching for Documets: Simple Query
+		- once we created an index and the index has some documents, this is an example of being able to query it. 
+		Operator	Description	Example
+		+		And		Solera+Developers => look both	
+		-		Or		Solera|Developers => atlease one of the two
+		-		Not		Solera-Developers => a document that has Solera but also does not have Developers.
+		*		suffix		Sol*		  => Anything behind l doesn't really matter, this becomes more like a fuzzy query. 
+		""		phrase		"Solera Developers" => if the document has the exact phrase, Solera Developers, with a space in between, only then I should get a result back. 
+		- supports OData Filters
+			- $filter
+			- Logical operators (and, or, not)
+			- Comparisons (eq, ne, gt, lt, gr, le)
+			- Collection filters
+			- Geospatial filters
+		
+	- Operations per Document
+		- Search -> simply search the document
+		- Suggestion
+		- Lookup -> which could be specifically based on the ID or the key of that particular document
+		- Count -> when it comes to paging.
+
+Creating a search service
+	- create Resource -> "Azure Search" ->  Create
+		- Click Import data -> you can import samples
+		- Click Add Index -> Default filed name (id)
+			- Index name (test)
+			- Add Field -> Fidle Name (index) & check everything
+		- Click Settings -> Keys -> a primary and secondary admin key
+			- The reason for two keys is because we can use one in production and then when we're swapping the key, we can use the key we have 
+			  and then regenerate our secondary while we use our primary and then regenerate the primary later, so it makes it easy for you to swap it
+			- Manage your query keys -> allow us to only be able to read from that particular/any index which is in this "ft-azure-search-service" search service instance
+Field Types
+	Type			Key	Searchable	Filterable	Sortable	Facetable	Suggestions	Retrievable
+	Edm.String		Yes	Yes		Yes		Yes		Yes		Yes		Yes		
+	Collection(Edm.String)	No	Yes		Yes		No		Yes		Yes		Yes
+	Edm.Int32/64	No	No		Yes		Yes		Yes		No		Yes
+	Edm.Double		No	No		Yes		Yes		Yes		No		Yes
+	Edm.Boolean		No	No		Yes		Yes		Yes		No		Yes
+	Edm.DateTimeOffset	No	No		Yes		Yes		Yes		No		Yes
+	Edm.GeographyPoint	No	No		Yes		Yes		No		No		Yes
+	
+	- Edm.String is simple string text that can optionally be tokenized for full text search. 
+	- Collection(Edm.String) -> list of strings that can still be tokenized for a full text search if need be.
+
+Querying and linguistics
+	- Query Parameters.
+		- Request - GET /indexes/[index name]/docs?[query parameters]
+		- Parameter
+			- search =[string]
+			- searchMode = any|all
+			- searchFields = [string] => want to search on these particular fields. You can say comma separater values of those particular fields. 
+			- $skip = # => pagination
+			- $top = # => pagination
+			- $count = true|false => pagination
+			- $select = [string] => only want to select last name and first name even though it's a big account index
+			- $filter = [string]
+			- $orderby = [string]
+			- facet =[string]
+			- api-version=[string]
+			- scoringProfile = [string]
+			- highlight=[string]
+			- scoringParameter =[string]
+			- highlightPreTag =[string]
+			- hightlightPostTag = [string]
+	- Pagination
+		- GET /indexes/[index name]/docs?search=*$top=20&$skip=0&$count=true => give me the  top 20 records 
+		- GET /indexes/[index name]/docs?search=*$top=20&$skip=20&$count=true => give me the top 20 records after skip 20 records	
+		- GET /indexes/[index name]/docs?search=*$top=20&$skip=40&$count=true => give me the top 20 records after skip 40 records	
+	- Index Structure:Field and Suggesters
+		{
+		  "name":"accounts",
+		  "fields":[
+			{"name":"account_number", "type":"Edm.String", "key":"true"}
+		   	{"name":"balance", "type":"Edm.String"},
+		   	{"name":"firstname", "type":"Edm.String"},
+		   	{"name":"lastname", "type":"Edm.String"},
+		   	{"name":"age", "type":"Edm.Int32"},
+		   	{"name":"gender", "type":"Edm.String"},
+		   	],
+		   	"suggesters":[
+		   		{"name":"nameSuggester", 
+		   		"searchMode":"analysingInfixMatching",
+		   		"sourceFields":["firstname","lastname"]}
+		   	]
+		}
+		- suggesters can only apply on a string or an Edm collection of string field.
+	- linguistics 
+		-  support for 50 languages -> word breaking, stop words & inflections
+		- Lucene analyzers and stemmers
+		- MS Analyzers -> Same natural language processing stack used by parts of Office, Bing and Cortana.
+	- indexing data
+		- Push - using indexing API
+			- POST to/indexes/<name>/docs/index
+			- take up to 1000 actions per batch
+			- Actions can be upload, merge, delete,..
+			- That batch, insert 900 records and update another 100 records
+			- WebJobs in the background, in an Azure environment that takes care of batching operations or actions to Azure search. 
+		- Pull -using indexers 
+			- data lies in Azure SQL DB or Document DB
+			- create a policy per data source and then it will automatically detect the change in that particular.
+			- For example, account record deleted from Azure SQL DB. Automatically, the indexer will detect the change and then delete the records in Azure search.
+
+Searching API examples
+	- ../docs?search=my search text
+	- ../docs?search=austin&$filter=state eq 'TX'
+	- ../docs?search=austin&$orderby=state desc&$top=20&$select=name,email
+	- ../docs?search=solera&facet=sate&facet=city
+		- categorize my data based on state and city. And state and city are not values. These are keys for those particular fields which happen to be state and city.  
+	- ../docs?search=solera&highlight=name
+		- property call name and our search keyword was solera. We want that name property to be highlighted.
+
+Scoring Functions
+	- Azure Search uses scoring functions to be able to boost data. Different ways
+		- Boosting documents matching a certain criteria. 
+			- Example, if we're selling a 24 inch monitor and the 27 inch monitor happens to be on sale, we want the 27 inch monitor to show up.
+		- magnitude, boosting based on a number (rating).
+			- Even though not be the best match, but it's highly rated, we want it to be boosted up. 
+		- freshness, boosting based on recently added documents
+			- Example, movie database
+		- Distance
+	- Example,the schema using scoring profiles.
+		- Index Definition : Field Weights
+		{
+			"fields": [...],
+			"corsOptions": {...},
+			"scoringProfiles": [
+				{
+					"name" :"scoringCity",
+					"text":{
+						"weights":{
+							"county":2,
+							"city":5
+						}
+					},
+					"functions" : [ ... ]
+				}
+			]
+		}
+		- two kinds of weights - the field county and city
+		- The higher the number the higher the scoring. (city 5)
+		- Example. looking for county Austin and city Austin.
+			- Just do a search even though there might be a county Austin that might have a higher score than the document that has city Austin. 
+			- Since we're saying city takes precedence, it will boost the results based on that particular city higher than the county. 
+			- So when the results come back to us we will see the results of city Austin will take precedence over the results with county Austin. 
+	- functions inside the scoring profiles.
+		- Index Definition : Scroing Functions
+		{					
+		 "type": "magnitude",
+		 "boost" : 2,
+		 "fieldName" : "city",
+		 "interpolation" : "linear",
+		 "magnitude": {
+		 	"boostingRangeStart":1,
+		 	"boostingRangeEnd":5
+		 }
+		}
+		- type magnitude - it's based on some kind of number, defined the number, that'd boosting range starts at one and ends at five.
+
+		{					
+		 "type": "distance",
+		 "boost" : 5,
+		 "fieldName" : "location",
+		 "interpolation" : "quadratic",
+		 "distance": {
+		 	"referencePointParameter":"loc",
+		 	"boostingDistance":20
+		 }
+		}
+		- type distance - we will end up using a location and if the result from further from our location than make sure it shows up later in my searches.
+			- Example, want to look for a restaurant in Yelp/Google. Boost the results, that are near the person that might be in walking distance than higher miles.
+	- API: Search with scoring profiles
+		- /docs?search=solera?scoringProfiels=scoringcity
+		- /docs?search=solera?scoringProfiels=myprofile&scoringParmeter=loc:34.1,-111 - with parameters
+
+CRUD Operations
+	- Import JSON data
+		- Download https://www.elastic.co/guide/en/kibana/7.1/tutorial-load-dataset.html
+			- https://download.elastic.co/demos/kibana/gettingstarted/7.x/accounts.zip
+		- Create VS console application, add accounts.json, 
+			- choose regular expression, remove "{"index":{"_id":"1"}}" by "{"index":{"_id":"\d*"}}" 
+			- remove empty lines \n\r
+	- Set up references
+		- Add appSettings.json
+		 "Azure": {
+		    "SearchService": {
+		      "Name": "ft-azure-search-service",
+		      "AdminKey": "A6D74D325038A4EC2A70BD064A83BD81",
+		      "QueryAPIKey": "788D991EA2DC6FB07EF54170D066E3EA"
+		    }
+		  },
+		- Program.cs, read azure key
+		 	var builder = new ConfigurationBuilder()
+		                .SetBasePath(Directory.GetCurrentDirectory())
+		                .AddJsonFile("appsettings.json");
+		
+		    IConfiguration config = new ConfigurationBuilder()
+			.AddJsonFile("appsettings.json", true, true)
+			.Build();
+
+		    string indexName = "accounts";
+		    string serviceName = config["Azure:SearchService:Name"];
+		    string adminKey = config["Azure:SearchService:AdminKey"];
+	            string queryAPIKey = config["Azure:SearchService:QueryAPIKey"];
+		- Add Nuget packges - Microsoft.Azure.Search, MS.Extensions.Configuration, MS.Extensions.Configuration.FileExtensions, MS.Extensions.Configuration.Json.
+		- Initialize the SearchServiceClient with the searchServiceName & the Credentials with the adminKey
+			- SearchServiceClient searchServiceClient = new SearchServiceClient(serviceName, new SearchCredentials(adminKey));
+		- Use the serviceClient to add an index. Check if the serviceClient has Indexers, if already exists then delete it. 
+            		- if (searchServiceClient.Indexers.Exists(indexName)) searchServiceClient.Indexers.Delete(indexName);
+			- we're going to be working with the same data set over and over again, so  we want exceptions
+		- define the index & definition-> name and Fields (build the Field for our type)
+		- BuildForType utltity - will take the Account type, then create the fields we need for the index definition for index accounts, which is our index in ft-axure-search-service Azure Search instance.
+		    var accountIndexDefinition = new Index()
+		    {
+			Name = indexName,
+			Fields = FieldBuilder.BuildForType<Account>()
+		    };
+
+		- Create the index, Can use different definition like Create, CreateAsync, CreateOrUpdate, CreateOrUpdateAsync - all of them would have worked.
+            		- searchServiceClient.Indexes.Create(accountIndexDefinition);
+
+		- Create Accounts.cs
+		   [SerializePropertyNamesAsCamelCase]
+		    public class Account
+		    {
+		        [System.ComponentModel.DataAnnotations.Key]
+		        [IsFilterable]
+		        public string Account_Number { get; set; }
+		
+		        [IsFilterable, IsSortable, IsFacetable]
+		        public double? Balance { get; set; }
+		        [IsSearchable, IsFilterable, IsSortable]
+		        public string FirstName { get; set; }
+		        [IsSearchable, IsFilterable, IsSortable]
+		        public string LastName { get; set; }
+		        [IsFacetable, IsFilterable, IsSortable]
+		        public int? Age { get; set; }
+		        [IsSearchable, IsFilterable]
+		        public string Address { get; set; }
+		        [IsFilterable, IsFacetable, IsSortable]
+		        public string Employer { get; set; }
+		        [IsFilterable]
+		        public string Email { get; set; }
+		        [IsSortable, IsSearchable, IsFilterable]
+		        public string City { get; set; }
+		        [IsSortable, IsSearchable, IsFilterable]
+		        public string State { get; set; }
+    		   }
+			- SerializablePropertyNamesAsCamelCase - This way we don't have go to every single property and make it a camel case.
+		- Add index programmatically
+			- 2 kinds of clients -  ISearchIndexClient & queryClient
+		  	- ISearchIndexClient searchIndexClient = searchServiceClient.Indexes.GetClient(indexName);
+		-  Utility to import all accounts.json file documents to our Azure Search instance of ft-azure-search-service.
+			- ImportDocuments(searchIndexClient);
+		- To read accounts.json data (it contain 1000 documents), there's no square brackets, all separated  by comma means data isn't in an array.
+		- use a StreamReader to read the entire file line by line, take the JSON line, convert it into an actual object. Push the data over to Azure. 
+		-Get a list of actions, which is part of Azure Search.
+			-  var actions = new List<IndexAction<Account>>();
+		- Different kinds of actions like  Upload, Merge, or even MergeOrUpload, Delete
+			- actions.Add(IndexAction.Upload(account));
+		- Remember, bulk action can have about 1,000 actions as part of it, and not more than 1,000. 
+		- Make sure clear a new batch of actions. And then, we need to update the Azure Search instance with this new batch.
+			- var batch = IndexBatch.New(actions);
+Query the index
+	- SearchIndexClient searchIndexClient = new SearchIndexClient(serviceName, indexName, new SearchCredentials(queryAPIKey));
+		- using the query key. You can use the admin keys, but best practice use the query key because it's read only. 
+	- get the first name and the last name rather than getting an entire object.
+        	- Select = new[] { "firstName", "lastName" }		
+	- star (*) search everything 
+        	documentSearchResult = searchIndexClient.Documents.Search<Account>("*", searchParameters);
+	- star (*)- searching every field over there that's supposed to be searchable and the only fields that will be shown are the ones that are retrievable and also part of the select operator.
+
+Advanced Search Functionlaity - Synonyms
+	- pm> install-packgage microsoft.azure.search -verions 4.0.0-preview - to install preview version
+	- Add a synonym map - where accounts happens to be the index and then synonyms will be added using the map.
+	 	var accountSynonymMap = new SynonymMap()
+	            {
+	                //give it any name
+	                Name = "city-state-synonym-map",
+	                Synonyms = "cal, california, CA\nTexas=>TX"
+         	   };
+	- couple of ways to add Synonyms. 
+	- Example something like "Cal, California, CA" - any time it looks for CA and there's a value called California, it will automatically replace that for it and 
+	  it also means that if it's looking for CAL and the value happens to be CA it will still bring it back. synonym which works either left to right or right to left
+	- Example, \nTexas=>TX" - say Texas resolves to TX. synonym which works one way, means if you have Texas it will look for TX in the field, but not the other way around. 
+	  So if you have TX it wouldn't look for Texas.
+	- Fields -> the name will be state, but we have a property called state, it has to match something that exists in your class.
+		- index.Fields.IndexOf(new Field("state", DataType.String) { SynonymMaps = new[] { "city-state-synonym-map" } });
+	- query something with a synonym. 
+	- lot of documents with CA, but not for CAL. So regular text search fails however since we programmatically used a synonym, we should still get a result back. 
+	  You can see the state coming back is CA, but what we're looking for is just CAL.
+
+Advanced Search Functionlaity - Boosting
+	- Every item returned in search result happens to have a score associated with it. Scoring refers to the competition of a search score for every item. 
+	- Scoring algorithm is internal to search engines and is called the ranking algorithm. 
+	- score of an item simply indicates it's relevance. The higher the score, the higher the relevancy of that item in that particular search.
+	- business needs, customize the search results. Create a scoring profile. 
+		- A scoring profile is part of the index definition and it needs the index definition to be updated if the index has already been created.
+		- A scoring profile is composed of weighted fields, functions, and parameters.
+	- use textWeights & assign weights to the fields that need to be scored higher and ranked higher than other fields. 
+		- The score could be anything, it could be 1.2, 3.5, really doesn't matter.
+		- The higher the score, the better it is for rating or scoring that particular field higher than others. 
+		- use firstName, assign score 2. The reason, in accounts.json, search "Huges", you can see, last name Hughes and also first name that's Hughes.
+		- return the same query that gives us two records back, but the weight of firstName is two and the weight of lastName is five. 
+		- when I get the result, the last name Hughes will be higher than the first name Hughes. 
+		- So a very simple case just to demonstrate scoring, or boosting, in Azure search.
+		
+		 var textWeights = new TextWeights();
+		
+		    textWeights.Weights = new Dictionary<string, double>();
+		    textWeights.Weights.Add("firstName", 2);
+		    textWeights.Weights.Add("lastName", 5);
+
+	- create the definition, assign the weights
+	            accountIndexDefinition.ScoringProfiles = new List<ScoringProfile>
+	            {
+	                new ScoringProfile
+	                {
+	                    Name = "boostLastName",
+	                    TextWeights = textWeights,
+	                    FunctionAggregation =ScoringFunctionAggregation.FirstMatching
+	                }
+            		};
+	- update the current index
+		  serviceClient.Indexes.CreateOrUpdate(accountIndexDefinition);
+	- add search parameters
+		 SearchParameters parameters = new SearchParameters
+		{
+		    Select = new[] { "firstName", "lastName" }
+		};
+		
+                //Case 1 and case 2
+                //parameters.ScoringProfile = "boostLastName";
+	- make a call to Azure search
+	- search for Hughes and pass in the parameters. 
+		- not using scoring profile, run the code,  these results could either be in order or completely out of order,  you can see, te first one first name score of 1.97 & second one last name score of 1.84, which is definitely the higher one out of the two.
+		- Apply scoring profile, it actually boosts the last name higher than anything else.
+			- If there is city, or age, or anything else that happens to have the same exact value, in that case first name and last name will actually rank higher than even city
+			- Look at the results, a score of 3.9, it's a big jump from 1.9 to 3.9. te first one last name score of 3.9 & second one first name score of 1.40,
+			
+Advanced Search Functionlaity - Suggestors or  autocomplete or type aheads.
+	- Microsoft.Rest.Azure.CloudException: 'Fields that were already present in an index (firstName, lastName) cannot be referenced by a new suggester.
+	 Only new fields added in the same index update operation are allowed.'
+		- Avoid the above exception  & in order to make suggesters work, 
+		- with the current version of Azure Search, there's a limitation, and it would not allow me to add that particular definition for the existing fields. 
+		- It only allows me to do that for additional fields that I want to add.
+		- Keep things simple, dlete our existing index, and then import the documennt
+	- add the suggester code
+		 var suggestor = new Suggester("autoComplete");
+		    suggestor.SourceFields.Add("firstName");
+		    suggestor.SourceFields.Add("lastName");
+
+		    accountIndexDefinition.Suggesters = new List<Suggester>();
+		    accountIndexDefinition.Suggesters.Add(suggestor);
+
+            	serviceClient.Indexes.CreateOrUpdate(accountIndexDefinition);
+	- Add SuggestParameters.
+		 //Add SuggestParameters.
+		                SuggestParameters suggestParameters = new SuggestParameters
+		                {
+		                    UseFuzzyMatching = true,
+		                    Top = 20
+                };
+	- call suggesterResults, or the autoComplete results, we can parse in 
+	anything right now, pass Hug
+		 var suggestorResults = queryClient.Documents.Suggest("Hug", "autoComplete", suggestParameters);
+               
+	- /*Keep in mind, it does not really have any scoring at all done right now. 
+	            20 results
+                    [0]->Hughes
+                    [1]->Hughes
+                    [2]->Hudson //seeing the fuzzy logic kick in
+                    [3]->Hutchinson //seeing the fuzzy logic kick in
+                    [4]->Huff //seeing the fuzzy logic kick in
+                    [7]->Huffman //seeing the fuzzy logic kick in
+                    [6]->Hunt //seeing the fuzzy logic kick in
+                    [8]->Hurley //seeing the fuzzy logic kick in
+                    [10]->Hull //seeing the fuzzy logic kick in
+                    [12]->Huber
+                    [16]->Hunter
+                    [17]->Hurst
+                    [18]->Hubbard
+                    [19]->Humphrey
+                - This a very easy way to create an autocomplete without having to do much work. */
+                
+Facets
+	- visit the site, azjobsdemo.azurewebsites.net ->  It's created by the Azure Search team
+	- Facets equals new List of string.  Facets = new List<string> { "balance", "age" }
+	- it's not working magically. If you look Account.cs, what we've done originally is add IsFacetable on Age and Balance
+	- Look at the results, We get 2 facets & also the same time we get 17 results (the document has State California)
+	- Look at the facets - the Key which is balance (10 records) and 10 records for the key age. it contains value and count, like age 22(count 3), age 25 (count 2)
