@@ -1,0 +1,220 @@
+Linux Filesystems
+
+Think of a refrigerator that has multiple shelves that can be used for storing various items. These shelves help you organize the grocery items by shape, size, type, etc. The same concept applies to a filesystem, which is the embodiment of a method of storing and organizing arbitrary collections of data in a human-usable form.
+
+Different Types of Filesystems Supported by Linux:
+
+    Conventional disk filesystems: ext2, ext3, ext4, XFS, Btrfs, JFS, NTFS, etc.
+    Flash storage filesystems: ubifs, JFFS2, YAFFS, etc.
+    Database filesystems
+    Special purpose filesystems: procfs, sysfs, tmpfs, debugfs, etc.
+
+This section will describe the standard filesystem layout shared by most Linux distributions.
+
+
+Partitions and Filesystems
+
+A partition is a logical part of the disk, whereas a filesystem is a method of storing/finding files on a hard disk (usually in a partition). By way of analogy, you can think of filesystems as being like family trees that show descendants and their relationships, while the partitions are like different families (each of which has its own tree).
+
+A comparison between filesystems in Windows and Linux is given in the following table:
+
+2.1.file systems
+
+The Filesystem Hierarchy Standard
+
+Linux systems store their important files according to a standard layout called the Filesystem Hierarchy Standard, or FHS. This standard ensures that users can move between distributions without having to re-learn how the system is organized.
+
+Linux uses the ‘/’ character to separate paths (unlike Windows, which uses ‘\’), and does not have drive letters. New drives are mounted as directories in the single filesystem, often under /media (so, for example, a CD-ROM disc labeled FEDORA might end up being found at /media/FEDORA, and a file README.txt on that disc would be at /media/FEDORA/README.txt).
+
+Click the image to view an enlarged version.
+
+2.2.root
+
+All Linux filesystem names are case-sensitive, so /boot, /Boot, and /BOOT represent three different directories (or folders). 
+Many distributions distinguish between core utilities needed for proper system operation and other programs, and place the latter in directories under /usr (think "user"). 
+
+http://refspecs.linuxfoundation.org/fhs.shtml
+
+Viewing the Filesystem Hierarchy from the Graphical Interface 
+Ubuntu - https://learningmate.s3-us-west-2.amazonaws.com/LFS01/Chapter3/section1/screen11/index.html?_sm_au_=iVVHFRgNM0qDknLD
+OpenSUSE - https://learningmate.s3-us-west-2.amazonaws.com/LFS01/Chapter3/section1/screen12/index.html?_sm_au_=iVVHFRgNM0qDknLD
+CentOS - https://learningmate.s3-us-west-2.amazonaws.com/LFS01/Chapter3/section1/screen13/index.html?_sm_au_=iVVHFRgNM0qDknLD
+
+
+The Boot Process
+
+The Linux boot process is the procedure for initializing the system. It consists of everything that happens from when the computer power is first switched on until the user interface is fully operational. 
+
+2.3.boot process
+
+BIOS - The First Step
+
+Starting an x86-based Linux system involves a number of steps. When the computer is powered on, the Basic Input/Output System (BIOS) initializes the hardware, including the screen and keyboard, and tests the main memory. This process is also called POST (Power On Self Test).
+
+The BIOS software is stored on a ROM chip on the motherboard. After this, the remainder of the boot process is completely controlled by the operating system.
+
+2.4.bios
+
+Master Boot Records (MBR) and Boot Loader
+
+Once the POST is completed, the system control passes from the BIOS to the boot loader. The boot loader is usually stored on one of the hard disks in the system, either in the boot sector (for traditional BIOS/MBR systems) or the EFI partition (for more recent (Unified) Extensible Firmware Interface or EFI/UEFI systems). Up to this stage, the machine does not access any mass storage media. Thereafter, information on the date, time, and the most important peripherals are loaded from a small, battery-powered memory store called the CMOS values (after a technology used for the battery - which allows the system to keep track of the date and time even when it is powered off).
+
+A number of boot loaders exist for Linux; the most common ones are GRUB (for GRand Unified Boot loader) and ISOLINUX (for booting from removable media). Most Linux boot loaders can present a user interface for choosing alternative options for booting Linux, and even other operating systems that might be installed. When booting Linux, the boot loader is responsible for loading the kernel image and the initial RAM disk (which contains some critical files and device drivers needed to start the system) into memory.
+
+2.5.mbr
+
+Boot Loader in Action
+
+The boot loader has two distinct stages:
+
+First Stage:
+
+For systems using the BIOS/MBR method, the boot loader resides at the first sector of the hard disk also known as the Master Boot Record (MBR). The size of the MBR is just 512 bytes. In this stage, the boot loader examines the partition table and finds a bootable partition. Once it finds a bootable partition, it then searches for the second stage boot loader e.g, GRUB, and loads it into RAM (Random Access Memory).
+
+For systems using the EFI/UEFI method, UEFI firmware (software stored in RAM) reads its Boot Manager data to determine which UEFI application is to be launched and from where (i.e., from which disk and partition the EFI partition can be found). The firmware then launches the UEFI application, for example, GRUB, as defined in the boot entry in the firmware's boot manager. This procedure is more complicated but more versatile than the older MBR methods.
+
+Second Stage:
+
+The second stage boot loader resides under /boot. A splash screen is displayed which allows us to choose which Operating System (OS) to boot. After choosing the OS, the boot loader loads the kernel of the selected operating system into RAM and passes control to it.
+
+The boot loader loads the selected kernel image (in the case of Linux) and passes control to it. Kernels are almost always compressed, so its first job is to uncompress itself. After this, it will check and analyze the system hardware and initialize any hardware device drivers built into the kernel.
+
+2.6.boot loader
+
+The Linux Kernel
+
+The boot loader loads both the kernel and an initial RAM–based file system (initramfs) into memory so it can be used directly by the kernel.  
+
+When the kernel is loaded in RAM, it immediately initializes and configures the computer’s memory and also configures all the hardware attached to the system. This includes all processors, I/O subsystems, storage devices, etc. The kernel also loads some necessary user space applications.
+
+2.7.kernel
+
+The Initial RAM Disk
+
+The initramfs filesystem image contains programs and binary files that perform all actions needed to mount the proper root filesystem, like providing kernel functionality for the needed filesystem and device drivers for mass storage controllers with a facility called udev (for User Device) which is responsible for figuring out which devices are present, locating the drivers they need to operate properly, and loading them. After the root filesystem has been found, it is checked for errors and mounted.
+
+The mount program instructs the operating system that a filesystem is ready for use, and associates it with a particular point in the overall hierarchy of the filesystem (the mount point). If this is successful, the initramfs is cleared from RAM and the init program on the root filesystem (/sbin/init) is executed.
+
+init handles the mounting and pivoting over to the final real root filesystem. If special hardware drivers are needed before the mass storage can be accessed, they must be in the initramfs image.
+
+2.8.ram
+
+
+/sbin/init and Services
+
+Once the kernel has set up all its hardware and mounted the root filesystem, the kernel runs the /sbin/init program. This then becomes the initial process, which then starts other processes to get the system running. Most other processes on the system trace their origin ultimately to init; the exceptions are kernel processes, started by the kernel directly for managing internal operating system details.
+
+Traditionally, this process startup was done using conventions that date back to System V UNIX, with the system passing through a sequence of runlevels containing collections of scripts that start and stop services. Each runlevel supports a different mode of running the system. Within each runlevel, individual services can be set to run, or to be shut down if running. Newer distributions are moving away from the System V standard, but usually support the System V conventions for compatibility purposes.
+
+Besides starting the system, init is responsible for keeping the system running and for shutting it down cleanly. It acts as the "manager of last resort" for all non-kernel processes, cleaning up after them when necessary, and restarts user login services as needed when users log in and out.
+
+2.9.servcies
+
+Text-Mode Login
+
+Near the end of the boot process,  init starts a number of text-mode login prompts (done by a program called getty). These enable you to type your username, followed by your password, and to eventually get a command shell.
+
+Usually, the default command shell is bash (the GNU Bourne Again Shell), but there are a number of other advanced command shells available. The shell prints a text prompt, indicating it is ready to accept commands; after the user types the command and presses Enter, the command is executed, and another prompt is displayed after the command is done.
+
+As you'll learn in the chapter 'Command Line Operations', the terminals which run the command shells can be accessed using the ALT key plus a function key. Most distributions start six text terminals and one graphics terminal starting with F1 or F2. If the graphical environment is also started, switching to a text console requires pressing CTRL-ALT + the appropriate function key (with F7 or F1 being the GUI). As you'll see shortly, you may need to run the startx command in order to start or restart your graphical desktop after you have been in pure text mode.
+
+2.10.login
+
+
+X Window System
+
+Generally, in a Linux desktop system, the X Window System is loaded as the final step in the boot process.
+
+A service called the display manager keeps track of the displays being provided, and loads the X server (so-called because it provides graphical services to applications, sometimes called X clients). The display manager also handles graphical logins, and starts the appropriate desktop environment after a user logs in.
+
+2.11.x window
+
+A desktop environment consists of a session manager, which starts and maintains the components of the graphical session, and the window manager, which controls the placement and movement of windows, window title-bars, and controls.
+
+If the display manager is not started by default in the default runlevel, you can start X a different way, after logging on to a text-mode console, by running startx from the command line.
+
+2.12.x window1
+
+Choosing a Linux Distribution
+
+2.13.choosing distribution
+
+Some questions worth thinking about before deciding on a distribution include:
+
+    What is the main function of the system? (server or desktop)
+    What types of packages are important to the organization? For example, web server, word processing, etc.
+    How much hard disk space is available? For example, when installing Linux on an embedded device, there will be space limitations.
+    How often are packages updated?
+    How long is the support cycle for each release? For example, LTS releases have long term support.
+    Do you need kernel customization from the vendor?
+    What hardware are you running the Linux distribution on? For example, X86, ARM, PPC, etc.
+    Do you need long-term stability or short-term experimental software?
+
+Linux Installation: Planning
+
+A partition layout needs to be decided at the time of installation because Linux systems handle partitions by mounting them at specific points in the filesystem.  You can always modify the design later, but it always easier to try and get it right to begin with.
+
+Nearly all installers provide a reasonable filesystem layout by default, with either all space dedicated to normal files on one big partition and a smaller swap partitition, or with separate partitions for some space-sensitive areas like /home and /var. You may need to override the defaults and do something different if you have special needs, or if you want to use more than one disk.
+
+2.13.planning
+2.14.planning1
+
+Some distributions will also install more advanced security frameworks, such as SELinux or AppArmor.
+
+
+Linux Installation: Install Source
+
+Like other operating systems, Linux distributions are provided on optical media such as CDs or DVDs. USB media is also a popular option.
+
+Many installers can do an installation completely automatically, using a configuration file to specify installation options. This file is called a Kickstart file for Fedora-based systems, an AutoYAST profile for SUSE-based systems, and a preseed file for the Debian-based systems.
+
+2.15.source
+
+Linux Installation: The Warning
+
+The demonstrations show how to install Linux directly on your machine, erasing all current data that was there. 
+
+These alternate methods are:
+
+    Re-partitioning your hard disk to free up enough room to permit dual boot (side-by-side) installation of Linux along with your present operating system.
+    Using a host machine hypervisor program (such as VMWare's products or Oracle Virtual Box) to install a client Linux Virtual Machine.
+    Booting off of and using a Live CD or USB stick and not writing to the hard disk at all.
+
+The first method is sometimes complicated and should be done when your confidence is high and you understand the steps involved. The second and third methods are quite safe and make it difficult to damage your system.
+
+
+https://courses.edx.org/c4x/LinuxFoundationX/LFS101x/asset/Preparing_Your_Computer_for_LFS101x.pdf
+
+Steps to Install Ubuntu (Ubuntu, a member of the Debian Family Version of Linux.)
+
+Insert the Ubuntu Installation CD/DVD or connect the Ubuntu Installation USB to the system
+
+2.17.install ubuntu
+2.17.install ubuntu1
+
+Select Erase disk and install Ubuntu and click Install Now.
+Note that this option deletes the current partitions in the disk and creates its own default partitions.
+If you want to create a custom layout, click Something else, then click New Partition table which will delete all previous partitions including the data present in them.
+
+2.17.install ubuntu2
+
+Select the required time zone and click Continue
+2.17.install ubuntu3
+2.17.install ubuntu4
+
+Enter the user details with password.
+2.17.install ubuntu5
+2.17.install ubuntu6
+2.17.install ubuntu7
+
+Steps to Install CentOS (a member of the Fedora family version of Linux)
+
+2.18.install centos6
+Select Skip
+2.18.install centos61
+2.18.install centos62
+2.18.install centos63
+
+Steps to install OpenSUSE, a member of the SUSE family version of Linux.
+
+2.19.install opensuse

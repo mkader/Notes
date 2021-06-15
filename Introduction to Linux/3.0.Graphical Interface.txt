@@ -1,0 +1,18 @@
+You can use either a Command Line Interface (CLI) or a Graphical User Interface (GUI) when using Linux. 
+For repetitive tasks the CLI is often more efficient, while the GUI is easier to navigate
+
+GNOME Desktop Environment GUI
+
+It is bundled as the default desktop environment for many distributions including Red Hat Enterprise Linux, Fedora, CentOS, SUSE Linux Enterprise, and Debian. 
+GNOME has menu-based navigation and is sometimes an easy transition for at least some Windows users. 
+
+KDE, which is used by default in OpenSUSE.
+
+Unity (from Ubuntu, based on GNOME), Xfce, and LXDE.
+
+
+GUI Startup
+
+When you install a desktop environment, the X display manager starts at the end of the boot process. This X display manager is responsible for starting the graphics system, logging in the user, and starting the user’s desktop environment. 
+
+The default display manager for GNOME is called gdm. Other popular display managers include lightdm (used on Ubuntu) and kdm (associated with KDE).
