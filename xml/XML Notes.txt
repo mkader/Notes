@@ -1,0 +1,266 @@
+XSL CODE
+--------
+
+1)Starting  
+----------
+1)(From Database)
+
+<?xml version="1.0"?>
+<xsl:stylesheet version="1.0"  xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+	<xsl:template match="NewDataSet">
+		ALL CODE ARE GOING HERE
+	</xsl:template>
+</xsl:stylesheet>
+
+2)From XML( like/ htt://wwww.souno.com/advertise.xml)
+----------------------------
+<xsl:template match="/">
+	ALL CODE ARE GOING HERE
+</xsl:template>
+
+
+2)Display html code ( Getting Html code from database)
+-------------------
+tblYelloPageAdHtmlCode 		- 	table name
+yellowpagecompanyadhtmlcode	-	field name		
+<xsl:value-of disable-output-escaping="yes" select="tblYelloPageAdHtmlCode/yellowpagecompanyadhtmlcode"/>
+
+3)Parameter
+-----------
+<xsl:param name='SoUno_Filter' select='Value'/>
+
+
+4)Variable Declaration
+----------------------
+<xsl:variable name="TotalRecord1" select="interchangeSearch/sdnResults/@total" /> 
+
+5)If Condition
+---------------
+1)<xsl:if test="$TotalRecord1 !=0"></xsl:if>
+2)<xsl:if test="$SoUno_Filter='No'">
+3)getting only  number  
+(substring(title, 1, 1) &gt; -1) or (substring(title, 1, 1) &lt; 9)
+4) and or 
+4)from xml 
+select="count(interchangeSearch/sdnResults/sdnResult[(substring(title, 1, 1)&gt;-1) or (substring
+(title, 1, 1)&lt;9)])" /> 
+5)matching first characters 
+substring(title, 1, 1)=$SoUno_Filter
+6)from xml
+count(interchangeSearch/sdnResults/sdnResult[substring(title, 1, 1)=$SoUno_Filter])
+7)<xsl:if test="@i &gt;= $start and @i &lt;= $end">
+
+6)Count Format
+-------
+<xsl:variable name="TotalRecord" select="count()" /> 
+
+
+7)Calling Sub Template
+----------------------
+<xsl:call-template name = "SponseredHead"/>
+<xsl:template name = "SponseredHead">
+	All CODE GOES HERE
+</xsl:template>
+
+8)Substring
+-----------
+substring(title, 1, 1)
+
+9)For loop And Sorting and descending 
+----------------------
+getting all record - $SoUno_Sort field  name
+<xsl:for-each select="interchangeSearch/sdnResults/sdnResult">
+	<xsl:sort data-type ="number" select="*[name(.)=$SoUno_Sort]"/> - number sort -
+	<xsl:sort select="*[name(.)=$SoUno_Sort]"/> - letter sort  
+	<xsl:sort select="*[name(.)=active]" order="descending" />	- order 
+</xsl:for-each>
+
+<xsl:for-each select="tblYellow[substring(name, 1, 1)=$SearchFilter]">
+	<xsl:sort data-type ="number" select="*[name(.)=$YellowSort]"/>
+	<xsl:call-template name="Display_Area" />
+</xsl:for-each>
+
+<xsl:for-each select="emp[@accountid=0]">
+
+
+10)Attribute
+-------------
+<A target="_blank">
+	<xsl:attribute name="href"><xsl:value-of select="clickUrl"/></xsl:attribute>
+</A>
+
+
+11) Replace Word Function
+------------------------
+<xsl:template name="replace">
+	<xsl:param name="text-string"/>
+	<xsl:variable name="find-word">,</xsl:variable>
+	<xsl:variable name="replace-with">,<br></br></xsl:variable>
+	<xsl:choose>
+		<xsl:when test="contains($text-string,$find-word)">
+			<xsl:value-of  select="concat(substring-before($text-string,$find-word),
+			$replace-with,substring-after($text-string,$find-word))"/>
+		</xsl:when>
+		<xsl:otherwise>
+			<xsl:value-of select="$text-string"/>
+		</xsl:otherwise>
+	</xsl:choose>
+</xsl:template>
+
+<xsl:variable name = "andurl">
+	<xsl:call-template name = "replaceand">
+		<xsl:with-param name = "text-string" select="Url2"/>
+	</xsl:call-template>
+</xsl:variable>
+
+	
+
+12) Getting XML Values Code
+---------------------------
+<interchangeSearch>
+<sdnResults totla='10'>
+	<sdnResult>
+		<title></title>
+		<clickUrl></clickUrl>
+	</sdnResult>
+</sdnResults>
+</interchangeSearch>
+
+<xsl:variable name="TotalRecord1" select="interchangeSearch/sdnResults/@total" /> 
+
+<xsl:value-of select="clickUrl"/> - field value
+
+<xsl:value-of select="$SearchValue"/>&amp; - parameter value display
+& - &amp;
+
+getting starting  number record
+<xsl:for-each select="interchangeSearch/sdnResults/sdnResult[(substring(title, 1, 1)&gt;-1) or 
+(substring(title, 1, 1)&lt;9)]">
+</xsl:for-each>
+
+getting all record
+<xsl:for-each select="interchangeSearch/sdnResults/sdnResult">
+
+getting record matching first character 			
+<xsl:for-each select="interchangeSearch/sdnResults/sdnResult[substring(title, 1, 1)=$SoUno_Filter]">
+
+from database
+<xsl:template match="NewDataSet"></xsl:template>
+
+from xml
+<xsl:template match="/"></xsl:template>
+
+mutliply
+<xsl:value-of select="50+(yellowtotalrec*80)"/>
+
+<xsl:for-each select='project'>
+	<xsl:for-each select='emp'>
+	</xsl:for-each>
+</xsl:for-each>
+
+
+13)like statment, - checking word is present in the stamenet
+-----------------------------------------------------------
+contains($text-string,$find-word)
+
+14)Concatenation
+---------------
+<xsl:value-of  select="concat(substring-before($text-string,$find-word),$replace-with,substring-after
+($text-string,$find-word))"/>
+
+15)Choose STatemnet
+-------------------
+<xsl:choose>
+	<xsl:when test="contains($text-string,$find-word)">
+		<xsl:value-of  select=""/>
+	</xsl:when>
+	<xsl:otherwise>
+		<xsl:value-of select=""/>
+	</xsl:otherwise>
+</xsl:choose>
+
+16)Convert upper to lower
+-------------------------
+translate(name,'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+
+
+17)Display Space
+----------------
+<xsl:text disable-output-escaping="yes">&amp;nbsp;</xsl:text>
+
+18)Format
+---------
+<xsl:number value="substring(phone,1,3)" format="(001"/>
+
+phone format
+<xsl:number value="substring(phone,1,3)" format="(001"/>
+<xsl:number value="substring(phone,4,3)" format=") 001-"/>
+<xsl:number value="substring(phone,7,4)" format="0001"/>
+
+number format
+<xsl:value-of select="format-number(estakeswinningnumberspotamount, '##,###,###')">
+<xsl:value-of select="format-number($TotalHours, '###.00')"/>
+
+
+19 Length String
+----------------
+<xsl:if test="string-length(phone)!=0">
+
+20) Count number of Record
+--------------------------
+<xsl:number value="position()" format="1"/>
+
+
+21 Split Text
+-------------
+<xsl:template name="splittext">
+	<xsl:param name="desc"/>
+	<xsl:variable name="ldesc" select="string-length($desc)"/>
+	<xsl:choose>
+		<xsl:when test="$ldesc > 29">
+			<xsl:value-of select="substring($desc,1,29)"/><xsl:text>&#xA;&#xA;</xsl:text>
+			<xsl:call-template name="splittext">
+				<xsl:with-param name="desc">
+					<xsl:value-of select="substring($desc,30,$ldesc)"/>
+				</xsl:with-param>
+			</xsl:call-template>
+		</xsl:when>
+		<xsl:otherwise>
+			<xsl:value-of select="$desc"/>
+		</xsl:otherwise>
+	</xsl:choose>
+</xsl:template>
+
+<xsl:call-template name = "splittext">
+	<xsl:with-param name = "desc" select="@description"/>
+</xsl:call-template>
+
+
+22 Comment
+---------
+<xsl:comment></xsl:comment>
+
+
+23) JavaScript
+--------------
+<script language="JavaScript" type="text/JavaScript"><![CDATA[
+	function AdPage(acxiomcompanyid,coupon)
+	{	
+		top.body.location.href='../business/AdPage.aspx?;
+	}
+]]></script>
+
+
+24)Sum 
+------
+<xsl:variable name="SumOfHours" select="sum(Task/Leave/@Hours)"/>
+<xsl:value-of select="format-number((@sun+@mon+@tue+@wed+@thu+@fri+@sat), '###0.00')"/>
+
+
+25 
+<xsl:variable name="trimstatus" select="substring(@tmstatus,string-length(substring-before(@tmstatus, 
+ substring(normalize-space(@tmstatus), 1, 1))) + 1,string-length(@tmstatus) -
+string-length(substring-before(@tmstatus, substring(normalize-space(@tmstatus),1, 1)))	- 
+string-length(substring-after(@tmstatus,substring(normalize-space(@tmstatus),
+string-length(normalize-space(@tmstatus)), 1))))"/>
+<xsl:variable name="lenstatus" select="string-length($trimstatus)" />

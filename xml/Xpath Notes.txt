@@ -1,0 +1,229 @@
+XPath
+-------
+1)What is XPath?
+---------------
+	XPath is a syntax for defining parts of an XML document 
+	XPath uses path expressions to navigate in XML documents 
+	XPath contains a library of standard functions 
+	XPath is a major element in XSLT 
+	XPath is a W3C Standard 
+
+2)XPath Path Expressions
+------------------------
+	XPath uses path expressions to select nodes or node-sets in an XML document. 
+	
+3)XPath Terminology
+-------------------
+	1)Nodes - 7 kinds of nodes: element, attribute, text, namespace, processing-instruction, comment, and document (root) nodes. XML documents are treated as trees of nodes. The root of the tree is called the document node (or root node).
+
+	<?xml version="1.0" encoding="ISO-8859-1"?>
+	(*)<bookstore>
+		(**)<book>
+	  		<title lang="en">Harry Potter</title>
+	  		<author>J K. Rowling</author> 
+	  		<year>2005</year>
+	  		<price>29.99</price>
+		</book>
+	</bookstore> 
+	
+	Example
+	<bookstore> (document node), <year>2005</year> (element node), lang="en" (attribute node)
+
+	2)Atomic values - Atomic values are nodes with no children or parent.
+	Example of atomic values: J K. Rowling, "en" 
+
+	3)Items - Items are atomic values or nodes.
+
+4)Relationship of Nodes
+-----------------------
+	1)Parent - Each element and attribute has one parent.
+	Example(**); the book element is the parent of the title, author, year, and price:
+
+	2)Children - Element nodes may have zero, one or more children.
+	Example(**); the title, author, year, and price elements are all children of the book element
+
+	3)Siblings - Nodes that have the same parent.
+	Example(**); the title, author, year, and price elements are all siblings:
+
+	4)Ancestors - A node's parent, parent's parent, etc.
+	Example(*); the ancestors of the title element are the book element and the bookstore element:
+
+	5)Descendants - A node's children, children's children, etc.
+	Example(*); descendants of the bookstore element are the book, title, author, year, and price elements:
+
+5)Selecting Nodes
+-----------------	
+Expression	Description 
+nodename 	Selects all child nodes of the node 
+/ 		Selects from the root node 
+// 		Selects nodes in the document from the current node that match the selection no
+		matter where they are  
+. 		Selects the current node 
+.. 		Selects the parent of the current node 
+@ 		Selects attributes 
+
+Examples
+Path Expression 	Result 
+bookstore 		Selects all the child nodes of the bookstore element 
+/bookstore 		Selects the root element bookstore
+bookstore/book 		Selects all book elements that are children of bookstore 
+//book 			Selects all book elements no matter where they are in the document 
+bookstore//book 	Selects all book elements that are descendant of the bookstore element, 
+			no matter where they are under the bookstore element 
+//@lang 		Selects all attributes that are named lang 
+
+Note: If the path starts with a slash ( / ) it always represents an absolute path to an element!
+KaderNote : bookstore,/bookstore	Both are giving same results
+KaderNoter: bookstore/book,//book,bookstore//book - All are giving same reuslts 	
+
+6)Predicates 
+-------------
+  Predicates are used to find a specific node or a node that contains a specific value.
+  Predicates are always embedded in square brackets.
+Examples
+Path Expression				Result 
+/bookstore/book[1]  			Selects the first book element that is the child of the bookstore element 
+/bookstore/book[last()] 		Selects the last book element that is the child of the bookstore element 
+/bookstore/book[last()-1] 		Selects the last but one book element that is the child of the bookstore element 
+/bookstore/book[position()<3]	 	Selects the first two book elements that are children of the bookstore element 
+//title[@lang] 				Selects all the title elements that have an attribute named lang 
+//title[@lang='eng'] 			Selects all the title elements that have an attribute named lang with a value of 'eng' 
+/bookstore/book[price>35.00] 		Selects all the book elements of the bookstore element that have a price element with a value greater than 35.00 
+/bookstore/book[price>35.00]/title 	Selects all the title elements of the book elements of the bookstore element that have a price element with a value greater than 35.00 
+
+KaderNote - /bookstore/book[last()] ,/bookstore/book[last()-1],/bookstore/book[position()<3] - not working
+
+7)Selecting Unknown Nodes
+-------------------------
+XPath wildcards can be used to select unknown XML elements.
+
+Wildcard	Description 
+* 		Matches any element node 
+@* 		Matches any attribute node 
+node() 		Matches any node of any kind 
+Examples
+Path Expression	Result 
+/bookstore/*	Selects all the child nodes of the bookstore element 
+//* 		Selects all elements in the document 
+//title[@*] 	Selects all title elements which have any attribute 
+
+8)Selecting Several Paths - By using the | operator in an XPath expression you can select several paths.
+--------------------------
+Examples
+Path Expression			Result 
+//book/title | //book/price 	Selects all the title AND price elements of all book elements 
+//title | //price 		Selects all the title AND price elements in the document 
+/bookstore/book/title | //price Selects all the title elements of the book element of the bookstore element AND all the price elements in the document 
+
+9)XPath Axes - An axis defines a node-set relative to the current node.
+------------
+AxisName		Result 
+ancestor 		Selects all ancestors (parent, grandparent, etc.) of the current node 
+ancestor-or-self 	Selects all ancestors (parent, grandparent, etc.) of the current node and the current node itself 
+attribute 		Selects all attributes of the current node 
+child 			Selects all children of the current node 
+descendant 		Selects all descendants (children, grandchildren, etc.) of the current node 
+descendant-or-self 	Selects all descendants (children, grandchildren, etc.) of the current node and the current node itself 
+following 		Selects everything in the document after the closing tag of the current node 
+following-sibling 	Selects all siblings after the current node 
+namespace 		Selects all namespace nodes of the current node 
+parent 			Selects the parent of the current node 
+preceding 		Selects everything in the document that is before the start tag of the current node 
+preceding-sibling 	Selects all siblings before the current node 
+self 			Selects the current node 
+
+10)Location Path Expression - A location path can be absolute or relative.
+---------------------------
+An absolute location path starts with a slash ( / ) and a relative location path does not. 
+In both cases the location path consists of one or more steps, each separated by a slash:
+
+An absolute location path:/step/step/...
+A relative location path:step/step/... 
+
+Syntax - axisname::nodetest[predicate] 
+
+Example			Result 
+child::book 		Selects all book nodes that are children of the current node 
+attribute::lang 	Selects the lang attribute of the current node 
+child::* 		Selects all children of the current node 
+attribute::* 		Selects all attributes of the current node 
+child::text() 		Selects all text child nodes of the current node 
+child::node() 		Selects all child nodes of the current node 
+descendant::book 	Selects all book descendants of the current node 
+ancestor::book 		Selects all book ancestors of the current node 
+ancestor-or-self::book 	Selects all book ancestors of the current node - and the current as well if it is a book node 
+child::*/child::price 	Selects all price grandchildren of the current node 
+
+11)XPath Operators
+------------------
+Operator	Example			Return value 
+| 		//book | //cd 		Returns a node-set with all book and cd elements 
++ 		6 + 4 			10 
+- 		6 - 4 			2 
+* 		6 * 4			24 
+div 		8 div 4 		2 
+= 		price=9.80 		true if price is 9.80,	false if price is 9.90 
+!=		price!=9.80
+< 		price<9.80
+<= 		price<=9.80
+> 		price>9.80
+>= 		price>=9.80
+or 		price=9.80 or price=9.70
+and 		price>9.00 and price<9.90
+mod 		5 mod 2 		1 
+
+
+Example
+<?xml version="1.0" encoding="ISO-8859-1"?><bookstore><book category="COOKING">
+  <title lang="en">Everyday Italian</title>
+  <author>Giada De Laurentiis</author>
+  <year>2005</year>
+  <price>30.00</price>
+</book><book category="CHILDREN">
+  <title lang="en">Harry Potter</title>
+  <author>J K. Rowling</author>
+  <year>2005</year>
+  <price>29.99</price>
+</book><book category="WEB">
+  <title lang="en">XQuery Kick Start</title>
+  <author>James McGovern</author>
+  <author>Per Bothner</author>
+  <author>Kurt Cagle</author>
+  <author>James Linn</author>
+  <author>Vaidyanathan Nagarajan</author>
+  <year>2003</year>
+  <price>49.99</price>
+</book><book category="WEB">
+  <title lang="en">Learning XML</title>
+  <author>Erik T. Ray</author>
+  <year>2003</year>
+  <price>39.95</price>
+</book></bookstore>
+
+
+<html>
+<body>
+<script type="text/vbscript">
+
+set xmlDoc=CreateObject("Microsoft.XMLDOM")
+xmlDoc.async="false"
+xmlDoc.load("books.xml")
+
+set nodes=xmlDoc.selectNodes("//bookstore/book/title | //price")
+
+for each x in nodes
+  document.write("<xmp>")
+  document.write(x.xml)
+  document.write("</xmp>")
+next
+
+</script>
+</body>
+</html>
+
+Select the prices - xmlDoc.selectNodes("/bookstore/book/price/text()")  
+
+
+
+
+			

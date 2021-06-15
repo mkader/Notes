@@ -1,0 +1,741 @@
+<HTML><HEAD><TITLE>XPath  Function Reference</TITLE></HEAD>
+<BODY>
+<TABLE cellSpacing=3 cellPadding=0 border=0>
+  <TBODY>
+  <TR>
+    <TD vAlign=top width=100%>
+      <TABLE cellSpacing=0 cellPadding=5 width="100%" bgColor=#ffffff
+        border=1><TBODY>
+        <TR>
+          <TD>
+            <H1>Functions Reference</H1>
+            <TABLE border=0>
+              <TBODY>
+              <TR>
+                <TD vAlign=top>
+                  <UL>
+                    <LI><A
+                    href="#accessor">Accessor</A>
+
+                    <LI><A
+                    href="#error">Error
+                    and Trace</A>
+                    <LI><A
+                    href="#numeric">Numeric</A>
+
+                    <LI><A
+                    href="#string">String</A>
+                    </LI></UL></TD>
+                <TD vAlign=top>
+                  <UL>
+                    <LI><A
+                    href="#anyuri">AnyURI</A>
+
+                    <LI><A
+                    href="#boolean">Boolean</A>
+
+                    <LI><A
+                    href="#datetime">Duration/Date/Time</A>
+
+                    <LI><A
+                    href="#qname">QName</A>
+                    </LI></UL></TD>
+                <TD vAlign=top>
+                  <UL>
+                    <LI><A
+                    href="#node">Node</A>
+
+                    <LI><A
+                    href="#sequence">Sequence</A>
+
+                    <LI><A
+                    href="#context">Context</A>
+                    </LI></UL></TD></TR></TBODY></TABLE>
+            <P>The default prefix for the function namespace is fn:, and the URI
+            is:<BR>http://www.w3.org/2005/02/xpath-functions.</P>
+            <H3><A name=accessor>Accessor Functions</A></H3>
+            <TABLE class=ex id=table1 cellSpacing=0 width="100%" border=1>
+              <TBODY>
+              <TR>
+                <TD vAlign=top width="30%"><B>Name</B></TD>
+                <TD vAlign=top width="75%"><B>Description</B></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:node-name(<I>node</I>)</TD>
+                <TD vAlign=top>Returns the node-name of the argument
+node</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:nilled(<I>node</I>)</TD>
+                <TD vAlign=top>Returns a Boolean value indicating whether the
+                  argument node is nilled</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:data(<I>item.item,...</I>)</TD>
+                <TD vAlign=top>Takes a sequence of items and returns a
+                  sequence of atomic values</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:base-uri()<BR>fn:base-uri(<I>node</I>)</TD>
+                <TD vAlign=top>Returns the value of the base-uri property of
+                  the current or specified node </TD></TR>
+              <TR>
+                <TD vAlign=top>fn:document-uri(<I>node</I>)</TD>
+                <TD vAlign=top>Returns the value of the document-uri property
+                  for the specified node</TD></TR></TBODY></TABLE>
+            <H3><A name=error>Error and Trace Functions</A></H3>
+            <TABLE class=ex id=table2 cellSpacing=0 width="100%" border=1>
+              <TBODY>
+              <TR>
+                <TD vAlign=top width="30%"><B>Name</B></TD>
+                <TD vAlign=top width="75%"><B>Description</B></TD></TR>
+              <TR>
+                <TD
+                  vAlign=top>fn:error()<BR>fn:error(<I>error</I>)<BR>fn:error(<I>error,description</I>)<BR>fn:error(<I>error,description,error-object</I>)</TD>
+                <TD vAlign=top>Example:
+                  error(fn:QName('http://example.com/test', 'err:toohigh'),
+                  'Error: Price is too high')
+                  <P>Result: Returns http://example.com/test#toohigh and the
+                  string "Error: Price is too high" to the external processing
+                  environment</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:trace(<I>value,label</I>)</TD>
+                <TD vAlign=top>Used to debug queries</TD></TR></TBODY></TABLE>
+            <H3><A name=numeric>Functions on Numeric Values</A></H3>
+            <TABLE class=ex id=table7 cellSpacing=0 width="100%" border=1>
+              <TBODY>
+              <TR>
+                <TD vAlign=top width="30%"><B>Name</B></TD>
+                <TD vAlign=top width="75%"><B>Description</B></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:number(<I>arg</I>)</TD>
+                <TD vAlign=top>Returns the numeric value of the argument. The
+                  argument could be a boolean, string, or node-set
+                  <P>Example: number('100')<BR>Result: 100</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:abs(<I>num</I>)</TD>
+                <TD vAlign=top>Returns the absolute value of the argument
+                  <P>Example: abs(3.14)<BR>Result: 3.14</P>
+                  <P>Example: abs(-3.14)<BR>Result: 3.14</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:ceiling(<I>num</I>)</TD>
+                <TD vAlign=top>Returns the smallest integer that is greater
+                  than the number argument
+                  <P>Example: ceiling(3.14)<BR>Result: 4</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:floor(<I>num</I>)</TD>
+                <TD vAlign=top>Returns the largest integer that is not greater
+                  than the number argument
+                  <P>Example: floor(3.14)<BR>Result: 3</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:round(<I>num</I>)</TD>
+                <TD vAlign=top>Rounds the number argument to the nearest
+                  integer
+                  <P>Example: round(3.14)<BR>Result: 3</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:round-half-to-even()</TD>
+                <TD vAlign=top>Example: round-half-to-even(0.5)<BR>Result: 0
+                  <P>Example: round-half-to-even(1.5)<BR>Result: 2</P>
+                  <P>Example: round-half-to-even(2.5)<BR>Result:
+              2</P></TD></TR></TBODY></TABLE>
+            <H3><A name=string>Functions on Strings</A></H3>
+            <TABLE class=ex id=table8 cellSpacing=0 width="100%" border=1>
+              <TBODY>
+              <TR>
+                <TD vAlign=top width="30%"><B>Name</B></TD>
+                <TD vAlign=top width="75%"><B>Description</B></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:string(<I>arg</I>)</TD>
+                <TD vAlign=top>Returns the string value of the argument. The
+                  argument could be a number, boolean, or node-set
+                  <P>Example: string(314)<BR>Result: "314"</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:codepoints-to-string(<I>int,int,...</I>)</TD>
+                <TD vAlign=top>Returns a string from a sequence of code points
+                  <P>Example: codepoints-to-string(84, 104, 233, 114, 232, 115,
+                  101)<BR>Result: 'Thérèse' </P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:string-to-codepoints(<I>string</I>)</TD>
+                <TD vAlign=top>Returns a sequence of code points from a string
+                  <P>Example: string-to-codepoints("Thérèse")<BR>Result: 84,
+                  104, 233, 114, 232, 115, 101</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:codepoint-equal(<I>comp1,comp2</I>)</TD>
+                <TD vAlign=top>Returns true if the value of comp1 is equal to
+                  the value of comp2, according to the Unicode code point
+                  collation
+                  (http://www.w3.org/2005/02/xpath-functions/collation/codepoint),
+                  otherwise it returns false</TD></TR>
+              <TR>
+                <TD
+                  vAlign=top>fn:compare(<I>comp1,comp2</I>)<BR>fn:compare(<I>comp1,comp2,collation</I>)</TD>
+                <TD vAlign=top>Returns -1 if comp1 is less than comp2, 0 if
+                  comp1 is equal to comp2, or 1 if comp1 is greater than comp2
+                  (according to the rules of the collation that is used)
+                  <P>Example: compare('ghi', 'ghi')<BR>Result: 0</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:concat(<I>string,string,...</I>)</TD>
+                <TD vAlign=top>Returns the concatenation of the strings
+                  <P>Example: concat('XPath ','is ','FUN!')<BR>Result: 'XPath is
+                  FUN!'</P></TD></TR>
+              <TR>
+                <TD
+                vAlign=top>fn:string-join(<I>(string,string,...),sep</I>)</TD>
+                <TD vAlign=top>Returns a string created by concatenating the
+                  string arguments and using the sep argument as the separator
+                  <P>Example: string-join(('We', 'are', 'having', 'fun!'), '
+                  ')<BR>Result: ' We are having fun! '</P>
+                  <P>Example: string-join(('We', 'are', 'having',
+                  'fun!'))<BR>Result: 'Wearehavingfun!'</P>
+                  <P>Example:string-join((), 'sep')<BR>Result: ''</P></TD></TR>
+              <TR>
+                <TD
+                  vAlign=top>fn:substring(<I>string,start,len</I>)<BR>fn:substring(<I>string,start</I>)</TD>
+                <TD vAlign=top>Returns the substring from the start position
+                  to the specified length. Index of the first character is 1. If
+                  length is omitted it returns the substring from the start
+                  position to the end
+                  <P>Example: substring('Beatles',1,4)<BR>Result: 'Beat'</P>
+                  <P>Example: substring('Beatles',2)<BR>Result:
+              'eatles'</P></TD></TR>
+              <TR>
+                <TD
+                  vAlign=top>fn:string-length(<I>string</I>)<BR>fn:string-length()</TD>
+                <TD vAlign=top>Returns the length of the specified string. If
+                  there is no string argument it returns the length of the
+                  string value of the current node
+                  <P>Example: string-length('Beatles')<BR>Result: 7</P></TD></TR>
+              <TR>
+                <TD
+                  vAlign=top>fn:normalize-space(<I>string</I>)<BR>fn:normalize-space()</TD>
+                <TD vAlign=top>Removes leading and trailing spaces from the
+                  specified string, and replaces all internal sequences of white
+                  space with one and returns the result. If there is no string
+                  argument it does the same on the current node
+                  <P>Example: normalize-space(' The&nbsp;&nbsp; XML
+                  ')<BR>Result: 'The XML'</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:normalize-unicode()</TD>
+                <TD vAlign=top>&nbsp;</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:upper-case(<I>string</I>)</TD>
+                <TD vAlign=top>Converts the string argument to upper-case
+                  <P>Example: upper-case('The XML')<BR>Result: 'THE
+              XML'</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:lower-case(<I>string</I>)</TD>
+                <TD vAlign=top>Converts the string argument to lower-case
+                  <P>Example: lower-case('The XML')<BR>Result: 'the
+              xml'</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:translate(<I>string1,string2,string3</I>)</TD>
+                <TD vAlign=top>Converts string1 by replacing the characters in
+                  string2 with the characters in string3
+                  <P>Example: translate('12:30','30','45')<BR>Result:
+'12:45'</P>
+                  <P>Example: translate('12:30','03','54')<BR>Result:
+'12:45'</P>
+                  <P>Example: translate('12:30','0123','abcd')<BR>Result:
+                  'bc:da'</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:escape-uri(<I>stringURI,esc-res</I>)</TD>
+                <TD vAlign=top>Example:
+                  escape-uri("http://example.com/test#car", true())<BR>Result:
+                  "http%3A%2F%2Fexample.com%2Ftest#car"
+                  <P>Example: escape-uri("http://example.com/test#car",
+                  false())<BR>Result: "http://example.com/test#car"</P>
+                  <P>Example: escape-uri ("http://example.com/~bébé",
+                  false())<BR>Result:
+              "http://example.com/~b%C3%A9b%C3%A9"</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:contains(<I>string1,string2</I>)</TD>
+                <TD vAlign=top>Returns true if string1 contains string2,
+                  otherwise it returns false
+                  <P>Example: contains('XML','XM')<BR>Result: true</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:starts-with(<I>string1,string2</I>)</TD>
+                <TD vAlign=top>Returns true if string1 starts with string2,
+                  otherwise it returns false
+                  <P>Example: starts-with('XML','X')<BR>Result: true</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:ends-with(<I>string1,string2</I>)</TD>
+                <TD vAlign=top>Returns true if string1 ends with string2,
+                  otherwise it returns false
+                  <P>Example: ends-with('XML','X')<BR>Result: false</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:substring-before(<I>string1,string2</I>)</TD>
+                <TD vAlign=top>Returns the start of string1 before string2
+                  occurs in it
+                  <P>Example: substring-before('12/10','/')<BR>Result:
+                '12'</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:substring-after(<I>string1,string2</I>)</TD>
+                <TD vAlign=top>Returns the remainder of string1 after string2
+                  occurs in it
+                  <P>Example: substring-after('12/10','/')<BR>Result:
+              '10'</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:matches(<I>string,pattern</I>)</TD>
+                <TD vAlign=top>Returns true if the string argument matches the
+                  pattern, otherwise, it returns false
+                  <P>Example: matches("Merano", "ran")<BR>Result: true</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:replace(<I>string,pattern,replace</I>)</TD>
+                <TD vAlign=top>Returns a string that is created by replacing
+                  the given pattern with the replace argument
+                  <P>Example: replace("Bella Italia", "l", "*")<BR>Result:
+                  'Be**a Ita*ia'</P>Example: replace("Bella Italia", "l",
+                  "")<BR>Result: 'Bea Itaia'</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:tokenize(<I>string,pattern</I>)</TD>
+                <TD vAlign=top>Example: tokenize("XPath is fun",
+                  "\s+")<BR>Result: ("XPath", "is", "fun")</TD></TR></TBODY></TABLE>
+            <H3><A name=anyuri>Functions for anyURI</A></H3>
+            <TABLE class=ex id=table9 cellSpacing=0 width="100%" border=1>
+              <TBODY>
+              <TR>
+                <TD vAlign=top width="30%"><B>Name</B></TD>
+                <TD vAlign=top width="75%"><B>Description</B></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:resolve-uri(<I>relative,base</I>)</TD>
+                <TD vAlign=top>&nbsp;</TD></TR></TBODY></TABLE>
+            <H3><A name=boolean>Functions on Boolean Values</A></H3>
+            <TABLE class=ex id=table11 cellSpacing=0 width="100%" border=1>
+              <TBODY>
+              <TR>
+                <TD vAlign=top width="30%"><B>Name</B></TD>
+                <TD vAlign=top width="75%"><B>Description</B></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:boolean(<I>arg</I>)</TD>
+                <TD vAlign=top>Returns a boolean value for a number, string,
+                  or node-set</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:not(<I>arg</I>)</TD>
+                <TD vAlign=top>The argument is first reduced to a boolean
+                  value by applying the boolean() function. Returns true if the
+                  boolean value is false, and false if the boolean value is true
+                  <P>Example: not(true())<BR>Result: false</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:true()</TD>
+                <TD vAlign=top>Returns the boolean value true
+                  <P>Example: true()<BR>Result: true</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:false()</TD>
+                <TD vAlign=top>Returns the boolean value false
+                  <P>Example: false()<BR>Result: false</P></TD></TR></TBODY></TABLE>
+            <H3><A name=datetime>Functions on Durations, Dates and
+Times</A></H3>
+            <P>Component Extraction Functions on Durations, Dates and Times </P>
+            <TABLE class=ex id=table13 cellSpacing=0 width="100%" border=1>
+              <TBODY>
+              <TR>
+                <TD vAlign=top width="30%"><B>Name</B></TD>
+                <TD vAlign=top width="75%"><B>Description</B></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:dateTime(<I>date,time</I>)</TD>
+                <TD vAlign=top>Converts the arguments to a date and a
+              time</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:years-from-duration(<I>datetimedur</I>)</TD>
+                <TD vAlign=top>Returns an integer that represents the years
+                  component in the canonical lexical representation of the value
+                  of the argument</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:months-from-duration(<I>datetimedur</I>)</TD>
+                <TD vAlign=top>Returns an integer that represents the months
+                  component in the canonical lexical representation of the value
+                  of the argument</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:days-from-duration(<I>datetimedur</I>)</TD>
+                <TD vAlign=top>Returns an integer that represents the days
+                  component in the canonical lexical representation of the value
+                  of the argument</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:hours-from-duration(<I>datetimedur</I>)</TD>
+                <TD vAlign=top>Returns an integer that represents the hours
+                  component in the canonical lexical representation of the value
+                  of the argument</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:minutes-from-duration(<I>datetimedur</I>)</TD>
+                <TD vAlign=top>Returns an integer that represents the minutes
+                  component in the canonical lexical representation of the value
+                  of the argument</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:seconds-from-duration(<I>datetimedur</I>)</TD>
+                <TD vAlign=top>Returns a decimal that represents the seconds
+                  component in the canonical lexical representation of the value
+                  of the argument</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:year-from-dateTime(<I>datetime</I>)</TD>
+                <TD vAlign=top>Returns an integer that represents the year
+                  component in the localized value of the argument
+                  <P>Example:
+                  year-from-dateTime(xs:dateTime("2005-01-10T12:30-04:10"))<BR>Result:
+                  2005</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:month-from-dateTime(<I>datetime</I>)</TD>
+                <TD vAlign=top>Returns an integer that represents the month
+                  component in the localized value of the argument
+                  <P>Example:
+                  month-from-dateTime(xs:dateTime("2005-01-10T12:30-04:10"))<BR>Result:
+                  01</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:day-from-dateTime(<I>datetime</I>)</TD>
+                <TD vAlign=top>Returns an integer that represents the day
+                  component in the localized value of the argument
+                  <P>Example:
+                  day-from-dateTime(xs:dateTime("2005-01-10T12:30-04:10"))<BR>Result:
+                  10</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:hours-from-dateTime(<I>datetime</I>)</TD>
+                <TD vAlign=top>Returns an integer that represents the hours
+                  component in the localized value of the argument
+                  <P>Example:
+                  hours-from-dateTime(xs:dateTime("2005-01-10T12:30-04:10"))<BR>Result:
+                  12</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:minutes-from-dateTime(<I>datetime</I>)</TD>
+                <TD vAlign=top>Returns an integer that represents the minutes
+                  component in the localized value of the argument
+                  <P>Example:
+                  minutes-from-dateTime(xs:dateTime("2005-01-10T12:30-04:10"))<BR>Result:
+                  30</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:seconds-from-dateTime(<I>datetime</I>)</TD>
+                <TD vAlign=top>Returns a decimal that represents the seconds
+                  component in the localized value of the argument
+                  <P>Example:
+                  seconds-from-dateTime(xs:dateTime("2005-01-10T12:30:00-04:10"))<BR>Result:
+                  0</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:timezone-from-dateTime(<I>datetime</I>)</TD>
+                <TD vAlign=top>Returns the time zone component of the argument
+                  if any</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:year-from-date(<I>date</I>)</TD>
+                <TD vAlign=top>Returns an integer that represents the year in
+                  the localized value of the argument
+                  <P>Example: year-from-date(xs:date("2005-04-23"))<BR>Result:
+                  2005</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:month-from-date(<I>date</I>)</TD>
+                <TD vAlign=top>Returns an integer that represents the month in
+                  the localized value of the argument
+                  <P>Example: month-from-date(xs:date("2005-04-23"))<BR>Result:
+                  4</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:day-from-date(<I>date</I>)</TD>
+                <TD vAlign=top>Returns an integer that represents the day in
+                  the localized value of the argument
+                  <P>Example: day-from-date(xs:date("2005-04-23"))<BR>Result:
+                  23</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:timezone-from-date(<I>date</I>)</TD>
+                <TD vAlign=top>Returns the time zone component of the argument
+                  if any</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:hours-from-time(<I>time</I>)</TD>
+                <TD vAlign=top>Returns an integer that represents the hours
+                  component in the localized value of the argument
+                  <P>Example: hours-from-time(xs:time("10:22:00"))<BR>Result:
+                  10</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:minutes-from-time(<I>time</I>)</TD>
+                <TD vAlign=top>Returns an integer that represents the minutes
+                  component in the localized value of the argument
+                  <P>Example: minutes-from-time(xs:time("10:22:00"))<BR>Result:
+                  22</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:seconds-from-time(<I>time</I>)</TD>
+                <TD vAlign=top>Returns an integer that represents the seconds
+                  component in the localized value of the argument
+                  <P>Example: seconds-from-time(xs:time("10:22:00"))<BR>Result:
+                  0</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:timezone-from-time(<I>time</I>)</TD>
+                <TD vAlign=top>Returns the time zone component of the argument
+                  if any</TD></TR>
+              <TR>
+                <TD
+                  vAlign=top>fn:adjust-dateTime-to-timezone(<I>datetime,timezone</I>)</TD>
+                <TD vAlign=top>If the timezone argument is empty, it returns a
+                  dateTime without a timezone. Otherwise, it returns a dateTime
+                  with a timezone</TD></TR>
+              <TR>
+                <TD
+                  vAlign=top>fn:adjust-date-to-timezone(<I>date</I><I>,timezone</I>)</TD>
+                <TD vAlign=top>If the timezone argument is empty, it returns a
+                  date without a timezone. Otherwise, it returns a date with a
+                  timezone</TD></TR>
+              <TR>
+                <TD
+                  vAlign=top>fn:adjust-time-to-timezone(<I>time</I><I>,timezone</I>)</TD>
+                <TD vAlign=top>If the timezone argument is empty, it returns a
+                  time without a timezone. Otherwise, it returns a time with a
+                  timezone</TD></TR></TBODY></TABLE>
+            <H3><A name=qname>Functions Related to QNames</A></H3>
+            <TABLE class=ex id=table18 cellSpacing=0 width="100%" border=1>
+              <TBODY>
+              <TR>
+                <TD vAlign=top width="30%"><B>Name</B></TD>
+                <TD vAlign=top width="75%"><B>Description</B></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:QName()</TD>
+                <TD vAlign=top>&nbsp;</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:local-name-from-QName()</TD>
+                <TD vAlign=top>&nbsp;</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:namespace-uri-from-QName()</TD>
+                <TD vAlign=top>&nbsp;</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:namespace-uri-for-prefix()</TD>
+                <TD vAlign=top>&nbsp;</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:in-scope-prefixes()</TD>
+                <TD vAlign=top>&nbsp;</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:resolve-QName()</TD>
+                <TD vAlign=top>&nbsp;</TD></TR></TBODY></TABLE>
+            <H3><A name=node>Functions on Nodes</A></H3>
+            <TABLE class=ex id=table21 cellSpacing=0 width="100%" border=1>
+              <TBODY>
+              <TR>
+                <TD vAlign=top width="30%"><B>Name</B></TD>
+                <TD vAlign=top width="75%"><B>Description</B></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:name()<BR>fn:name(<I>nodeset</I>)</TD>
+                <TD vAlign=top>Returns the name of the current node or the
+                  first node in the specified node set</TD></TR>
+              <TR>
+                <TD
+                vAlign=top>fn:local-name()<BR>fn:local-name(<I>nodeset</I>)</TD>
+                <TD vAlign=top>Returns the name of the current node or the
+                  first node in the specified node set - without the namespace
+                  prefix</TD></TR>
+              <TR>
+                <TD
+                  vAlign=top>fn:namespace-uri()<BR>fn:namespace-uri(<I>nodeset</I>)</TD>
+                <TD vAlign=top>Returns the namespace URI of the current node
+                  or the first node in the specified node set</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:lang(<I>lang</I>)</TD>
+                <TD vAlign=top>Returns true if the language of the current
+                  node matches the language of the specified language
+                  <P>Example: Lang("en") is true for<BR>&lt;p
+                  xml:lang="en"&gt;...&lt;/p&gt;</P>
+                  <P>Example: Lang("de") is false for<BR>&lt;p
+                  xml:lang="en"&gt;...&lt;/p&gt;</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:root()<BR>fn:root(<I>node</I>)</TD>
+                <TD vAlign=top>Returns the root of the tree to which the
+                  current node or the specified belongs. This will usually be a
+                  document node</TD></TR></TBODY></TABLE>
+            <H3><A name=sequence>Functions on Sequences</A></H3>
+            <P>General Functions on Sequences</P>
+            <TABLE class=ex id=table23 cellSpacing=0 width="100%" border=1>
+              <TBODY>
+              <TR>
+                <TD vAlign=top width="30%"><B>Name</B></TD>
+                <TD vAlign=top width="75%"><B>Description</B></TD></TR>
+              <TR>
+                <TD
+                vAlign=top>fn:index-of(<I>(item,item,...),searchitem</I>)</TD>
+                <TD vAlign=top>Returns the positions within the sequence of
+                  items that are equal to the searchitem argument
+                  <P>Example: index-of ((15, 40, 25, 40, 10), 40)<BR>Result: (2,
+                  4)</P>
+                  <P>Example: index-of (("a", "dog", "and", "a", "duck"),
+                  "a")<BR>Result (1, 4)</P>
+                  <P>Example: index-of ((15, 40, 25, 40, 10), 18)<BR>Result:
+                  ()</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:remove(<I>(item,item,...),position</I>)</TD>
+                <TD vAlign=top>Returns a new sequence constructed from the
+                  value of the item arguments - with the item specified by the
+                  position argument removed
+                  <P>Example: remove(("ab", "cd", "ef"), 0)<BR>Result: ("ab",
+                  "cd", "ef")</P>
+                  <P>Example: remove(("ab", "cd", "ef"), 1)<BR>Result: ("cd",
+                  "ef")</P>
+                  <P>Example: remove(("ab", "cd", "ef"), 4)<BR>Result: ("ab",
+                  "cd", "ef")</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:empty(<I>item,item,...</I>)</TD>
+                <TD vAlign=top>Returns true if the value of the arguments IS
+                  an empty sequence, otherwise it returns false
+                  <P>Example: empty(remove(("ab", "cd"), 1))<BR>Result:
+                false</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:exists(<I>item,item,...</I>)</TD>
+                <TD vAlign=top>Returns true if the value of the arguments IS
+                  NOT an empty sequence, otherwise it returns false
+                  <P>Example: exists(remove(("ab"), 1))<BR>Result:
+              false</P></TD></TR>
+              <TR>
+                <TD
+                  vAlign=top>fn:distinct-values(<I>(item,item,...),collation</I>)</TD>
+                <TD vAlign=top>Returns only distinct (different) values
+                  <P>Example: distinct-values((1, 2, 3, 1, 2))<BR>Result: (1, 2,
+                  3)</P></TD></TR>
+              <TR>
+                <TD
+                  vAlign=top>fn:insert-before(<I>(item,item,...),pos,inserts</I>)</TD>
+                <TD vAlign=top>Returns a new sequence constructed from the
+                  value of the item arguments - with the value of the inserts
+                  argument inserted in the position specified by the pos
+argument
+                  <P>Example: insert-before(("ab", "cd"), 0, "gh")<BR>Result:
+                  ("gh", "ab", "cd")</P>
+                  <P>Example: insert-before(("ab", "cd"), 1, "gh")<BR>Result:
+                  ("gh", "ab", "cd")</P>
+                  <P>Example: insert-before(("ab", "cd"), 2, "gh")<BR>Result:
+                  ("ab", "gh", "cd")</P>
+                  <P>Example: insert-before(("ab", "cd"), 5, "gh")<BR>Result:
+                  ("ab", "cd", "gh")</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:reverse(<I>(item,item,...)</I>)</TD>
+                <TD vAlign=top>Returns the reversed order of the items
+                  specified
+                  <P>Example: reverse(("ab", "cd", "ef"))<BR>Result: ("ef",
+                  "cd", "ab")</P>
+                  <P>Example: reverse(("ab"))<BR>Result: ("ab")</P></TD></TR>
+              <TR>
+                <TD
+                vAlign=top>fn:subsequence(<I>(item,item,...),start,len</I>)</TD>
+                <TD vAlign=top>Returns a sequence of items from the position
+                  specified by the start argument and continuing for the number
+                  of items specified by the len argument. The first item is
+                  located at position 1
+                  <P>Example: subsequence(($item1, $item2, $item3,...),
+                  3)<BR>Result: ($item3, ...)</P>
+                  <P>Example: subsequence(($item1, $item2, $item3, ...), 2,
+                  2)<BR>Result: ($item2, $item3)</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:unordered(<I>(item,item,...)</I>)</TD>
+                <TD vAlign=top>Returns the items in an implementation
+                  dependent order</TD></TR></TBODY></TABLE>
+            <P>Functions That Test the Cardinality of Sequences </P>
+            <TABLE class=ex id=table24 cellSpacing=0 width="100%" border=1>
+              <TBODY>
+              <TR>
+                <TD vAlign=top width="30%"><B>Name</B></TD>
+                <TD vAlign=top width="75%"><B>Description</B></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:zero-or-one(<I>item,item,...</I>)</TD>
+                <TD vAlign=top>Returns the argument if it contains zero or one
+                  items, otherwise it raises an error</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:one-or-more(<I>item,item,...</I>)</TD>
+                <TD vAlign=top>Returns the argument if it contains one or more
+                  items, otherwise it raises an error</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:exactly-one(<I>item,item,...</I>)</TD>
+                <TD vAlign=top>Returns the argument if it contains exactly one
+                  item, otherwise it raises an error</TD></TR></TBODY></TABLE>
+            <P>Equals, Union, Intersection and Except </P>
+            <TABLE class=ex id=table25 cellSpacing=0 width="100%" border=1>
+              <TBODY>
+              <TR>
+                <TD vAlign=top width="30%"><B>Name</B></TD>
+                <TD vAlign=top width="75%"><B>Description</B></TD></TR>
+              <TR>
+                <TD
+vAlign=top>fn:deep-equal(<I>param1,param2,collation</I>)</TD>
+                <TD vAlign=top>Returns true if param1 and param2 are
+                  deep-equal to each other, otherwise it returns
+              false</TD></TR></TBODY></TABLE>
+            <P>Aggregate Functions</P>
+            <TABLE class=ex id=table26 cellSpacing=0 width="100%" border=1>
+              <TBODY>
+              <TR>
+                <TD vAlign=top width="30%"><B>Name</B></TD>
+                <TD vAlign=top width="75%"><B>Description</B></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:count(<I>(item,item,...)</I>)</TD>
+                <TD vAlign=top>Returns the count of nodes</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:avg(<I>(arg,arg,...)</I>)</TD>
+                <TD vAlign=top>Returns the average of the argument values
+                  <P>Example: avg((1,2,3))<BR>Result: 2</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:max(<I>(arg,arg,...)</I>)</TD>
+                <TD vAlign=top>Returns the argument that is greater than the
+                  others
+                  <P>Example: max((1,2,3))<BR>Result: 3</P>
+                  <P>Example: max(('a', 'k'))<BR>Result: 'k'</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:min(<I>(arg,arg,...)</I>)</TD>
+                <TD vAlign=top>Returns the argument that is less than the
+                  others
+                  <P>Example: min((1,2,3))<BR>Result: 1</P>
+                  <P>Example: min(('a', 'k'))<BR>Result: 'a'</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:sum(<I>arg,arg,...</I>)</TD>
+                <TD vAlign=top>Returns the sum of the numeric value of each
+                  node in the specified node-set</TD></TR></TBODY></TABLE>
+            <P>Functions that Generate Sequences</P>
+            <TABLE class=ex id=table27 cellSpacing=0 width="100%" border=1>
+              <TBODY>
+              <TR>
+                <TD vAlign=top width="30%"><B>Name</B></TD>
+                <TD vAlign=top width="75%"><B>Description</B></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:id(<I>(string,string,...),node</I>)</TD>
+                <TD vAlign=top>Returns a sequence of element nodes that have
+                  an ID value equal to the value of one or more of the values
+                  specified in the string argument</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:idref(<I>(string,string,...),node</I>)</TD>
+                <TD vAlign=top>Returns a sequence of element or attribute
+                  nodes that have an IDREF value equal to the value of one or
+                  more of the values specified in the string argument</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:doc(<I>URI</I>)</TD>
+                <TD vAlign=top>&nbsp;</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:doc-available(<I>URI</I>)</TD>
+                <TD vAlign=top>Returns true if the doc() function returns a
+                  document node, otherwise it returns false</TD></TR>
+              <TR>
+                <TD
+                vAlign=top>fn:collection()<BR>fn:collection(<I>string</I>)</TD>
+                <TD vAlign=top>&nbsp;</TD></TR></TBODY></TABLE>
+            <H3><A name=context>Context Functions</A></H3>
+            <TABLE class=ex id=table28 cellSpacing=0 width="100%" border=1>
+              <TBODY>
+              <TR>
+                <TD vAlign=top width="30%"><B>Name</B></TD>
+                <TD vAlign=top width="75%"><B>Description</B></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:position()</TD>
+                <TD vAlign=top>Returns the index position of the node that is
+                  currently being processed
+                  <P>Example: //book[position()&lt;=3]<BR>Result: Selects the
+                  first three book elements </P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:last()</TD>
+                <TD vAlign=top>Returns the number of items in the processed
+                  node list
+                  <P>Example: //book[last()]<BR>Result: Selects the last book
+                  element</P></TD></TR>
+              <TR>
+                <TD vAlign=top>fn:current-dateTime()</TD>
+                <TD vAlign=top>Returns the current dateTime (with
+              timezone)</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:current-date()</TD>
+                <TD vAlign=top>Returns the current date (with timezone)</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:current-time()</TD>
+                <TD vAlign=top>Returns the current time (with timezone)</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:implicit-timezone()</TD>
+                <TD vAlign=top>Returns the value of the implicit
+timezone</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:default-collation()</TD>
+                <TD vAlign=top>Returns the value of the default
+collation</TD></TR>
+              <TR>
+                <TD vAlign=top>fn:static-base-uri()</TD>
+                <TD vAlign=top>Returns the value of the
+            base-uri</TD></TR></TBODY></TABLE><BR>
+
+ </TR></TBODY></TABLE></BODY></HTML>
