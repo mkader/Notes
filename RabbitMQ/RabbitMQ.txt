@@ -1,0 +1,904 @@
+RabbitMQ - It is a message broker: it accepts and forwards binary blobs of data  messages.
+==========
+	- RabbitMQ is running on localhost on standard port (5672). For different host, port or credentials, connections settings would require adjusting.
+	- (P)->Producing means sending. A program that sends messages is a producer :
+	  -------------------
+	- [][][][][][]->A queue which lives inside RabbitMQ. Although messages flow through RabbitMQ and your applications, they can only be stored inside a queue. 
+	  -----------------------
+	  A queue is only bound by the host's memory & disk limits, it's essentially a large message buffer. Many producers can send messages that go to one queue, 
+	  and many consumers can try to receive data from one queue. This is how we represent a queue:
+	- (C)->Consuming means receiving. A consumer is a program that mostly waits to receive messages:
+	  ------------------
+	- The producer, consumer, and broker do not have to reside on the same host; indeed in most applications they don't.
+	- 1. "Hello World", (using the .NET/C# Client) -> a producer that sends a single message, and a consumer that receives messages and prints them out. 
+	  -----------------------------------------
+		- "P" is our producer and "C" is our consumer. The middle is a queue - a message buffer that RabbitMQ keeps on behalf of the consumer.
+			(P) -> [|||] -> (C)
+		- RabbitMQ speaks multiple protocols. Using AMQP 0-9-1, which is an open, general-purpose protocol for messaging. 
+		- Now let's generate two projects, one for the publisher and one for the consumer:
+			- dotnet new console --name Send
+			  mv Send/Program.cs Send/Send.cs
+			- dotnet new console --name Receive
+			  mv Receive/Program.cs Receive/Receive.cs
+			- This will create two new directories named Send and Receive.
+		- Then we add the client dependency.
+			- cd Send
+			  dotnet add package RabbitMQ.Client
+			  dotnet restore
+			- cd Receive
+			  dotnet add package RabbitMQ.Client
+			  dotnet restore
+		- Sending - (P) -> [|||]
+		 -------------------------
+			- Call our message publisher (sender) Send.cs and our message consumer (receiver) Receive.cs. 
+			  The publisher will connect to RabbitMQ, send a single message, then exit.
+			using System;
+			using RabbitMQ.Client;
+			using System.Text;
+
+			class Send {
+			    public static void Main() {
+			    	//create a connection to the server
+			    	var factory = new ConnectionFactory()
+				                {
+				                    HostName = "172.22.144.236",
+				                    Port = 5672,
+				                    UserName = "guest",
+				                    Password = "guest"
+                };
+				var factory = new ConnectionFactory() { HostName = "localhost" };
+				
+				using(var connection = factory.CreateConnection()) 
+				using(var channel = connection.CreateModel())
+				{
+				    channel.QueueDeclare(queue: "hello", durable: false, exclusive: false, autoDelete: false, arguments: null);
+
+				    string message = "Hello World!";
+				    var body = Encoding.UTF8.GetBytes(message);
+
+				    channel.BasicPublish(exchange: "", routingKey: "hello", basicProperties: null, body: body);
+				    Console.WriteLine(" [x] Sent {0}", message);
+				}
+
+				Console.WriteLine(" Press [enter] to exit.");
+				Console.ReadLine();
+			    }
+			}
+
+			- The connection abstracts the socket connection, and takes care of protocol version negotiation and authentication and so on for us. 
+			  Here we connect to a broker on the local machine(localhost  or ip address).
+			- Create a channel, which is where most of the API for getting things done resides.
+			- To send, we must declare a queue for us to send to; then we can publish a message to the queue
+			- Declaring a queue - it will only be created if it doesn't exist already. The message content is a encoded byte array.
+			- When the code above finishes running, the channel and the connection will be disposed. That's it for our publisher.
+		- Not working - the broker was started without enough free disk space (by default it needs at least 50 MB free) and is therefore refusing to accept messages. 
+		  Check the broker logfile to confirm and reduce the limit if necessary. The configuration file documentation will show you how to set disk_free_limit.
+		- Receiving - [|||] -> (C)
+		 -------------------------
+			- As for the consumer, it is pushed messages from RabbitMQ. So unlike the publisher which publishes a single message, 
+			  we'll keep the consumer running continuously to listen for messages and print them out.
+			  
+			  using RabbitMQ.Client;
+			  using RabbitMQ.Client.Events;
+			  using System;
+			  using System.Text;
+			  
+			  class Receive  {
+			      public static void Main()  {
+			          var factory = new ConnectionFactory() { HostName = "localhost" };
+			          using(var connection = factory.CreateConnection())
+			          using(var channel = connection.CreateModel())
+			          {
+			              channel.QueueDeclare(queue: "hello", durable: false, exclusive: false, autoDelete: false, arguments: null);
+			  
+			              var consumer = new EventingBasicConsumer(channel);
+			              consumer.Received += (model, ea) =>
+			              {
+			                  var body = ea.Body;
+			                  var message = Encoding.UTF8.GetString(body);
+			                  Console.WriteLine(" [x] Received {0}", message);
+			              };
+			              channel.BasicConsume(queue: "hello", autoAck: true, consumer: consumer);
+			  
+			              Console.WriteLine(" Press [enter] to exit.");
+			              Console.ReadLine();
+			          }
+			      }
+			}
+			- Open a connection and a channel, and declare the queue from which we're going to consume. Note this matches up with the queue that Send publishes to.
+			- Declare the queue here as well. Because we might start the consumer before the publisher, 
+			  we want to make sure the queue exists before we try to consume messages from it.
+			- Tell the server to deliver us the messages from the queue. Since it will push us messages asynchronously, we provide a callback. 
+			  That is what EventingBasicConsumer.Received event handler does.
+		- Open two terminals.
+			- Run the consumer: cd Receive & dotnet run
+			- Run the producer: cd Send & dotnet run
+	
+			C:\MAK\solera\projects\RabbitMQ\code\Send>dotnet run
+				 [x] Sent Hello World!
+				 Press [enter] to exit.
+	 		C:\MAK\solera\projects\RabbitMQ\code\Receive>dotnet run
+				 Press [enter] to exit.
+				 [x] Received Hello World!
+				 [x] Done
+		- The consumer will print the message it gets from the publisher via RabbitMQ. The consumer will keep running, waiting for messages (Use Ctrl-C to stop it), 
+		  so try running the publisher from another terminal.
+	2. Work Queues - create a Work Queue that will be used to distribute time-consuming tasks among multiple workers
+	---------------
+		- Using message acknowledgments and BasicQos you can set up a work queue. The durability options let the tasks survive even if RabbitMQ is restarted.
+				  /c1	
+		- p --> [][][][][]
+				   \c2	
+		- Work Queues (aka: Task Queues) is to avoid doing a resource-intensive task immediately and having to wait for it to complete. 
+		  Instead we schedule the task to be done later. We encapsulate a task as a message and send it to a queue. 
+		  A worker process running in the background will pop the tasks and eventually execute the job. 
+		  When you run many workers the tasks will be shared between them.
+		- This concept is especially useful in web applications where it's impossible to handle a complex task during a short HTTP request window.
+		- Sending strings that stand for complex tasks. Pretend real time, like images to be resized or pdf files to be rendered, 
+		  so busy by using the Thread.Sleep() function. Take the number of dots in the string as its complexity; every dot will account for one second of "work". 
+		  For example, a fake task described by Hello... will take three seconds.
+		- To allow arbitrary messages to be sent from the command line. This program will schedule tasks to our work queue, so let's name it NewTask:
+		- Generate two projects.
+			- dotnet new console --name NewTask
+			  mv NewTask/Program.cs NewTask/NewTask.cs
+			- dotnet new console --name Worker
+			  mv Worker/Program.cs Worker/Worker.cs
+			- cd NewTask
+			  dotnet add package RabbitMQ.Client
+			  dotnet restore
+			- cd Worker
+			  dotnet add package RabbitMQ.Client
+			  dotnet restore
+		- Sending (NewTask)
+			using System;
+			using RabbitMQ.Client;
+			using System.Text;
+			
+			class NewTask {
+			    public static void Main(string[] args)  {
+			        var factory = new ConnectionFactory() { HostName = "localhost" };
+			        using(var connection = factory.CreateConnection())
+			        using(var channel = connection.CreateModel())
+			        {
+			            channel.QueueDeclare(queue: "task_queue", durable: true, exclusive: false, autoDelete: false, arguments: null);
+			
+			            var message = GetMessage(args);
+			            var body = Encoding.UTF8.GetBytes(message);
+			
+			            var properties = channel.CreateBasicProperties();
+			            properties.Persistent = true;
+			
+			            channel.BasicPublish(exchange: "", routingKey: "task_queue", basicProperties: properties, body: body);
+			            Console.WriteLine(" [x] Sent {0}", message);
+			        }
+			
+			        Console.WriteLine(" Press [enter] to exit.");
+			        Console.ReadLine();
+			    }
+			
+			    private static string GetMessage(string[] args) {
+			        return ((args.Length > 0) ? string.Join(" ", args) : "Hello World!");
+			    }
+			}
+		- Receive (Worker) - it needs to fake a second of work for every dot in the message body. 
+		  It will handle messages delivered by RabbitMQ and perform the task:
+		  	using System;
+			using RabbitMQ.Client;
+			using RabbitMQ.Client.Events;
+			using System.Text;
+			using System.Threading;
+			
+			class Worker {
+			    public static void Main()    {
+			        var factory = new ConnectionFactory() { HostName = "localhost" };
+			        using(var connection = factory.CreateConnection())
+			        using(var channel = connection.CreateModel())
+			        {
+			            channel.QueueDeclare(queue: "task_queue", durable: true, exclusive: false, autoDelete: false, arguments: null);
+			
+			            channel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
+			
+			            Console.WriteLine(" [*] Waiting for messages.");
+			
+			            var consumer = new EventingBasicConsumer(channel);
+			            consumer.Received += (model, ea) =>
+			            {
+			                var body = ea.Body;
+			                var message = Encoding.UTF8.GetString(body);
+			                Console.WriteLine(" [x] Received {0}", message);
+			
+					//Our fake task to simulate execution time:
+			                int dots = message.Split('.').Length - 1;
+			                Thread.Sleep(dots * 1000);
+			
+			                Console.WriteLine(" [x] Done");
+			
+			                channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
+			            };
+			            channel.BasicConsume(queue: "task_queue", autoAck: false, consumer: consumer);
+			
+			            Console.WriteLine(" Press [enter] to exit.");
+			            Console.ReadLine();
+			        }
+			    }
+			}
+		- Round-robin dispatching
+		 ----------------------
+			- One of the advantages of using a Task Queue is the ability to easily parallelise work. 
+			  If we are building up a backlog of work, we can just add more workers and that way, scale easily.
+			- First, run two Worker instances at the same time. They will both get messages from the queue, but how exactly? Let's see.
+			- 3 consoles open. Two will run the Worker(consumers c1 & c2) program.
+			- # shell 1
+			  cd Worker
+			  dotnet run
+			  # => [*] Waiting for messages. To exit press CTRL+C
+			- # shell 2
+			  cd Worker
+			  dotnet run
+			  # => [*] Waiting for messages. To exit press CTRL+C
+			- 3rd console, publish new tasks. Once you've started the consumers you can publish a few messages:
+			- # shell 3
+			  cd NewTask
+			  dotnet run "First message."
+			  dotnet run "Second message.."
+			  dotnet run "Third message..."
+			  dotnet run "Fourth message...."
+			  dotnet run "Fifth message....."
+			- Let's see what is delivered to our workers:
+			- # shell 1
+			  # => [*] Waiting for messages. To exit press CTRL+C
+			  # => [x] Received 'First message.'
+			  # => [x] Received 'Third message...'
+			  # => [x] Received 'Fifth message.....'
+			- # shell 2
+			  # => [*] Waiting for messages. To exit press CTRL+C
+			  # => [x] Received 'Second message..'
+			  # => [x] Received 'Fourth message....'
+		- By default, RabbitMQ will send each message to the next consumer, in sequence. On average every consumer will get the same number of messages. 
+		  This way of distributing messages is called round-robin. Try this out with three or more workers.
+		- Message ack(nowledgment) => channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
+		------------------------
+			- An ack is sent back by the consumer to tell RabbitMQ that a particular message has been received, processed and that RabbitMQ is free to delete it.
+			- what happens if one of the consumers starts a long task and dies with it only partly done. 
+			  With our current code, once RabbitMQ delivers a message to the customer it immediately marks it for deletion. 
+			  In this case, if you kill a worker we will lose the message it was just processing. 
+			  We'll also lose all the messages that were dispatched to this particular worker but were not yet handled.
+			- But we don't want to lose any tasks. If a worker dies, we'd like the task to be delivered to another worker.
+				- i changed code to long run task, Thread.Sleep(dots * 10000);, open 3 workers, 1 send cmd. when entered from send
+					C:\MAK\solera\projects\RabbitMQ\code\NewTask>dotnet run "Fifth message....."
+					 [x] Sent Fifth message.....
+					 Press [enter] to exit.
+				- workers receive message, waiting for to finish long thread
+					 C:\MAK\solera\projects\RabbitMQ\code\Workerdotnet run
+					  [*] Waiting for messages.
+					  Press [enter] to exit.
+					  [x] Received Third message...
+					  ^C
+			         - when i cancel it, now message to 2nd workers
+					 C:\MAK\solera\projects\RabbitMQ\code\Workerdotnet run
+					  [*] Waiting for messages.
+					  Press [enter] to exit.
+					  [x] Received Third message...
+					  ^C
+			         - workers receive messae, waiting for to finish long thread.
+			         - when i cancel it, now message to 3rd workers
+			         C:\MAK\solera\projects\RabbitMQ\code\Workerdotnet run
+				  [*] Waiting for messages.
+				  Press [enter] to exit.
+				  [x] Received Third message...
+				  ^C
+				 - workers receive messae, waiting for to finish long thread.
+			          when i cancel it. restart first worker, receive message & finish it long task.
+			- In order to make sure a message is never lost, RabbitMQ supports message acknowledgments. 
+			- If a consumer dies (its channel is closed, connection is closed, or TCP connection is lost) without sending an ack, 
+			  RabbitMQ will understand that a message wasn't processed fully and will re-queue it. 
+			  If there are other consumers online at the same time, it will then quickly redeliver it to another consumer. 
+			  That way you can be sure that no message is lost, even if the workers occasionally die.
+		- Manual message acknowledgments are turned on by default. 
+		  ----------------------------
+		  In previous examples we explicitly turned them off by setting the autoAck ("automatic acknowledgement mode") parameter to true. 
+		  It's time to remove this flag and manually send a proper acknowledgment from the worker, once we're done with a task.
+		- Acknowledgement must be sent on the same channel the delivery it is for was received on. 
+		  Attempts to acknowledge using a different channel will result in a channel-level protocol exception.
+		- Forgotten acknowledgment - It's a common mistake to miss the BasicAck. It's an easy error, but the consequences are serious.
+		--------------------------
+			- Messages will be redelivered when your client quits (which may look like random redelivery), but RabbitMQ will eat more and more 
+			  memory as it won't be able to release any unacked messages.
+		- In order to debug this kind of mistake you can use rabbitmqctl to print the messages_unacknowledged field:
+			rabbitmqctl.bat list_queues name messages_ready messages_unacknowledged
+		- Message durability - our tasks will still be lost if RabbitMQ server stops
+		-------------------
+			- When RabbitMQ quits or crashes it will forget the queues and messages unless you tell it not to. 
+			  Two things are required to make sure that messages aren't lost: we need to mark both the queue and messages as durable.
+			- First, we need to make sure that RabbitMQ will never lose our queue. In order to do so, we need to declare it as durable:
+				channel.QueueDeclare(queue: "hello", durable: true, ...);
+			- RabbitMQ doesn't allow you to redefine an existing queue with different parameters and will return 
+			  an error to any program that tries to do that. you can't change to durable: true for "hello" queue.
+			- QueueDeclare change needs to be applied to both the producer and consumer code.
+			- we need to mark our messages as persistent - by setting IBasicProperties.SetPersistent to true.
+
+		-Message persistence
+		--------------------
+			- Marking messages as persistent doesn't fully guarantee that a message won't be lost. Although it tells RabbitMQ to save the message 
+			  to disk, there is still a short time window when RabbitMQ has accepted a message and hasn't saved it yet. 
+			- Also, RabbitMQ doesn't do fsync(2) for every message -- it may be just saved to cache and not really written to the disk. 
+			  The persistence guarantees aren't strong. If you need a stronger guarantee then you can use publisher confirms.
+		-Fair dispatch
+		-------------
+			- For example two workers, when all odd messages are heavy and even messages are light, one worker will be constantly busy 
+			  and the other one will do hardly any work. RabbitMQ doesn't know anything about that and will still dispatch messages evenly.
+			- This happens because RabbitMQ just dispatches a message when the message enters the queue. It doesn't look at the number
+			  of unacknowledged messages for a consumer. It just blindly dispatches every n-th message to the n-th consumer.
+				                           ---------->C1
+					Queue_name=hello  /perfetch=1	
+				p --->	[][][][][][][][][] 
+							  \perfetch=1
+ 							   ----------->C2	
+			- In order to change this behavior we can use the BasicQos method with the prefetchCount = 1 setting. 
+			- It tells RabbitMQ not to give more than one message to a worker at a time. Or, don't dispatch a new message to a worker 
+			  until it has processed and acknowledged the previous one. Instead, it will dispatch it to the next worker that is not still busy.
+		- Queue size
+		----------
+			- If all the workers are busy, your queue can fill up. You will want to keep an eye on that, and maybe add more workers, or have some other strategy.
+	3. Publish/Subscribe -  deliver a message to multiple consumers
+	--------------------
+		- A work queue(2.) is that each task is delivered to exactly one worker. 
+		- In this part we'll deliver a message to multiple consumers. This pattern is known as "publish/subscribe".
+		- Build a simple logging system. It will consist of two programs -- the first will emit log messages and the second will receive and print them.
+		- One receiver program will get the messages and direct the logs to disk; 2nd receiver see the logs on the screen.
+		- Essentially, published log messages are going to be broadcast to all the receivers.
+		- Exchanges (x) - few exchange types available: direct, topic, headers and fanout, the producer can only send messages to an exchange not queue
+		------------
+			- In previous tutorials:
+				- A producer is a user application that sends messages.
+				- A queue is a buffer that stores messages.
+				- A consumer is a user application that receives messages.
+			- The core idea in the messaging model in RabbitMQ is that the producer never sends any messages directly to a queue. 
+			  Actually, quite often the producer doesn't even know if a message will be delivered to any queue at all.
+			- full messaging model in Rabbit Instead, the producer can only send messages to an exchange. An exchange is a very simple thing. 
+			--------------------------------
+					  /------ [][][][][]
+				p -----> x 
+					  \------ [][][][][]
+			- On one side it receives messages from producers and the other side it pushes them to queues. 
+			- The exchange must know exactly what to do with a message it receives. 
+			- Should it be appended to a particular queue or many queues? Or should it get discarded. The rules for that are defined by the exchange type.
+			- Exchange types - direct, topic, headers and fanout. 
+			- The fanout- it is very simpel, create and call it logs: channel.ExchangeDeclare("logs", "fanout");
+			-------------
+				- which doesn't give us much flexibility - it's only capable of mindless broadcasting.
+				- it just broadcasts all the messages it receives to all the queues it knows. And that's exactly what we need for our logger.
+			- Listing exchanges
+			--------------------
+				- To list the exchanges on the server you can run the ever useful rabbitmqctl: sudo rabbitmqctl list_exchanges
+				- In this list there will be some amq.* exchanges and the default (unnamed) exchange. These are created by default, 
+				  but it is unlikely you'll need to use them at the moment.
+				- The default exchange
+				----------------------
+					- Example 1 & 2 (Hello),we were using a default exchange, which we identify by the empty string ("").
+						- channel.BasicPublish(exchange: "", routingKey: "hello", basicProperties: null, body: body);
+					- The empty string is the default or nameless exchange: messages are routed to the queue with the name specified by routingKey, if it exists.
+					- Publish to our named exchange -> channel.BasicPublish(exchange: "logs", routingKey: "", basicProperties: null, body: body);
+		- Temporary queues
+		------------------
+			- Previously we were using queues which had a specified name (remember hello and task_queue). 
+			- Being able to name a queue was crucial for us -- we needed to point the workers to the same queue. 
+			- Giving a queue a name is important when you want to share the queue between producers and consumers.
+			- But that's not the case for our logger. We want to hear about all log messages, not just a subset of them. 
+			- We're also interested only in currently flowing messages not in the old ones. To solve that we need two things.
+			- Firstly, whenever we connect to Rabbit we need a fresh, empty queue. To do this we could create a queue with 
+			  a random name, or, even better - let the server choose a random queue name for us.
+			- Secondly, once we disconnect the consumer the queue should be automatically deleted.
+			- In the .NET client, when we supply no parameters to QueueDeclare() we create a non-durable, exclusive, autodelete queue with a generated name:
+				- var queueName = channel.QueueDeclare().QueueName;
+				- At that point queueName contains a random queue name. For example it may look like amq.gen-JzTY20BRgKO-HjmUJj0wLg.
+		- Bindings - relationship between exchange and a queue is called a binding
+		----------
+			- Created a fanout exchange and a queue. Tell the exchange to send messages to our queue. That relationship between exchange and a queue is called a binding.
+				- channel.QueueBind(queue: queueName, exchange: "logs", routingKey: "");
+			- From now on the logs exchange will append messages to our queue.
+			- Listing bindings - You can list existing bindings using, you guessed it, rabbitmqctl list_bindings
+			------------------
+		- The producer program, which emits log messages. Publish messages to our logs exchange instead of the nameless one. 
+		  --------------------
+		  We need to supply a routingKey when sending, but its value is ignored for fanout exchanges.
+			using System;
+			using RabbitMQ.Client;
+			using System.Text;
+
+			class EmitLog {
+			    public static void Main(string[] args) {
+				var factory = new ConnectionFactory() { HostName = "localhost" };
+				using(var connection = factory.CreateConnection())
+				using(var channel = connection.CreateModel())
+				{
+				   //after establishing the connection we declared the exchange. 
+				   //This step is necessary as publishing to a non-existing exchange is forbidden.
+				    channel.ExchangeDeclare(exchange: "logs", type: "fanout");
+
+				    var message = GetMessage(args);
+				    var body = Encoding.UTF8.GetBytes(message);
+				    channel.BasicPublish(exchange: "logs", routingKey: "", basicProperties: null, body: body);
+				    Console.WriteLine(" [x] Sent {0}", message);
+				}
+
+				Console.WriteLine(" Press [enter] to exit.");
+				Console.ReadLine();
+			    }
+
+			    private static string GetMessage(string[] args) {
+				return ((args.Length > 0) ? string.Join(" ", args) : "Hello World!");
+			    }
+			}
+			- The messages will be lost if no queue is bound to the exchange yet, but that's okay for us; if no consumer is listening yet we can safely discard the message.
+
+			using System;
+			using RabbitMQ.Client;
+			using RabbitMQ.Client.Events;
+			using System.Text;
+
+			class ReceiveLogs
+			{
+			    public static void Main()
+			    {
+				var factory = new ConnectionFactory() { HostName = "localhost" };
+				using(var connection = factory.CreateConnection())
+				using(var channel = connection.CreateModel())
+				{
+				    channel.ExchangeDeclare(exchange: "logs", type: "fanout");
+
+				    var queueName = channel.QueueDeclare().QueueName;
+				    channel.QueueBind(queue: queueName, exchange: "logs", routingKey: "");
+
+				    Console.WriteLine(" [*] Waiting for logs.");
+
+				    var consumer = new EventingBasicConsumer(channel);
+				    consumer.Received += (model, ea) =>
+				    {
+					var body = ea.Body;
+					var message = Encoding.UTF8.GetString(body);
+					Console.WriteLine(" [x] {0}", message);
+				    };
+				    channel.BasicConsume(queue: queueName, autoAck: true, consumer: consumer);
+
+				    Console.WriteLine(" Press [enter] to exit.");
+				    Console.ReadLine();
+				}
+			    }
+			}
+			- Save logs to a file,  ReceiveLogs>dotnet run > logs_from_rabbit.log
+			- Logs on screen, ReceiveLogs>dotnet run
+			- Emit log, EmitLog>dotnet run
+			- Using rabbitmqctl list_bindings you can verify that the code actually creates bindings and queues as we want. 
+				C:\Program Files\RabbitMQ Server\rabbitmq_server-3.7.7\sbin> rabbitmqctl list_binding
+				# => Listing bindings ...
+				# => logs    exchange        amq.gen-JzTY20BRgKO-HjmUJj0wLg  queue           []
+				# => logs    exchange        amq.gen-vso0PVvyiRIL2WoV3i48Yg  queue           []
+	4. Routing
+	----------
+		- In this tutorial , add a feature to it - we're going to make it possible to subscribe only to a subset of the messages. 
+		- For example, only critical error messages to the log file (to save disk space), while still being able to print all of the log messages on the console.
+		- Bindings can take an extra routingKey parameter. To avoid the confusion with a BasicPublish parameter we're going to call it a binding key. 
+		  This is how we could create a binding with a key: channel.QueueBind(queue: queueName, exchange: "direct_logs", routingKey: "black");
+		- The meaning of a binding key depends on the exchange type. The fanout exchanges, which we used previously, simply ignored its value.
+		- Direct exchange - The routing algorithm is simple - a message goes to the queues whose binding key exactly matches the routing key of the message
+		-----------------
+			- Previous log code, broadcasts all messages to all consumers. but want to allow filtering messages based on their severity. 
+			- For example, write critical log erros, and not waste disk space on warning or info log messages.
+			- We were using a fanout exchange, which doesn't give us much flexibility - it's only capable of mindless broadcasting.
+			- To illustrate that, consider the following setup:
+						    orange
+				       type=direct /--------->[][][][] -> c1	
+				p --->  x---------->-black---\
+						   \          \
+						    --green-->[][][][]] -> c2
+			- The direct exchange X with two queues bound to it. 1st queue is bound with binding key orange, and  2nd has two bindings key with(black and green).
+			- A message published to the exchange with a routing key orange will be routed to queue Q1. 
+			  Messages with a routing key of black or green will go to Q2. All other messages will be discarded.
+		- Multiple bindings - bind multiple queues with the same binding key.
+		-------------------
+			- In our example we could add a binding between X and Q1 with binding key black. 
+			- In that case, the direct exchange will behave like fanout and will broadcast the message to all the matching queues. 
+			- A message with routing key black will be delivered to both Q1 and Q2.
+		- Emitting logs - supply the log severity as a routing key, the receiving script will be able to select the severity it wants to receive
+		---------------
+			- As always, we need to create an exchange first: channel.ExchangeDeclare(exchange: "direct_logs", type: "direct");
+			- And we're ready to send a message: channel.BasicPublish(exchange: "direct_logs", routingKey: severity, basicProperties: null, body: body);
+				- To simplify things we will assume that 'severity' can be one of 'info', 'warning', 'error'.
+		- Subscribing -  create a new binding for each severity
+		-------------
+			foreach(var severity in args) { channel.QueueBind(queue: queueName, exchange: "direct_logs", routingKey: severity); }
+		- EmitLogDirect.cs
+			using System;
+			using System.Linq;
+			using RabbitMQ.Client;
+			using System.Text;
+
+			class EmitLogDirect {
+			    public static void Main(string[] args) {
+				var factory = new ConnectionFactory() { HostName = "localhost" };
+				using(var connection = factory.CreateConnection())
+				using(var channel = connection.CreateModel())
+				{
+				    channel.ExchangeDeclare(exchange: "direct_logs", type: "direct");
+
+				    var severity = (args.Length > 0) ? args[0] : "info"; 
+				    var message = (args.Length > 1) ? string.Join(" ", args.Skip( 1 ).ToArray()) : "Hello World!";
+				    var body = Encoding.UTF8.GetBytes(message);
+				    channel.BasicPublish(exchange: "direct_logs", routingKey: severity, basicProperties: null, body: body);
+				    Console.WriteLine(" [x] Sent '{0}':'{1}'", severity, message);
+				}
+
+				Console.WriteLine(" Press [enter] to exit.");
+				Console.ReadLine();
+			    }
+			}
+		- ReceiveLogsDirect.cs:
+			using System;
+			using RabbitMQ.Client;
+			using RabbitMQ.Client.Events;
+			using System.Text;
+
+			class ReceiveLogsDirect {
+			    public static void Main(string[] args) {
+				var factory = new ConnectionFactory() { HostName = "localhost" };
+				using(var connection = factory.CreateConnection())
+				using(var channel = connection.CreateModel())
+				{
+				    channel.ExchangeDeclare(exchange: "direct_logs", type: "direct");
+				    var queueName = channel.QueueDeclare().QueueName;
+
+				    if(args.Length < 1) {
+					Console.Error.WriteLine("Usage: {0} [info] [warning] [error]", Environment.GetCommandLineArgs()[0]);
+					Console.WriteLine(" Press [enter] to exit.");
+					Console.ReadLine();
+					Environment.ExitCode = 1;
+					return;
+				    }
+
+				    foreach(var severity in args) {
+					channel.QueueBind(queue: queueName,  exchange: "direct_logs", routingKey: severity);
+				    }
+
+				    Console.WriteLine(" [*] Waiting for messages.");
+
+				    var consumer = new EventingBasicConsumer(channel);
+				    consumer.Received += (model, ea) =>
+				    {
+					var body = ea.Body;
+					var message = Encoding.UTF8.GetString(body);
+					var routingKey = ea.RoutingKey;
+					Console.WriteLine(" [x] Received '{0}':'{1}'", routingKey, message);
+				    };
+				    channel.BasicConsume(queue: queueName, autoAck: true, consumer: consumer);
+
+				    Console.WriteLine(" Press [enter] to exit.");
+				    Console.ReadLine();
+				}
+			    }
+			}
+			- save only 'warning' and 'error' (and not 'info') log messages to a file,ReceiveLogsDirect>dotnet run warning error > logs_from_rabbit.log
+			- log messages on screen, ReceiveLogsDirect>dotnet run info warning error
+			- EmitLogDirect>dotnet run error "Run. Run. Or it will explode."
+
+	5.Topics
+	---------
+		- using the direct exchange, it still has limitations - it can't do routing based on multiple criteria.
+		- In our logging system we might want to subscribe to not only logs based on severity, but also based on the source which emitted the log. 
+		  You might know this concept from the syslog unix tool, which routes logs based on both severity (info/warn/crit...) and facility (auth/cron/kern...).
+		- Listen to just critical errors coming from 'cron' but also all logs from 'kern'.
+		- Topic exchange - is powerful and can behave like other exchanges.
+		-----------------
+			- Messages sent to a topic exchange can't have an arbitrary routing_key - it must be a list of words, delimited by dots. 
+			- A few valid routing key word examples: "stock.usd.nyse", "nyse.vmw", "quick.orange.rabbit". Up to the limit of 255 bytes.
+			- The binding key must also be in the same form. The logic behind the topic exchange is similar to a direct one - 
+			  a message sent with a particular routing key will be delivered to all the queues that are bound with a matching binding key. 
+			  However there are two important special cases for binding keys:
+				- * (star) can substitute for exactly one word.
+				- # (hash) can substitute for zero or more words.
+			- It's easiest to explain this in an example:
+						    *.orange.*
+				       type=direct /--------->[][][][] -> c1	
+				p --->  x---------->-*.*.rabbit---\
+						   \               \
+						    --lazy.#------->[][][][]] -> c2
+		- In this example, send messages which all describe animals. The messages will be sent with a routing key that consists of three words (two dots). 
+		  The first word in the routing key will describe speed, second a colour and third a species: "<speed>.<colour>.<species>".
+		- We created three bindings: Q1 is bound with binding key "*.orange.*" and Q2 with "*.*.rabbit" and "lazy.#".
+		- These bindings can be summarised as:
+			- Q1 is interested in all the orange animals.
+			- Q2 wants to hear everything about rabbits, and everything about lazy animals.
+			- A message with a routing key set to "quick.orange.rabbit","lazy.orange.elephant" will be delivered to both queues. 
+			  On the other hand "quick.orange.fox" will only go to the first queue, and "lazy.brown.fox" only to the second. 
+			  "lazy.pink.rabbit" will be delivered to the second queue only once, even though it matches two bindings. 
+			  "quick.brown.fox" doesn't match any binding so it will be discarded.
+		- What happens if we break our contract and send a message with one or four words, like "orange" or "quick.orange.male.rabbit"? 
+		  Well, these messages won't match any bindings and will be lost.
+		- On the other hand "lazy.orange.male.rabbit", even though it has four words, will match the last binding and will be delivered to the second queue.
+		- Topic exchange
+		-----------------
+			- When a queue is bound with "#" (hash) binding key - it will receive all the messages, regardless of the routing key - like in fanout exchange.
+			- When special characters "*" (star) and "#" (hash) aren't used in bindings, the topic exchange will behave just like a direct one.
+
+		- The routing keys of logs will have two words: "<facility>.<severity>".
+		- EmitLogTopic.cs:
+			using System;
+			using System.Linq;
+			using RabbitMQ.Client;
+			using System.Text;
+
+			class EmitLogTopic {
+			    public static void Main(string[] args) {
+				var factory = new ConnectionFactory() { HostName = "localhost" };
+				using(var connection = factory.CreateConnection())
+				using(var channel = connection.CreateModel())
+				{
+				    channel.ExchangeDeclare(exchange: "topic_logs", type: "topic");
+
+				    var routingKey = (args.Length > 0) ? args[0] : "anonymous.info";
+				    var message = (args.Length > 1) ? string.Join(" ", args.Skip( 1 ).ToArray()) : "Hello World!";
+				    var body = Encoding.UTF8.GetBytes(message);
+				    channel.BasicPublish(exchange: "topic_logs", routingKey: routingKey, basicProperties: null, body: body);
+				    Console.WriteLine(" [x] Sent '{0}':'{1}'", routingKey, message);
+				}
+			    }
+			}
+		-ReceiveLogsTopic.cs:
+			using System;
+			using RabbitMQ.Client;
+			using RabbitMQ.Client.Events;
+			using System.Text;
+
+			class ReceiveLogsTopic {
+			    public static void Main(string[] args) {
+				var factory = new ConnectionFactory() { HostName = "localhost" };
+				using(var connection = factory.CreateConnection())
+				using(var channel = connection.CreateModel()) 
+				{
+				    channel.ExchangeDeclare(exchange: "topic_logs", type: "topic");
+				    var queueName = channel.QueueDeclare().QueueName;
+
+				    if(args.Length < 1) {
+					Console.Error.WriteLine("Usage: {0} [binding_key...]", Environment.GetCommandLineArgs()[0]);
+					Console.WriteLine(" Press [enter] to exit.");
+					Console.ReadLine();
+					Environment.ExitCode = 1;
+					return;
+				    }
+
+				    foreach(var bindingKey in args) {
+					channel.QueueBind(queue: queueName, exchange: "topic_logs", routingKey: bindingKey);
+				    }
+
+				    Console.WriteLine(" [*] Waiting for messages. To exit press CTRL+C");
+
+				    var consumer = new EventingBasicConsumer(channel);
+				    consumer.Received += (model, ea) => {
+					var body = ea.Body;
+					var message = Encoding.UTF8.GetString(body);
+					var routingKey = ea.RoutingKey;
+					Console.WriteLine(" [x] Received '{0}':'{1}'", routingKey, message);
+				    };
+				    channel.BasicConsume(queue: queueName, autoAck: true, consumer: consumer);
+
+				    Console.WriteLine(" Press [enter] to exit.");
+				    Console.ReadLine();
+				}
+			    }
+			}
+		- Run the following examples:
+			- To receive all the logs: ReceiveLogsTopic > dotnet run "#"
+			- To receive all logs from the facility "kern": ReceiveLogsTopic >dotnet run "kern.*"
+			- Or if you want to hear only about "critical" logs: ReceiveLogsTopic > dotnet run "*.critical"
+			- You can create multiple bindings: ReceiveLogsTopic > dotnet run "kern.*" "*.critical"
+			- And to emit a log with a routing key "kern.critical" type: EmitLogTopic > dotnet run "kern.critical" "A critical kernel error"
+	- 6.Remote procedure call (RPC)
+	--------------------------------
+		- Build an RPC system: a client and a scalable RPC server. Create a dummy RPC service that returns Fibonacci numbers.
+		- Client interface - create a simple client class, expose a Call method which sends an RPC request and blocks until the answer is received:
+		------------------
+			var rpcClient = new RPCClient();
+
+			Console.WriteLine(" [x] Requesting fib(30)");
+			var response = rpcClient.Call("30");
+			Console.WriteLine(" [.] Got '{0}'", response);
+		
+			rpcClient.Close();
+		- Callback queue - A client sends a request and a server replies with a response message. To receive a response, send a 'callback' queue address with the request:
+		----------------
+			var props = channel.CreateBasicProperties();
+			props.ReplyTo = replyQueueName;
+
+			var messageBytes = Encoding.UTF8.GetBytes(message);
+			channel.BasicPublish(exchange: "", routingKey: "rpc_queue", basicProperties: props, body: messageBytes);
+			// ... then code to read a response message from the callback_queue ...
+		- Message properties - The AMQP 0-9-1 protocol predefines a set of 14 properties that go with a message.
+		--------------------
+			- Persistent: : Marks a message as persistent (with a value of 2) or transient (any other value). Take a look at the second tutorial.
+			- DeliveryMode: those familiar with the protocol may choose to use this property instead of Persistent. They control the same thing.
+			- ContentType: Used to describe the mime-type of the encoding. Example, used JSON encoding, good practice to set this property to: application/json.
+			- ReplyTo: Commonly used to name a callback queue.
+			- CorrelationId: Useful to correlate RPC responses with requests.
+		- Correlation Id
+		---------------
+			- Create a single callback queue per client. That raises a new issue, having received a response in that queue it's not clear 
+			  to which request the response belongs. That's when the CorrelationId property is used & set it to a unique value for every request. 
+			  Later, when we receive a message in the callback queue we'll look at this property, and based on that we'll be able to match 
+			  a response with a request. If we see an unknown CorrelationId value, we may safely discard the message - it doesn't belong to our requests.
+			- You may ask, why should we ignore unknown messages in the callback queue, rather than failing with an error? It's due to a 
+			  possibility of a race condition on the server side. Although unlikely, it is possible that the RPC server will die just after 
+			  sending us the answer, but before sending an acknowledgment message for the request. If that happens, the restarted RPC server 
+			  will process the request again. That's why on the client we must handle the duplicate responses gracefully, and the RPC should ideally be idempotent.
+		- Summary
+		----------	
+		
+			Client      -------------------------     rpc_queue          Server
+			C --------->|Request		    |---->[][][][][]-----------> S	
+			 \          |reply_tp=amqp.gen-Xa2..|                      	/
+			  \         |correlation_id=abc	    |			       /	
+			   \         -------------------------                         /
+			    |        			      reply_to=amq.gen-Xa2   / 
+			    |       |-----------------------|<----[][][][][]--------/
+			    | <-----|  Reply		    |	
+			            |  correlation_id=abd   |
+			            |-----------------------|
+			            			     
+			- Our RPC will work like this:
+				- When the Client starts up, it creates an anonymous exclusive callback queue.
+				- For an RPC request, the Client sends a message with 2 properties: ReplyTo - set to the callback queue & CorrelationId - unique value for every request.
+				- The request is sent to an rpc_queue queue.
+				- The RPC worker (aka: server) is waiting for requests on that queue. When a request appears, 
+				  it does the job and sends a message with the result back to the Client, using the queue from the  ReplyTo property.
+				- The client waits for data on the callback queue. When a message appears, it checks the CorrelationId property. 
+				  If it matches the value from the request it returns the response to the application.
+		- RPC server RPCServer.cs:
+			using System;
+			using RabbitMQ.Client;
+			using RabbitMQ.Client.Events;
+			using System.Text;
+
+			class RPCServer {
+			    public static void Main() {
+				var factory = new ConnectionFactory() { HostName = "localhost" };
+				using (var connection = factory.CreateConnection())
+				using (var channel = connection.CreateModel())
+				{
+				    channel.QueueDeclare(queue: "rpc_queue", durable: false, exclusive: false, autoDelete: false, arguments: null);
+				    //Run more than one server process. to spread the load equally over multiple servers, to set the prefetchCount setting in channel.BasicQos.
+				    channel.BasicQos(0, 1, false);
+				    var consumer = new EventingBasicConsumer(channel);
+				    //use BasicConsume to access the queue.
+				    channel.BasicConsume(queue: "rpc_queue", autoAck: false, consumer: consumer);
+				    Console.WriteLine(" [x] Awaiting RPC requests");
+
+				    consumer.Received += (model, ea) => {
+					string response = null;
+
+					var body = ea.Body;
+					var props = ea.BasicProperties;
+					var replyProps = channel.CreateBasicProperties();
+					replyProps.CorrelationId = props.CorrelationId;
+
+					try {
+					    var message = Encoding.UTF8.GetString(body);
+					    int n = int.Parse(message);
+					    Console.WriteLine(" [.] fib({0})", message);
+					    response = fib(n).ToString();
+					} catch (Exception e) {
+					    Console.WriteLine(" [.] " + e.Message);
+					    response = "";
+					} finally {
+					    var responseBytes = Encoding.UTF8.GetBytes(response);
+					    channel.BasicPublish(exchange: "", routingKey: props.ReplyTo, basicProperties: replyProps, body: responseBytes);
+					    channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
+					}
+				    };
+
+				    Console.WriteLine(" Press [enter] to exit.");
+				    Console.ReadLine();
+				}
+			    }
+
+			    /// 
+
+			    /// Assumes only valid positive integer input.
+			    /// Don't expect this one to work for big numbers, and it's
+			    /// probably the slowest recursive implementation possible.
+			    /// 
+			    private static int fib(int n) {
+				if (n == 0 || n == 1) {
+				    return n;
+				}
+
+				return fib(n - 1) + fib(n - 2);
+			    }
+			}
+		-RPCClient.cs:
+			using System;
+			using System.Collections.Concurrent;
+			using System.Text;
+			using RabbitMQ.Client;
+			using RabbitMQ.Client.Events;
+
+			public class RpcClient {
+			    private readonly IConnection connection;
+			    private readonly IModel channel;
+			    private readonly string replyQueueName;
+			    private readonly EventingBasicConsumer consumer;
+			    private readonly BlockingCollection<string> respQueue = new BlockingCollection<string>();
+			    private readonly IBasicProperties props;
+
+			    public RpcClient() {
+				var factory = new ConnectionFactory() { HostName = "localhost" };
+
+				connection = factory.CreateConnection();
+				channel = connection.CreateModel();
+				replyQueueName = channel.QueueDeclare().QueueName;
+				consumer = new EventingBasicConsumer(channel);
+
+				props = channel.CreateBasicProperties();
+				var correlationId = Guid.NewGuid().ToString();
+				props.CorrelationId = correlationId;
+				props.ReplyTo = replyQueueName;
+
+				consumer.Received += (model, ea) => {
+				    var body = ea.Body;
+				    var response = Encoding.UTF8.GetString(body);
+				    if (ea.BasicProperties.CorrelationId == correlationId) {
+					respQueue.Add(response);
+				    }
+				};
+			    }
+
+			    public string Call(string message) {
+				var messageBytes = Encoding.UTF8.GetBytes(message);
+				channel.BasicPublish(exchange: "", routingKey: "rpc_queue", basicProperties: props, body: messageBytes);
+
+				channel.BasicConsume(consumer: consumer, queue: replyQueueName, autoAck: true);
+
+				return respQueue.Take(); ;
+			    }
+
+			    public void Close() {
+				connection.Close();
+			    }
+			}
+			
+			//Making the Client request:
+			public class Rpc {
+			    public static void Main() {
+				var rpcClient = new RpcClient();
+
+				Console.WriteLine(" [x] Requesting fib(30)");
+				var response = rpcClient.Call("30");
+
+				Console.WriteLine(" [.] Got '{0}'", response);
+				rpcClient.Close();
+			    }
+			}
+
+		 	- We establish a connection and channel and declare an exclusive 'callback' queue for replies.
+			- We subscribe to the 'callback' queue, so that we can receive RPC responses.
+			- Our Call method makes the actual RPC request.
+			- Here, we first generate a unique CorrelationId number and save it - the while loop will use this value to catch the appropriate response.
+			- Next, we publish the request message, with two properties: ReplyTo and CorrelationId.
+			- At this point we can sit back and wait until the proper response arrives.
+			- The while loop is doing a very simple job, for every response message it checks if the CorrelationId is the one we're looking for. If so, it saves the response.
+			- Finally we return the response back to the user.
+		- Our RPC service is now ready. We can start the server: RPCServer >dotnet run
+		- To request a fibonacci number run the client: RPCClient > dotnet run
+		- The design presented here is not the only possible implementation of a RPC service, but it has some important advantages:
+			- If the RPC server is too slow, you can scale up by just running another one. Try running a second RPCServer in a new console.
+			- On the client side, the RPC requires sending and receiving only one message. No synchronous calls like 
+			  QueueDeclare are required. As a result the RPC client needs only one network round trip for a single RPC request.
+			- Our code is still pretty simplistic and doesn't try to solve more complex (but important) problems, like:
+				- How should the client react if there are no servers running?
+				- Should a client have some kind of timeout for the RPC?
+				- If the server malfunctions and raises an exception, should it be forwarded to the client?
+				- Protecting against invalid incoming messages (eg checking bounds, type) before processing.
+
+Management Plugin
+-----------------
+	- The rabbitmq-management plugin provides an HTTP-based API for management and monitoring of RabbitMQ nodes and clusters, 
+	  along with a browser-based UI (http://localhost:15672/cli/rabbitmqadmin -> guest/guest) and a command line tool, rabbitmqadmin.
+	- 
