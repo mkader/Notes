@@ -1,0 +1,3662 @@
+ASP.NET Core (ANC) Tutorial
+---------------------
+	- ANC is a cross-platform, high-performance, open-source framework for building modern, cloud-based, Internet-connected applications. 
+	- The following benefits and features.
+		- Cross Platform : 
+			- ASP.NET 4.x applications run only on windows platform / ANC applications can be developed and run across different platforms like Windows, macOS, or Linux. 
+			- ASP.NET 4.x applications can be hosted only on IIS / ANC applications can be hosted on IIS, Apache, Docker, or even self-host in your own process. 
+		- With ANC, the same Unified Programming Model(UPM) to create MVC and Web API : 
+			- Both the MVS Controller class nd the ASP.NET Web API Controller class inherit from the same Controller base class and returns IActionResult 
+			  (it has several implementations like ViewResult (MVC) and JsonResult (Web API))
+			  		IActionResult
+			  		    |
+			  	   |---------------|			    
+			  	ViewResult	JsonResult
+		- Dependency Injection : ANC has built-in support for dependency injection. 
+		- Testability : With built-in dependency injection and the UPM for creating MVC, Web and API's, unit testing ANC applications is easy.
+		- Open Source & community-focused : ANC is fully open source. 
+		- Modular HTTP Request Pipeline : ANC Provides Modularity with Middleware Components. 
+		  I	- Both the request and response pipeline are composed using the middleware components. 
+		  	- It includes a rich set of built-in middleware components. 
+		  	- We can also write our own custom middleware components.
+ASP.NET Core Project file (C#/VB -> .csproj/.vbproj)
+-------------------------
+	- No need to unload the project to edit the project file
+	- File or folder references are no longer included in the project file
+	- The File System determines what files/folders belong to the project.
+		- All files/folders (add/remove) that are present in the project root folder are part of the project and will be immediately displayed/removed in the solution explorer. 
+	- understnad the ANCDemo.csproj project file 
+			<Project Sdk="Microsoft.NET.Sdk.Web">
+
+			  <PropertyGroup>
+			    <TargetFramework>netcoreapp2.2</TargetFramework>
+			    <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
+			  </PropertyGroup>
+
+			  <ItemGroup>
+			    <PackageReference Include="Microsoft.AspNetCore.App" />
+			    <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
+			  </ItemGroup>
+
+			</Project>
+		- TargetFramework : to specify the target framework for your application, called Target Framework Moniker (TFM). 
+			- As you can see in the above example, our application targets framework netcoreapp2.2. netcoreapp2.2 is the Moniker for .NET Core 2.2. 
+				Name		Abberivation	TFM
+				----------------------------------------------
+				.NET Framework	net		net451
+ 								net472
+ 				---------------------------------------------------					
+				.NET Core	netcoreapp	netcoreapp1.0
+								netcoreapp2.2
+		- AspNetCoreHostingModel : This element specifies how the asp.net core application should be hosted. Should it be hosted InProcess or OutOfProcess (default). 
+			- InProcess specifies that to use in-process hosting model i.e host our asp.net core app inside of the IIS worker process (w3wp.exe or iisexpress.exe). 
+			- OutOfProcess specifies that to use out-of-process hosting model i.e forward web requests to a back-end ASP.NET Core app running the Kestrel server. 
+		- PackageReference : This element is used to include a reference to all the NuGet packages (2 packges installed) that are installed for your application. 
+			- Microsoft.AspNetCore.App : It's called metapackage. A metapackage has no content of its own but it's just a list of dependencies (other packages). 
+			- Notice there is no version number on the metapackage. When the version is not specified, an implicit version is specified by the SDK. 
+			- Rely on the implicit version rather than explicitly setting the version number on the package reference.
+			- Microsoft.AspNetCore.Razor.Design : This package contains MSBuild support for Razor and is referenced by Microsoft.AspNetCore.App meta package. 			 
+	- program.cs, setup.cs, appsettings.json
+Main method in asp.net core
+----------------------------
+	- Program.cs 
+		public class Program {
+		    public static void Main(string[] args) {
+			CreateWebHostBuilder(args).Build().Run();
+		    }
+
+		    public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
+			WebHost.CreateDefaultBuilder(args)
+			    .UseStartup<Startup>();
+		}
+	- Previous versions of .NET, a console application has a Main() method and it is the entry point for that console application. 
+	- But here, we are creating an ANC web application and not a console application. why do we have a Main() method.
+		- An ANC application initially starts as a console application and the Main() method in Program.cs file is the entry point. 
+ 		- So, when the runtime executes our application it looks for this Main() method and this where the execution starts.
+	- This Main() method configures ANC and starts it and at that point it becomes an ANC web application.
+	- calls CreateWebHostBuilder() method passing it the command line arguments & returns an object that implements IWebHostBuilder.
+		- Build() method is builds a web host that hosts our ANC web application.
+		- Run() method is runs the web application and it begins listening for incoming HTTP requests.
+	- CreateWebHostBuilder() method calls CreateDefaultBuilder() static method of the WebHost class.
+		- CreateDefaultBuilder() method creates/set up a web host with pre-configured defaults. 
+		- Startup class is also configured using the UseStartup() extension method of IWebHostBuilder class. 
+		- This CreateDefaultBuilder() method performs several tasks like  
+			- Setting up the web server 
+			- Loading the host and application configuration from various configuration sources and 
+			- Configuring logging
+	- Startup.cs class has 2 methods. 
+		public class Startup {
+		    public void ConfigureServices(IServiceCollection services) { }
+
+		    public void Configure(IApplicationBuilder app, IHostingEnvironment env) {
+			if (env.IsDevelopment()) {
+			    app.UseDeveloperExceptionPage();
+			}
+
+			app.Run(async (context) => {
+			    await context.Response.WriteAsync("Hello World!");
+			});
+		    }
+		}
+		- ConfigureServices() method configures services required by the application
+		- Configure() method sets up the application's request processing pipeline
+ASP.NET Core in process hosting
+-------------------------------
+	- CreateDefaultBuilder() performs
+		- Seting up the web server
+		- Loading the host and applicaiton configuraiton from various configuraiton sources and
+		- configuring logging
+	- New ANC project, <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel> is default in .csproj project file    	
+	- CreateDefaultBuilder() method calls UseIIS() method and host the app inside of the IIS worker process (w3wp.exe or iisexpress.exe).  
+	- From a performance standpoint, InProcess hosting delivers significantly higher request throughput than OutOfProcess hosting
+	- To get the process name executing the app, use System.Diagnostics.Process.GetCurrentProcess().ProcessName
+		-  await context.Response.WriteAsync(System.Diagnostics.Process.GetCurrentProcess().ProcessName); => iisexpress
+	- With InProcess hosting, there is only one web server i.e the IIS that hosts the asp.net core application. 
+		I 	       		IIS
+		n		      |----------------|	
+		t		      |  w3wp.exe      |
+		e		      |  ------------  |
+		r	<--HTTP-->    |  |Application| |
+		n		      |  ------------- |
+		et		      |----------------|  
+	- Run application by cmd, the application uses Kestrel as the web server.  using <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
+		- \ANCDemo>dotnet run
+		- http://localhost:5000/ => "dotnet"
+ASP.NET Core out of process hosting
+-----------------------------------
+	- There are 2 ways to configure Out of Process hosting 
+		- Option 1 : Add <AspNetCoreHostingModel> element to the app's project file with a value of OutOfProcess
+			<AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>
+		- Option 2 : Remove the <AspNetCoreHostingModel> element from the project file, OutOfProcess hosting will be used by default. 
+	- There are 2 web servers - An internal web server and an external web server.
+	- The internal web server is Kestrel and the external web server can be IIS, Nginx or Apache.
+	- What is Kestrel
+		- cross-platform web server for ANC. It is included by default as internal server in ANC.
+		- Kestrel can be used, by itself as an edge server i.e Internet-facing web server that can directly process the incoming HTTP requests from the client. 
+		- In Kestrel, the process used to host the app is dotnet.exe.
+		- Run application by cmd, the application uses Kestrel as the web server. using <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
+			- \ANCDemo>dotnet run
+			- http://localhost:5000 => "dotnet"
+		- Run by VS, change to OutProcess, the application uses Kestrel as the web server. using <AspNetCoreHostingModel>OutProcess</AspNetCoreHostingModel>
+			- http://localhost:13540 => "dotnet"
+		- Kestrel can be used in one of the following 2 ways.
+			- It can be used as the internet facing web server that process the incoming HTTP requests directly. 
+				Internet 	       Kestrel
+				n		      |----------------|	
+				t		      |  dotnet.exe    |
+				e		      |  ------------  |
+				r	<--HTTP-->    |  |Application| |
+				n		      |  ------------- |
+				et		      |----------------|  
+			- Kestrel can also be used in combination with a reverse proxy server, such as IIS, Nginx, or Apache. 
+				Internet 	      				 Kestrel
+				n		      				|----------------|	
+				t		   ----------------- 		|  dotnet.exe    |
+				e		   |Reverse Proxy  | 		|  ------------  |
+				r	<--HTTP--> | Server - IIS, | <--HTTP--> |  |Application| |
+				n		   | Apache, Nginx |   		|  ------------- |
+				et		      				|----------------|  
+			- If Kestrel can be used by itself as a web server, why do we need a reverse proxy server.
+				- using a reverse proxy server is a good choice as it provides an additional layer of configuration and security. 
+				- It might integrate better with the existing infrastructure. It can also be used for load balancing.  
+		- One common question : Can we run an asp.net core application without using the built in kestrel web server.
+			- The answer is YES. If we use the InProcess hosting model, the application is hosted inside of the IIS worker process (w3wp.exe or iisexpress.exe). 
+			  Kestrel is not used with InProcess hosting model. 
+		- 		    In Process				Out of Process
+		  Process name is - w3wp.exe or iisexpress.exe		dotnet.exe
+		  web server	  - only one				2 	
+		  performance	  - better				penalty of proxying requets between internet and external web server
+ASP.NET Core launchsettings.json file
+--------------------------------------
+	- Properties->launchsettings.json file or Project "Properties" -> "Debug" tab on the project "Properties" window
+	- The settings in this file are used when we run this ANC project either from VS or by using .NET Core CLI.
+	- This file is only used on local development machine, not for production.
+		{
+		  "iisSettings": {
+		    "windowsAuthentication": false,
+		    "anonymousAuthentication": true,
+		    "iisExpress": {
+		      "applicationUrl": "http://localhost:48118",
+		      "sslPort": 0
+		    }
+		  },
+		  "profiles": {
+		    "IIS Express": {
+		      "commandName": "IISExpress", (the above iisexpress used)
+		      "launchBrowser": true,
+		      "environmentVariables": {
+			"ASPNETCORE_ENVIRONMENT": "Development"
+		      }
+		    },
+		    "ANCDemo": {
+		      "commandName": "Project",
+		      "launchBrowser": true,
+		      "environmentVariables": {
+			"ASPNETCORE_ENVIRONMENT": "Development"
+		      },
+		      "applicationUrl": "http://localhost:5000"
+		    }
+		  }
+		}
+
+		- Notice, we have 2 profiles - IIS Express and ANCDemo 
+		- When we run the project from VS, by default, the profile with "commandName": "IISExpress" is used. => http://localhost:48118
+		  if we run the project using .NET Core CLI (dotnet run), the profile with the  "commandName": "Project" is used.  
+		- However, we can change which profile to use by clicking (menu >IIS Express) on the dropdownlist in Visual Studio 
+		- The value of the commandName property can be any one of the following. Project, IISExpress, IIS
+		- This value along with the value of AspNetCoreHostingModel element in the project file, specifies the internal and external web server (reverse proxy server) to launch. 
+			commandName	AspNetCoreHostingModel	Internal Web Server				External Web Server
+			Project		Hosting Setting Ignored	Only one web server is used - Kestrel
+			IISExpress	InProcess		Only one web server is used - IIS Express
+			IISExpress	OutOfProcess		Kestrel						IIS Express
+			IIS		InProcess		Only one web server is used - IIS
+			IIS		OutOfProcess		Kestrel						IIS
+	- If there are certain settings that you want your ANC application to use when you publish and deploy your app, store them in appsettings.json file.  
+	  We usually store our application configuration settings in this file. 
+	  We can also have environment specific appsettings.json files. For example, appsettings.Staging.json for the staging environment. 
+	- The Environment Variable "ASPNETCORE_ENVIRONMENT" is set to "Development". Staging or Production. 
+	  These environment variables are available throughout our ANC application and include code that conditionally executes depending on the value of these environment variables. 
+		- For example, consider the following code in the Configure() method in Startup.cs file 
+		public void Configure(IApplicationBuilder app, IHostingEnvironment env) {
+		    if (env.IsDevelopment()) {
+			app.UseDeveloperExceptionPage();
+		    }
+
+		    // Rest of the code...
+		}
+		- Developer Exception Page is only displayed if the environment is Development. 
+ASP.NET Core appsettings.json file
+------------------------------------
+	- Previous versions of ASP.NET, store application configuration settings, like db connection strings, in web.config file. 
+	- In ANC application configuration settings can come from the following different configurations sources. 
+		Files (appsettings.json, appsettings.{Environment}.json, where {Environment} is the app's current hosting environment)
+		User secrets
+		Environment variables
+		Command-line arguments
+		Own Custom Configuration sources
+	- appsettings.json file : I have modified this file to include a new setting with the key - MyKey. 
+		{
+		  "Logging": {
+		    "LogLevel": {
+		      "Default": "Warning"
+		    }
+		  },
+		  "AllowedHosts": "*",
+		  "MyKey": "Value from appsettings.json"
+		}
+	- To Accessing (any source)configuration information in the Startup class, inject the IConfiguration service provided by the Framework. Startup class is in Startup.cs file. 
+		public class Startup {
+		    private IConfiguration _configuration;
+
+		    // Notice we are using Dependency Injection here, get constructor type ctor press tab 2 times
+		    public Startup(IConfiguration configuration) {
+			_configuration = configuration; //(store to private field)
+		    }
+
+		    public void ConfigureServices(IServiceCollection services) { }
+
+		    public void Configure(IApplicationBuilder app, IHostingEnvironment env) {
+			if (env.IsDevelopment()) {
+			    app.UseDeveloperExceptionPage();
+			}
+
+			app.Run(async (context) => {
+			    await context.Response.WriteAsync(_configuration["MyKey"]);
+			});
+		    }
+		}
+	- Dependency Injection 
+		- In previous versions of ASP.NET Dependency Injection was optional and to configure it we have to use frameworks like Ninject, StructureMap etc. 
+		- In ANC Dependency Injection is an integral part. Dependency Injection allow us to create systems that are loosely coupled, extensible and easily testable.
+	- ASP.NET Core IConfiguration service 
+		- IConfiguration service is setup to read configuration information from all the various configuration sources in asp.net core
+		- If you have a configuration setting with the same key in multiple configuration sources, the later configuration sources override the earlier configuration sources 
+			- for example appsettings.Development.json =>"MyKey": "Value from appsettings.Development.json", 
+			 _configuration["MyKey"] will show appsettings.Development.json key
+			- comment appsettings.Development.json => //"MyKey": ..., try _configuration["MyKey"] will show appsettings.json key
+
+	- CreateDefaultBuilder() method of the WebHost class which is automatically invoked when the application starts, reads the configuration sources in a specific order.
+		- To see the order in which the configuration sources are read, please check out ConfigureAppConfiguration() method on the following link
+		  https://github.com/aspnet/MetaPackages/blob/release/2.2/src/Microsoft.AspNetCore/WebHost.cs
+			- Upon inspecting the file, you will see, the following is the default order in which the various configuration sources are read 
+				appsettings.json, 
+				appsettings.{Environment}.json
+				User secrets => C:\Users\Mohideen.Kader\AppData\Roaming\Microsoft\UserSecrets
+				Environment variables
+				Command-line arguments
+			- You can change this order if you want to or even add your own custom configuration sources in addition to all the existing configuration sources.
+		
+	- Order example
+		- 1. appsettings.json file => "MyKey": "Value from appsettings.json", F5, brower shows => Value from appsettings.json
+		- 1 + 2.appsettings.Development.json file => "MyKey": "Value from appsettings.development.json", F5, brower shows => Value from appsettings.development.json, not picked 1
+		- 1+2+ 3.appsettings.json file => "profiles": {..."environmentVariables": {"MyKey": "Value from environment", F5, brower shows => Value from environment, not picked 1,2
+		- 1+2+3 + 4.run from cmd dotnet run MyKey="Value form Command Line" , brower shows => Value from Command Line, not picked 1,2,3
+Middleware in ASP.NET Core
+---------------------------
+	- What is Middleware in ASP.NET Core
+		- In ANC, Middleware is a piece of software that can handle an HTTP request or response. A given middleware component in ANC has a very specific purpose. 
+		- For example, a middleware component that authenticates a user, another to handle errors, another to serve static files such as JavaScript, CSS, Images etc.  
+	- It is these middleware components that we use to setup a request processing pipeline in ANC. It is this pipeline that determines how a request is processed. 
+	  The request pipeline is configured as part of the application startup by the Configure() method in Startup.cs file.  The following is the code in Configure() method. 
+
+		public void Configure(IApplicationBuilder app, IHostingEnvironment env) {
+		    if (env.IsDevelopment()) {
+			app.UseDeveloperExceptionPage();
+		    }
+
+		    app.Run(async (context) => {
+			await context.Response.WriteAsync("Hello World!");
+		    });
+		}
+		- Configure() contains a very simple request processing pipeline with just two pieces of middleware (UseDeveloperExceptionPage() & Run() method). 
+		- very simple request processing pipeline, all our application can do is write a message to the response object that will be displayed by the browser.
+	- The following diagram helps us understand middleware components and how they fit in a request processing pipeline 
+		------|Log-|-------|Static|-------|MV|------------->
+		<-----|ging|-------|Files |-------|C |--------------
+		- Example, 1) Logging middleware in the application request processing pipeline so when a request arrives from the web server,
+		  this middleware logs the time and 2) then passes that incoming request to the next static files middleware,
+		  for further processing a middleware component may handle the incoming requests and decide not to call the next piece of middleware in the pipeline 
+		  this is called short-circuiting
+		- Example, 1) Issuing a request to localhost/getaccounts to retrieve the list of all accounts, 
+		  2) 1st logging middleware in the pipeline simply logs the time and 3) then pass that request to the next static files middleware,
+		  Since this request is not for a static file like an image,CSS, js. so it's may not be interested in processing this request 
+		  3) So it will simply pass that request to the next MVC middleware, so the MVC malware knows how to handle that request & produces the HTTP response at this point 
+		  4) the pipeline reverses itself the MVC middleware passes that response to the static files, it's not interested in processing that response further
+		  5) so it may simply pass that response to the next logging middleware, it may simply lock the time the response is received (logged request time received)
+		  6) and then pass that response to the web server, then response to the client who made the request - Order
+	
+	- In ANC, a Middleware component has access to both - the incoming request and the outgoing response. 
+	- Middleware component may process an incoming request and pass that request to the next middleware in the pipeline for further processing. 
+		- For example, a logging middleware, it log the reuqest time and pass the request to the next middleware for further processing.
+  	- A middleware component may handle the request and decide not to call the next middleware in the pipeline. This is called short-circuiting the request pipeline. 
+  	- Short-circuiting is often desirable because it avoids unnecessary work. 
+  		- For example, if the request is for a static file like an image/css, the StaticFiles middleware can handle and serve that request and 
+  		  short-circuit the rest of the pipeline. This means, the StaticFiles middleware will not call the MVC middleware if the request is for a static file.
+	- A middleware component may handle an incoming HTTP request by generating an HTTP response. 
+		- For example, mvcmiddleware in the pipeline handles a request to the URL /employees and returns a list of employees.
+	- A middleware component may also process the outgoing response. 
+		- For example, the logging middleware component may log the time the response is sent.In addition, computing the difference between request and response times. 
+	- Middleware components are executed in the order they are added to the pipeline. 
+	  Care should be taken to add the middleware in the right order, otherwise the application may not function as expected. 
+	- The middleware components are available as NuGet packages. 
+	- you have complete control over configuring the request processing pipeline. . 
+		- Example, developing simple web application with a few static HTML pages/images, then your request processing pipeline may contain just "StaticFiles" middleware. 
+		- Developing a secure data driven web application then you may need several middleware components like StaticFiles, Authentication, Authorization, MVC middleware etc. 
+	-  also means from a memory and performance standpoint, you only pay for the middleware components you have in your request processing pipeline. 
+	-Recap
+		- Has access to both Request and Response
+		- May simply pass th Request to next Middleware
+		- May process and then pass the Request to next Middleware
+		- May handle the Request and short-circuit the pipeline
+		- May process the outgoing Response
+		- Middleware are executed in the order they are added.
+Configure() ASP.NET Core request processing pipeline
+--------------------------------------------------
+	- UseDeveloperExceptionPage - it responds with the developer exception page, if there is an exception and if the environment is Development.
+	- The Run() middleware, can only write a message to the Response object. it responds to every request. Doesn’t matter what your request path is. 
+	  All requests will be handled by this middleware and the response int the string message that the middleware is writing to the Response object.
+	- Create folder wwwroot/inventory.html, application will not be able to serve that static file. 
+	  Request processing pipeline does not have the middleware that can serve static files like html, images files
+	- Consider the following code in the Configure() method. 
+		app.Run(async (context) => {
+		    await context.Response.WriteAsync("Hello World!");
+		});
+	- Code Explanation, the Run() method implemented as an extension method of IApplicationBuilder interface. 
+	  This is the reason we are able to invoke this Run() method on IApplicationBuilder object app.
+	  The parameter that we are passing to the Run(...) method is a RequestDelegate, 
+	  	- Run() go to definition,  public static void Run(this IApplicationBuilder app, RequestDelegate handler)
+	  	- RequestDelegate is a delegate that has HttpContext object as a parameter. 
+	  		- go to definition => public delegate Task RequestDelegate(HttpContext context);
+			- It is through this HttpContext object, the middleware gains access to both the incoming http request and outgoing http response.
+			- At the moment, we are passing request delegate inline as an anonymous method using a lambda.
+			- Instead of passing the request delegate inline as an anonymous method, we can define the request delegate in a separate reusable class.
+	- Consider the following code 
+		app.Run(async (context) => {
+		    await context.Response.WriteAsync("Hello from 1st Middleware");
+		});
+
+		app.Run(async (context) => {
+		    await context.Response.WriteAsync("Hello from 2nd Middleware");
+		});
+		- We have 2 middlewares registered using the Run() method
+		  Upon running this project, we only see the response from the first middleware, We do not see the response from the second middleware
+		  This is because, a middleware that is registered using the Run() method cannot call the next middleware in the pipeline
+		- So, the middleware that we register using Run() 1st method is a terminal middleware
+		- A terminal middleware is a middleware that does not call the next middleware in the pipeline
+	- If you want your middleware to be able to call the next middleware in the pipeline, then register the middleware using Use() method as shown below. 
+		app.Use(async (context, next) => {
+		    await context.Response.WriteAsync("Hello from 1st Middleware");
+		    await next();
+		});
+
+		app.Run(async (context) => {
+		    await context.Response.WriteAsync("Hello from 2nd Middleware");
+		});
+		- Use() method has 2 parameters. The 1st parameter is the HttpContext context object and 
+		  the 2nd parameter is the Func type i.e it is a generic delegate that represents the next middleware in the pipeline. 
+
+	 - Now, consider the following code 
+
+		public void Configure(IApplicationBuilder app, IHostingEnvironment env,	ILogger<Startup> logger) {
+		    app.Use(async (context, next) => {
+			logger.LogInformation("MW1: Incoming Request");
+			await next();
+			logger.LogInformation("MW1: Outgoing Response");
+		    });
+
+		    app.Use(async (context, next) => {
+			logger.LogInformation("MW2: Incoming Request");
+			await next();
+			logger.LogInformation("MW2: Outgoing Response");
+		    });
+
+		    app.Run(async (context) => {
+			await context.Response.WriteAsync("MW3: Request handled and response produced");
+			logger.LogInformation("MW3: Request handled and response produced");
+		    });
+		}
+		- ILogger<Startup> service is injected into the Configure() method CreateDefaultBuilder() that is called by the Main() method configures logging
+			 - You can verify the link below https://github.com/aspnet/MetaPackages/blob/release/2.2/src/Microsoft.AspNetCore/WebHost.cs
+				- Please check the method ConfigureLogging(), You will find that, loggers for Console, Debug and EventSource are configured
+		- We are using the logger instance provided by the Dependency Injection system to log the information
+			- Run, You will see that, the information is logged in the following order
+				  MW1: Incoming Request
+				  MW2: Incoming Request
+				  MW3: Request handled and response produced
+				  MW2: Outgoing Response
+				  MW1: Outgoing Response
+			- Now relate the above output, with the following diagram from MSDN to understand what's happening. 
+Static files in asp.net core
+----------------------------
+	- By default, an asp.net core application will not serve static files
+	- The default directory for static files is wwwroot and this directory must be in the root project folder
+	- Copy and paste an banner.jpg image in wwwroot folder. To access this file from the browser, http://localhost:49119/banner.jpg
+		- Not see the image banner.jpg, request processing pipeline does not have the UseStaticFiles() middleware.  
+	- public void Configure(IApplicationBuilder app, IHostingEnvironment env) {
+    		if (env.IsDevelopment()) ..
+		
+    		// Add Static Files Middleware
+    		app.UseStaticFiles(); 
+
+		app.Run(async ...
+	}
+	- Serving a default document (default/index.htm(l)) & it's displayed when a user visits the root URL of your application. 
+		- For example, you have a file with name default.html, when you run your application i.e http://localhost:49119/ 
+	- Added default.html, but still i can't see the content. To serve default page, add the UseDefaultFiles() middleware in our application's request processing pipeline. 
+		// Add Default Files Middleware
+		app.UseDefaultFiles();
+		// Add Static Files Middleware
+		app.UseStaticFiles(); 
+		- UseDefaultFiles must be called before UseStaticFiles to serve the default file. default->static->backto default
+	- If you want to use another document like foo.html for example as your default document, you can do so using the following code. 
+		// Specify foo.html as the default document
+		DefaultFilesOptions defaultFilesOptions = new DefaultFilesOptions();
+		defaultFilesOptions.DefaultFileNames.Clear(); //clear the default file name properties
+		defaultFilesOptions.DefaultFileNames.Add("foo.html");
+		// Add Default Files Middleware
+		app.UseDefaultFiles(defaultFilesOptions); => from intellisense, it contains 2 overloaded options
+		// Add Static Files Middleware
+		app.UseStaticFiles(); 
+	- UseFileServer Middleware, combines the functionality of UseStaticFiles, UseDefaultFiles and UseDirectoryBrowser middleware. 
+	  - DirectoryBrowser middleware, enables directory browsing and allows users to see files within a specified directory. 
+	  	// Specify foo.html as the default document
+		app.UseFileServer(); => i can see default.html 
+	  
+		FileServerOptions fileServerOptions = new FileServerOptions();
+		fileServerOptions.DefaultFilesOptions.DefaultFileNames.Clear();
+		fileServerOptions.DefaultFilesOptions.DefaultFileNames.Add("foo.html");
+		app.UseFileServer(fileServerOptions); => now i can see foo.html
+	- The important point to note here is the pattern that we "use" keyword to add middleware to our application's request processing pipeline. 
+	  In most cases we add middleware using the extension methods that start with the word USE. 
+	  	- For example, UseDeveloperExceptionPage(), UseDefaultFiles(), UseStaticFiles(), UseFileServer()
+	- If you want to customise these middleware components, we use the respective OPTIONS object. For example notice the respective OPTIONS objects we use. 
+		Middleware			Options Object
+		UseDeveloperExceptionPage	DeveloperExceptionPageOptions , notice name sames as middleware, options is appended.
+		UseDefaultFiles			DefaultFilesOptions
+		UseStaticFiles			StaticFileOptions
+		UseFileServer			FileServerOptions
+	- Add summary
+ASP.NET Core developer exception page
+-------------------------------------
+	- Consider the following code in Configure() method in Startup class 
+
+		public void Configure(IApplicationBuilder app, IHostingEnvironment env) {
+		    if (env.IsDevelopment()) {
+			app.UseDeveloperExceptionPage();
+		    }
+
+		    app.UseFileServer();
+
+		    app.Run(async (context) => {
+			throw new Exception("Some error processing the request"); //line added
+			await context.Response.WriteAsync("Hello World!");
+		    });
+		}
+	- Run, not throwing the exception, instead we see "Hello from Default.html". 
+	- UseFileServer middleware combines the functionality of UseDefaultFiles and UseStaticFiles middleware. explained the previous slides the default document.
+	- Access http://localhost:49119 is handled by UseFileServer middleware and the pipeline reverses from there. 
+	  So the next Run() middleware in the request pipeline will not get the chance to execute and hence we do not see the exception thrown by this middleware. 
+	- Request to http://localhost:49119/abc.html, see the exception as expected. In this case, UseFileServer middleware will not find the file(abc), 
+	  it pass to next Run() middleware throws an exception and we see the exception details as expected. 
+	- move exception middleware after run, page won't throw exception but page won't run
+		public void Configure(IApplicationBuilder app, IHostingEnvironment env) {
+		    app.UseFileServer();
+
+		    app.Run(async (context) => {
+			throw new Exception("Some error processing the request"); //line added
+			await context.Response.WriteAsync("Hello World!");
+		    });
+		    
+		    if (env.IsDevelopment()) {
+		    	app.UseDeveloperExceptionPage();
+		    }
+		}	
+	- This exception page is similar to yellow screen of death in classic asp.net.  
+		- As the name implies, this Developer Exception Page contains exception details like  
+			- Stack trace including the file name and line number that caused the exception
+			- Query String, Cookies and HTTP headers
+			- on the exception page, on the "Query" tab->see "No QueryString data". If any query string parameters in the URL, likee http://lh:1/abc.htm?cou=usa&sta=ia
+	- Customising UseDeveloperExceptionPage Middleware 
+		 - Whenever you customize a middleware component, always remember you may have the respective OPTIONS object. 
+		 - use DeveloperExceptionPageOptions object as shown below. 
+			 if (env.IsDevelopment()) {
+				 DeveloperExceptionPageOptions developerExceptionPageOptions = new DeveloperExceptionPageOptions
+				{
+				    SourceCodeLineCount = 10
+				};
+				app.UseDeveloperExceptionPage(developerExceptionPageOptions);
+			}
+			- SourceCodeLineCount property specifies how many lines of code to include before and after the line of code that caused the exception.
+
+ASP.NET Core environment variables
+-----------------------------------
+	- use ASPNETCORE_ENVIRONMENT variable for our application, usually set this environment variable in launchsettings.json file.
+		- await context.Response.WriteAsync(env.EnvironmentName); => display "Development" or "Production"
+	- Set OS level(comment lanuchsetyings), click "This PC" ->Advanced System settings->environment variables->set ASPNETCORE_ENVIRONMENT variable on windows, restart VS for changes.
+		- // "environmentVariables": { "ASPNETCORE_ENVIRONMENT": "Development" }
+	- In both the places (launchsettings or os level) then the values in launchsettings.json file overrides the value specified at the operating system level.
+	- No explicitly set ASPNETCORE_ENVIRONMENT variable, default is "Production". This is done on purpose for better security and performance. 
+	- Useful methods of IHostingEnvironment service
+		- IsDevelopment(), IsStaging(), IsProduction() - to identify the environment is running
+	- custom environment, use IsEnvironment() method as shown below.
+		env.IsEnvironment("UAT") => "environmentVariables": { "ASPNETCORE_ENVIRONMENT": "UAT" }
+		// If the environment is Development serve Developer Exception Page
+		if (env.IsDevelopment())
+		{
+		    app.UseDeveloperExceptionPage();
+		}
+		// else serve User Friendly Error Page with Application Support Contact Info
+		else if (env.IsStaging() || env.IsProduction() || env.IsEnvironment("UAT"))
+		{
+		    app.UseExceptionHandler("/Error");
+		}
+
+ASP.NET Core MVC
+--------------------------
+	- What is MVC 
+		- MVC consists of three fundamental parts - Model, View and Controller. 
+		- It's an architectural design pattern for implementing User Interface Layer of an application.
+		- A typical real world application usually has the following layers.
+			- User Interface Layer => MVC design pattern is usually used for implementing the User Interface Layer of the application.
+			- Business Logic Layer or Domain Layer
+			- Data Access layer
+		Controller				Application Layers
+		|	|		------------------------------------------------------------------
+		V	V		User Interface Layer |	Business Logic Layer |	Data Access Layer
+		View-->Model			MVC	     |			     |	
+		
+	- How MVC Works
+		- When brower request http://pragimtech.com/employee/details/1
+			Request 1
+		Brow	--------------->C o n t r 2	
+		ser	<-------------- o  ll  er
+		         Response 7	|5	| 3
+					V   6	V
+					View-->Model <--4-- Data Source 
+		- 1.Request arrives at our server, 2. it is the Controller in the MVC design pattern that receives the request and handles it. 
+		- 3. The controller creates the model. The model has the classes that describe the data. 
+		- 4. In addition to the data itself, Model also contains the logic to retrieve data from the underlying data source such as a database. 
+		- 5. In addition to creating the Model, the controller also selects a View and passes 6. the Model object to that View. The view is only 
+		  responsible for presenting the model data.
+		- 7 It is the view, that generates the required HTML to present the model data i.e the employee data provided to it by the Controller. 
+		  This HTML is then sent over the network to the user who made the request.
+	- Model - in MVC contains a set of classes that represent data and the logic to manage that data. 
+		- So model in this case consists of the Employee class + the EmployeeRepository class that manages the employee data as shown below.
+			public class Employee {
+			    public int Id { get; set; }
+			    public string Name { get; set; }
+			    public string Department { get; set; }
+			}
+
+			public interface IEmployeeRepository {
+			    Employee GetEmployee(int id);
+			    void Save(Employee employee);
+			}
+
+			public class EmployeeRepository : IEmployeeRepository {
+			    public Employee GetEmployee(int id)    {
+				// Logic to retrieve employee details
+			    }
+
+			    public void Save(Employee employee)    {
+				// Logic to save employee details
+			    }
+			}		
+		- If you are wondering why are we using the interface IEmployeeRepository. Can't we use just the EmployeeRepository class without the interface.
+			- we can, but using the interface abstraction allows us to use dependency injection which in turn allows us to create systems that are l
+			  oosely coupled  and easily testable.
+		
+	- View - in MVC should only contain the logic to display the Model data provided to it by the Controller. There should be no complex logic in a view. 
+		- You can think of a view as an HTML Template.
+		- The view in this case will be provided with the Employee object. The Employee object is the model that carries the employee data to the view. 
+		  The only responsibility of the view is to present the employee(model) data in an HTML table. Here is the code in the view.
+
+			@model EmployeeManagement.Employee  <----------------Model Instance
+									     	Id:1	
+			<html>							Name:John
+			<head>							Department:IT
+			    <title>Employee Details</title>		
+			</head>							|	
+			<body>							|
+			    <table>						V
+				<tr>					     Employee Details	
+				    <td>ID</td>					ID         | 1
+				    <td>@Model.Id</td>				Name       | Jonn
+				</tr>						Department | IT
+				<tr>
+				    <td>Name</td>
+				    <td>@Model.Name</td>
+				</tr>
+				<tr>
+				    <td>Department</td>
+				    <td>@Model.Department </td>
+				</tr>
+			    </table>
+			</body>
+			</html>
+	- Controller
+		- When a request from the browser arrives at our application, it is the controller in the MVC design pattern, that handles the incoming 
+		  http request and responds to the user action. 
+		- In this case the user has issued a request to the URL (/employee/details/1), so this request is mapped to the Details action method in the EmployeeController, 
+		  passing it the EMPLOYEE ID which in this case is 1. This mapping is done by the Routing rules defined in our application. 
+		
+		www.dns.com/employee/  details      /1
+		              |           |          |
+		              V           |          |
+		public class EmployeeController : Controller
+		{                         |          |
+		    private IEmployeeRepository _employeeRepository;
+                                          |          |
+		    public EmployeeController(IEmployeeRepository employeeRepository)
+		    {                     |          |
+			_employeeRepository = employeeRepository;
+		    }                     |          |
+                			  V	     V                       
+		    public IActionResult Details(int id)
+		    {
+			Employee model = _employeeRepository.GetEmployee(id);
+			return View(model);
+		    }
+		}		
+		- In the Details action method, the controller builds the model (employee objecT). To retrieve the Employee data from the underlying data source, 
+		  the controller is making use of the EmployeeRepository class. 
+		- Once the controller has constructed the Employee model object with the required data, it then passes that Employee model object to the view. 
+		  The view then generates the required HTML to present the Employee data provided to it by the Controller. 
+		  This HTML is then sent over the network to the user who made the request.
+		  
+Setup mvc in asp.net core
+------------------------
+	- using the ANC "Empty" project template. At the moment this project does not have MVC setup.
+	- Two steps to setup MVC in ASP.NET Core Application
+		- Step 1 : Startup.cs-> ConfigureServices()-> add services.AddMvc(); => add the required MVC services to the dependency injection container in asp.net core. 
+		- Step 2 : Configure()-> add UseMvcWithDefaultRoute() => midddleware to our application's request processing pipeline. 
+		public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+		{
+		    if (env.IsDevelopment())
+		    {
+			app.UseDeveloperExceptionPage();
+		    }
+
+		    app.UseStaticFiles();
+
+		    app.UseMvcWithDefaultRoute();
+
+		    app.Run(async (context) =>
+		    {
+			await context.Response.WriteAsync("Hello World!");
+		    });
+		}
+	- Run, http://localhost:49119, see "Hello World!"
+		- when we issue a request ->  is not for a static file, UseStaticFiles() middleware will pass the request to UseMvcWithDefaultRoute() middleware
+		- UseMvcWithDefaultRoute()(go to definition, you look for default '{controller=Home}/{action=Index}/{id?}') looks for Index() action method in the HomeController.
+		- No Controller and action methon in our code,  UseMvcWithDefaultRoute() passes the request to the Run() middleware
+	- app.Run(async (context) =>{}); , run, you see the 404 error. UseMvcWithDefaultRoute() did not find the HomeController and no next middleware in the pipeline, so 404 error.
+	- Add HomeController, Add Controllers/HomeController.cs folder
+		public class HomeController
+		{
+		    public string Index()
+		    {
+			return "Hello from MVC";
+		    }
+		}
+		- Run,http://localhost:49119 or http://localhost:49119/home/index. see "Hello from MVC"
+		- http://localhost:36503/about/contactus - see see "Hello World!" (same Run, http://localhost:49119, see "Hello World!")
+	- comment Step 1 : Startup.cs-> ConfigureServices()-> add services.AddMvc();
+            	- error throws -> System.InvalidOperationException: 'Unable to find the required services. Please add all the required services by 
+            	  calling 'IServiceCollection.AddMvc' inside the call to 'ConfigureServices(...)' in the application startup code.'
+
+ASP.NET Core AddMvc vs AddMvcCore
+----------------------------------
+	- In HomeController->Index(), return this. (type this.(dot), you can less attributes, you can't find out json )
+	- Want HomeController to return JSON formatted data, instead of a simple string. 
+		- HomeController class has to derive from the Controller class provided by the framework. 
+		- The Controller base class provides support to return different results like JsonResult, ViewResult, PartialViewResult etc. 
+
+		public class HomeController : Controller {
+		    public JsonResult Index() {
+			return Json(new { id=1, name="pragim" });
+		    }
+		}
+		- Controller class is present in Microsoft.AspNetCore.Mvc namespace.
+	- Run, you can see json data
+	- Now, in the ConfigureServices() method call AddMvcCore() method instead of AddMvc() and run the application.
+
+		public void ConfigureServices(IServiceCollection services)
+		{
+		    services.AddMvcCore();
+		}
+	- Run, Error throws, No service for type  'Microsoft.AspNetCore.Mvc.Formatters.Json.Internal.JsonResultExecutor' has been registered.
+		- To be able to return JSON data, JsonFormatterServices need to be registered with the dependency injection container. 
+	- AddMvc() method does this but not the AddMvcCore() method. 
+	- You can confirm this by looking at the source code on ASP.NET Core MVC Github page. 
+		- https://github.com/aspnet/Mvc/blob/master/src/Microsoft.AspNetCore.Mvc/MvcServiceCollectionExtensions.cs
+		- line 33 AddMvcCore() and line 53 AddJsonFormatters() added
+	- Differentiate
+		- AddMvcCore() method only adds the core MVC services. 
+		- AddMvc() method adds all the required MVC services. 
+		- AddMvc() method calls AddMvcCore() method internally, to add all the core MVC services. 
+		- calling AddMvc() method there is no need to explicitly call AddMvcCore() method again.
+
+Model in ASP.NET Core MVC
+------------------------
+	- As the name implies, MockEmployeeRepository works with the in-memory employee mock data.
+	- MockEmployeeRepository class provides the implementation for IEmployeeRepository interface. 
+		public class MockEmployeeRepository : IEmployeeRepository
+		{
+		    private List<Employee> _employeeList;
+
+		    public MockEmployeeRepository()
+		    {
+			_employeeList = new List<Employee>()
+			{
+			    new Employee() { Id = 1, Name = "Mary", Department = "HR", Email = "mary@pragimtech.com" },
+			    new Employee() { Id = 2, Name = "John", Department = "IT", Email = "john@pragimtech.com" },
+			    new Employee() { Id = 3, Name = "Sam", Department = "IT", Email = "sam@pragimtech.com" },
+			};
+		    }
+
+		    public Employee GetEmployee(int Id)
+		    {
+			return this._employeeList.FirstOrDefault(e => e.Id == Id);
+		    }
+		}
+	
+		    public class HomeController : Controller
+		    {
+		        private IAccountRepository _accountRepositry;
+		        HomeController(IAccountRepository accountRepositry)
+		        {
+		            _accountRepositry = accountRepositry;
+		        }
+		        public JsonResult Index()
+		        {
+		            return Json(new { id = 1, name = "name" });
+		        }
+    		}
+	
+	- Throughout our application using interface IEmployeeRepository and not the concrete implementation MockEmployeeRepository. 
+	- This interface abstraction allows us to use dependency injection which in turn makes our application flexible and easily unit testable.
+
+Controller in ASP.NET Core MVC
+--------------------------------
+	- Details() method always returns JSON data. It does not respect content negotiation and ignores the Accept Header. http://localhost:36503/home/details
+		public class HomeController : Controller {
+		   ...
+
+		    public JsonResult Details() {
+			Employee model = _employeeRepository.GetEmployee(1);
+			return Json(model);
+		    }
+		}
+
+	- Controller returns ObjectResult, the Request Accept Header set to application/xml
+	    public ObjectResult Details() {
+		Employee model = _employeeRepository.GetEmployee(1);
+		return new ObjectResult(model);
+	    }
+	- both will display json even if you pass "Accept: application/xml", content negoitate
+	- Return data in XML format, pass "Accept: application/xml", data in xml format
+		public void ConfigureServices(IServiceCollection services)
+		{
+		    services.AddMvc().AddXmlSerializerFormatters();
+		}
+	- Controller returns View
+	    public ViewResult Details()
+	    {
+		Employee model = _employeeRepository.GetEmployee(1);
+		return View(model);
+	    }
+
+Views in ASP.NET Core MVC
+--------------------------
+	- Contains the logic to display the Model data provided to it by the Controller.
+	- A view is an HTML template with embedded Razor markup.
+	- A view file has .cshtml extension if the programming language is C#.
+	- Where are View files stored - \Views folder
+		 - EmployeeController		Views\Employee\
+		      Details()				Details.cshtml
+		      Edit()				Edit.cshtml
+		      List()				List.cshtml
+		   HomeController		Views\Home\
+		     Details()				Details.cshtml	
+		     Edit()				Edit.cshtml
+		     Index()				Index.cshtml
+	- Views Discovery
+		public class HomeController : Controller
+		{
+		    public ViewResult Details()
+		    {
+			return View();
+		    }
+		}
+		- It looks Details.cshtml in the 3 locations in the order specified
+			- First in "/Views/Home/" folder
+			- Then in "/Views/Shared/" folder
+			- Finally in "/Pages/Shared/" folder
+
+Customize view discovery in asp.net core mvc
+--------------------------------------------
+	- several overloaded versions of View() method - View(), View(object model), View(stirng viewName), View(steing viewName, object model)
+	- View(string viewName) method -> not like this default convention, pass custom view file, add \Views\Home\Test.cshtml =>  return View("Test");
+	- Specifying  the absolute view file path => return View("MyViews/Test.cshtml");, /MyViews/Test.cshtml,~/MyViews/Test.cshtml
+	- Relative View File Path, not specify the file extension .cshtml => return View("../Test/Update");
+		- go back up 2 levels in the folder hierarchy, use ../ twice as shown below => return View("../../MyViews/Details");
+   	- Overloaded Method				Description
+		View(object model)			to pass model data from the controller to the view. 
+		View(string viewName, object model)	Pass both the view name and model data.
+
+Passing data to view in ASP.NET Core MVC
+------------------------------------------
+	- Three ways to pass data from a controller to a view - ViewData, ViewBag, Strongly typed view.
+	- Using ViewData
+		public ViewResult Details()
+		{
+		    Employee model = _employeeRepository.GetEmployee(1);
+
+		    // Pass PageTitle and Employee model to the View using ViewData
+		    ViewData["PageTitle"] = "Employee Details";
+		    ViewData["Employee"] = model;
+
+		    return View();
+		}
+
+		Accessing ViewData in a View, Details.cshtml
+		    <h3>@ViewData["PageTitle"]</h3>
+
+		    @{
+			var employee = ViewData["Employee"] as EmployeeManagement.Models.Employee;
+		    }
+			Name : @employee.Name
+	
+
+		- In our example, we are casting the Employee object to Employee Type before accessing Name, Email and Department properties of the Employee object.
+		
+	- ViewBag in ASP.NET Core MVC, 
+			public ViewResult Details()
+			{
+			    Employee model = _employeeRepository.GetEmployee(1);
+
+			    // To store the page title and empoyee model object in the 
+			    // ViewBag we are using dynamic properties PageTitle and Employee
+			    ViewBag.PageTitle = "Employee Details";
+			    ViewBag.Employee = model;
+
+			    return View();
+			}
+			
+			- no need var account = ViewData["Account"] as ASP.NET.CORE.Demo.Models.Account;
+		
+			    <h3>@ViewBag.PageTitle</h3>
+			Name : @ViewBag.Employee.Name
+	
+	- ViewData v/s ViewBag
+		- Both ViewData and ViewBag can be used to pass data from a Controller to a View
+		- ViewBag is a wrapper around ViewData
+		- Both of them create a loosely typed view
+		- With ViewData, use string keys to store and retrieve data from the ViewData dictionary / With ViewBag, use dynamic properties to store and retrieve data
+		- Both ViewData keys and ViewBag dynamic properties are resolved dynamically at runtime. 
+		- Both ViewData and ViewBag does not provide compile-time type checking and as a result we do not get intellisense.
+		- Any Typo, only come to know about these errors at run time. 
+	- Strongly Typed View in ASP.NET Core MVC
+		public ViewResult Details()
+		{
+		    Employee model = _employeeRepository.GetEmployee(1);
+
+		    ViewBag.PageTitle = "Employee Details";
+
+		    return View(model);
+		}
+		- without using "@model EmployeeManagement.Models.Employee", call @model.Name, it's not Strongly Typed
+		- create a strongly typed view, using @model directive. 
+
+			@model EmployeeManagement.Models.Employee
+
+			    <h3>@ViewBag.PageTitle</h3>
+				Name : @Model.Name
+		
+	- Strongly Typed View Benefits => Provides compile-time type checking and intellisense. 
+
+ViewModel in ASP.NET Core MVC
+------------------------------
+	- Why do we need a ViewModel in ASP.NET Core MVC
+		- In some cases, a model object may not contain all the data a view needs. This is when we create a ViewModel. It contains all the data a view needs.
+	- Example, passing Employee details and PageTitle to the View. We are using Employee model object to pass Employee details and ViewBag to pass PageTitle.
+		- Using ViewBag is compile-time type and error checking. Include PageTitle property in the Employee class does not make sense
+		- This is when we create a class, that contains all the data a view needs. This class is called a ViewModel.
+	- ViewModel classes can live anywhere in your ASP.NET Core MVC project, but to keep things better organised, place ViewModels folder
+	- This ViewModel class contains all the data the view needs. For this reason ViewModels are also called as Data Transfer Objects or DTO in short.
+		    public class HomeDetailsViewModel
+		    {
+			public Employee Employee { get; set; }
+			public string PageTitle { get; set; }
+		    }
+			public ViewResult Details()
+			{
+			    // Instantiate HomeDetailsViewModel and store Employee details and PageTitle
+			    HomeDetailsViewModel homeDetailsViewModel = new HomeDetailsViewModel()
+			    {
+				Employee = _employeeRepository.GetEmployee(1),
+				PageTitle = "Employee Details"
+			    };
+
+			    // Pass the ViewModel object to the View() helper method
+			    return View(homeDetailsViewModel);
+			}
+
+		@model EmployeeManagement.ViewModels.HomeDetailsViewModel
+		    <h3>@Model.PageTitle</h3>
+			Name : @Model.Employee.Name
+List View
+----------
+  public ViewResult ListView()
+    {
+        // retrieve all the employees
+        var model = _employeeRepository.GetAllEmployees();
+        // Pass the list of employees to the view
+        return View(model);
+    }
+    @model IEnumerable<EmployeeManagement.Models.Employee>
+    
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var employee in Model)
+                {
+                    <tr>
+                        <td>
+                            @employee.Id
+                        </td>
+                }
+            </tbody>
+
+ASP.NET Core dependency injection 
+---------------------------------
+	- HomeController is dependant on IEmployeeRepository for retrieving Employee data.
+	- Instead of the HomeController creating a new instance of an implemention of IEmployeeRepository, 
+	  we are injecting IEmployeeRepository instance into the HomeController using the constructor. 
+	  This is called constructor injection, as we are using the constructor to inject the dependency.
+	- Run the project,got error 
+		- InvalidOperationException: Unable to resolve service for type 
+		  'EmployeeManagement.Models.IEmployeeRepository' while attempting to activate 'EmployeeManagement.Controllers.HomeController'.
+		- This is because the ASP.NET dependency injection container does not know which object instance to provide 
+		  if someone requests an object that implements IEmployeeRepository
+		- IEmployeeRepository may have several implementations. At this code, have one implementation and that is MockEmployeeRepository
+	- To fix the InvalidOperationException error, we need to register MockEmployeeRepository class with the dependency injection container in ASP.NET core.
+		- 3 methods to Registering Services with the ASP.NET Core Dependency Injection Container : AddSingleton, AddScoped & AddTransient
+		public void ConfigureServices(IServiceCollection services)
+		{
+		    services.AddMvc();
+		    services.AddSingleton<IEmployeeRepository, MockEmployeeRepository>();
+		}
+	- why do we have to do all this. Why can't we simply create an instance of MockEmployeeRepository class in the HomeController using the new keyword as shown below.
+		- Well, this makes HomeController tightly coupled to MockEmployeeRepository. 
+		- Later if we provide a new implementation for IEmployeeRepository and if we want to use that new implementation instead of MockEmployeeRepository, 
+		  we have to change the code in HomeController. why just one line code and no difficult. if used this MockEmployeeRepository in 50 other controllers
+		  	- The code in all the 50 controllers has to change. This is not only tedious but also error prone.
+		- So in-short, using the new keyword to create instances of dependencies creates tight coupling and as a result your application will be difficult to change. 
+		  With dependency injection we will not have this tight coupling. 
+		- With dependency injection, even, if we have used MockEmployeeRepository in 50 other controllers in our application, 
+		  if we want to swap it out with a different implementation, we just need to change the following one line of code in Startup.cs file. 
+		  Notice, we are now using DatabaseEmployeeRepository instead of MockEmployeeRepository. 
+
+			public void ConfigureServices(IServiceCollection services)
+			{
+			    services.AddMvc();
+			    services.AddSingleton<IEmployeeRepository, DatabaseEmployeeRepository>();
+			}
+		- Unit testing also becomes much easier, as we can easily swap out dependencies with dependency injection.
+		
+AddSingleton vs AddScoped vs AddTransient
+-------------------------------------------
+- ANC provides the following 3 methods to register services with the dependency injection container.  The method that we use determines the lifetime of the registered service. 
+	- AddSingleton() - A Singleton service is created when it is first requested. This same instance is then used by all the subsequent requests. 
+	  So in general, a Singleton service is created only one time per application and that single instance is used throughout the application life time.
+	- AddTransient() - A new instance of a Transient service is created each time it is requested.  
+	- AddScoped() - A new instance of a Scoped service is created once per request within the scope. 
+	  For example, in a web application it creates 1 instance per each http request but uses the same instance in the other calls within that same web request. 
+
+- AddSingleton
+	- using AddSingleton() method to register MockAccountRepository service. 
+	- AddSingleton() creates a single instance of the service when it is first requested and reuses that same instance in all the places where that service is needed.
+	  This means all the requests throughout the life time of the application use that same instance.
+	- MockAccountRepository service instance in 2 places - Create action method in the HomeController and in the Create view.
+	- At this point when we navigate to http://localhost:/home/create we see the Total Accounts Count is 3
+	- To serve this request an instance of the HomeController is created first. HomeController has a dependency on IEmployeeRepository. 
+	- This is the first time, the instance of the service is requested. So asp.net core creates an instance of the service and injects it into the HomeController.
+	- Create view also needs an instance of the service to calculate the total number of account. With singleton, the same service instance is used. 
+	  So the instance of the service that is already created is provided to the Create view also.
+	- Now if you provide a Name in the Name textbox and click Create button you will see the count goes up every time you click the button.
+	- This is because with Singleton, the same object is used, so changes made to the object can be viewed in all the places across all the HTTP requests.AddScoped 
+
+AddScoped()
+	- services.AddScoped<IAccountsRepository, MockAccountsRepository>();
+	- Issue a request to http://localhost:/home/create. 
+	- We see the Total Accounts Count is 3.
+	- Provide a Name and click the Create button.
+	- The Total Accounts Count increases to 4.
+	- When we click the Create button again, the Total Accounts Count is still 4.
+	- This is because for a scoped service with every http request we get a new instance. 
+	  However, with in the same http request if the service is required in multiple places like in the view and in the controller then the same instance 
+	  is provided for the entire scope of that http request. 
+	- If we relate this to our example, both the HomeController and the Create view will use the same instance of the service for a given http request. 
+	  This is the reason Create view is also able to see the new employee added by the Create action method of the HomeController. Hence we see the Total Accounts Count as 4.
+	- But every new http request will get a new instance of the service. This is the reason an employee added by one http request 
+	  cannot be seen in another http request. So this means every time we click the Create button we are issuing a new http request and hence the Total 
+	  Employees Count does not go beyond 4. 
+AddTransient 
+	- Issue a request to http://localhost:/home/create
+	- We see the Total Employees Count is 3
+	- Provide a Name and click the Create button.
+	- Notice, on the Create view, we still see the Total Accounts Count as 3
+	  This because with a transient service a new instance is provided every time a service instance is requested 
+	   whether it is in the scope of the same http request or across different http requests. 
+	- Since a new instance is provided even within the same scope of a given http request, the Create view is not able to see the new employee added by 
+	  the Create action of the HomeController. This is the reason the count of Accounts is 3 even after adding a new employee.
+
+Handling 404 not found in asp.net core mvc
+------------------------------------------
+	- There are 2 types of 404 errors.
+	- Type 1 : Resource with the specified ID does not exit. This type of 404 errors occur when you cannot find the employee, product, customer etc with the provided ID.
+		public ViewResult Details(int id)
+		{
+		    Employee employee = _employeeRepository.GetEmployee(id);
+
+		    if (employee == null)
+		    {
+			Response.StatusCode = 404;
+			return View("EmployeeNotFound", id);
+		    }
+
+		    return View(employee);
+		}
+		 - browse, http://localhost/home/details/99
+		 - EmployeeNotFound.cshtml
+			@model int
+
+			@{
+			    ViewBag.Title = "404 Error";
+			}
+
+			<div class="alert alert-danger mt-1 mb-1">
+			    <h4>404 Not Found Error :</h4>
+			    <hr />
+			    <h5>
+				Employee with ID = @Model cannot be found
+			    </h5>
+			</div>
+
+		<a asp-controller="home" asp-action="index" class="btn btn-outline-success"
+		   style="width:auto">Click here to see the list of all employees</a>
+
+	- Type 2 : The URL does not match any route, Consider the following route. This also results in a 404 error, http://localhost/foo/bar
+		- In this case we are not sure, the page the user is trying to get to so displaying a custom error page is not possible & we want to return a generic error page. 
+		- Handling non-success http status codes, use the following 3 built-in asp.net core middleware components.
+			UseStatusCodePages
+			UseStatusCodePagesWithRedirects
+			UseStatusCodePagesWithReExecute
+		- UseStatusCodePages Middleware - least useful of the 3 status code middleware components. 
+			public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+			{
+			    if (env.IsDevelopment())
+			    {
+				app.UseDeveloperExceptionPage();
+			    }
+			    else
+			    {
+				//"ASPNETCORE_ENVIRONMENT": "Staging"
+				app.UseStatusCodePages();
+			    }
+
+			    app.UseStaticFiles();
+
+			    app.UseMvc(routes =>
+			    {
+				routes.MapRoute("default", "{controller=Home}/{action=Index}/{id?}");
+			    });
+			}
+			- if we navigate to http://localhost/foo/bar, it returns the following simple text response. "Status Code: 404; Not Found "
+		- UseStatusCodePagesWithRedirects or UseStatusCodePagesWithReExecute Middleware - return a custom error view instead of non-success http status codes 
+
+		    else
+		    {
+			app.UseStatusCodePagesWithRedirects("/Error/{0}");
+			//app.UseStatusCodePagesWithReExecute("/Error/{0}");
+		    }
+
+			public class ErrorController : Controller
+			{
+			    // If there is 404 status code, the route path will become Error/404
+			    [Route("Error/{statusCode}")]
+			    public IActionResult HttpStatusCodeHandler(int statusCode)
+			    {
+				switch (statusCode)
+				{
+				    case 404:
+					ViewBag.ErrorMessage = "Sorry, the resource you requested could not be found";
+					break;
+				}
+
+				return View("NotFound");
+			    }
+			}
+
+			NotFound View
+
+			@{
+			    ViewBag.Title = "Not Found";
+			}
+
+			<h1>@ViewBag.ErrorMessage</h1>
+
+			<a asp-action="index" asp-controller="home">
+			    Click here to navigate to the home page
+			</a>
+
+	 - use Redirects() or Execute(),  if we navigate to http://localhost/foo/bar we see the following custom 404 error view NotFound.cshtml as expected.
+		- what's the difference between these 2 middleware components and which one should we be using.
+		- UseStatusCodePagesWithRedirects => from url http://localhost/foo/bar change to http://localhost/Error/404
+			- In Fiddler, changes it to 302, pointing it to the error path (/Error/404)
+				- 302 status code means the URI of the requested resource has been changed temporarily
+		- UseStatusCodePagesWithReExecute => url  http://localhost/foo/bar won't change but page content change and show "/Error/404". In Fiddler, it shows 404 error
+	- If you are using UseStatusCodePagesWithReExecute middleware, to get the original path in the ErrorController using IStatusCodeReExecuteFeature interface as shown below.
+		public class ErrorController : Controller
+		{
+		    [Route("Error/{statusCode}")]
+		    public IActionResult HttpStatusCodeHandler(int statusCode)
+		    {
+			var statusCodeResult =
+				HttpContext.Features.Get<IStatusCodeReExecuteFeature>();
+
+			switch (statusCode)
+			{
+			    case 404:
+				ViewBag.ErrorMessage =
+					"Sorry, the resource you requested could not be found";
+				ViewBag.Path = statusCodeResult.OriginalPath;
+				ViewBag.QS = statusCodeResult.OriginalQueryString;
+				break;
+			}
+
+			return View("NotFound");
+		    }
+		}
+
+		You can then display it in the custom error view as shown below
+
+		@{
+		    ViewBag.Title = "Not Found";
+		}
+
+		<h1>@ViewBag.ErrorMessage</h1>
+
+		<h1>@ViewBag.Path</h1>
+
+		<h1>@ViewBag.QS</h1>
+
+		<a asp-action="index" asp-controller="home">
+		    Click here to navigate to the home page
+		</a>
+
+Global exception handling in asp.net core mvc
+---------------------------------------------
+	- deliberately throwing an exception using the throw keyword.
+
+		public ViewResult Details(int? id)
+		{
+		    throw new Exception("Error in Details View");
+
+		    // Rest of the code
+		}
+
+		public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+		{
+		    if (env.IsDevelopment())
+		    {
+			app.UseDeveloperExceptionPage();
+		    }
+
+		    // Rest of the code
+		}
+
+	 -  we see the following developer exception page if there is an unhandled exception.
+		- in development, throws "An unhandled exception occurred while processing the request.Exception: Error in Execption View" 
+        	- in production, throws "This page isn’t working localhost is currently unable to handle this request.  HTTP ERROR 500" 
+			- other than 500 http error we do not see any other information. Error 500 means, there was an error on the server which the server did not know how to handle.
+	- Exception Handling in ASP.NET Core
+
+		public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+		{
+		    if (env.IsDevelopment())
+		    {
+			app.UseDeveloperExceptionPage();
+		    }
+		    else
+		    {
+			app.UseExceptionHandler("/Error");
+		    }
+
+		    // Rest of the code
+		}
+
+		public class ErrorController : Controller
+		{
+		    [AllowAnonymous]
+		    [Route("Error")]
+		    public IActionResult Error()
+		    {
+			// Retrieve the exception Details
+			var exceptionHandlerPathFeature =
+				HttpContext.Features.Get<IExceptionHandlerPathFeature>();
+
+			ViewBag.ExceptionPath = exceptionHandlerPathFeature.Path;
+			ViewBag.ExceptionMessage = exceptionHandlerPathFeature.Error.Message;
+			ViewBag.StackTrace = exceptionHandlerPathFeature.Error.StackTrace;
+
+			return View("Error");
+		    }
+		}
+
+
+		<h3>An occured while processing your request. The support
+		    team is notified and we are working on the fix</h3>
+		<h5>Please contact us on pragim@pragimtech.com</h5>
+		<hr />
+		<h3>Exception Details:</h3>
+		<div class="alert alert-danger">
+		    <h5>Exception Path</h5>
+		    <hr />
+		    <p>@ViewBag.ExceptionPath</p>
+		</div>
+
+		<div class="alert alert-danger">
+		    <h5>Exception Message</h5>
+		    <hr />
+		    <p>@ViewBag.ExceptionMessage</p>
+		</div>
+
+		<div class="alert alert-danger">
+		    <h5>Exception Stack Trace</h5>
+		    <hr />
+		    <p>@ViewBag.StackTrace</p>
+		</div>
+	- run http://localhost:36503/error/exceptionview/123
+
+Logging in ASP.NET Core
+-------------------------
+	- Run from VS, Output windows shows,  lot of information dumped by the process dotnet that's using OutProcess. If inprocess, iisexpress dumped information.
+	- [TIPS] disable iisexpress.exe logs under debug tab in visual studio
+		- Click Tools -> options -> Debugging -> Output window -> turn off all logged messesag -> run project -> output window won't show any log information
+	
+	- Logging section in appsettings.json, add => "Microsoft":  "Infomation"
+
+		"Logging": {
+		  "LogLevel": {
+		    "Default": "Warning",
+		    "Microsoft":  "Warning"
+		  }
+		}
+		- LogLevel is used to control how much log data is logged or displayed.
+		- Output window => Microsoft.AspNetCore.Hosting.Internal.WebHost:Information: Request starting HTTP/1.1 GET http://localhost:36503/  
+			- it starts with the word Microsoft and this is an information log and the log message is request starting
+			- that's because we basically said we want all the information level logs and higher from the Microsoft category and we see several logs here including the
+	
+	- Run from Cmd , > \EmployeeManagement>dotnet run => see the log information
+	- how are these logs displayed
+		- Logging providers in ASP.NET Core is the component that stores or displays logs. 
+			- For example, the Console log provider displays logs on the console. In VS, the Debug log provider displays logs on the Debug window 
+		- https://github.com/aspnet/AspNetCore/blob/master/src/DefaultBuilder/src/WebHost.cs
+			- .ConfigureLogging((hostingContext, logging) =>
+			{
+			    logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+			    logging.AddConsole();
+			    logging.AddDebug();
+			    logging.AddEventSourceLogger();
+			})
+                - ASP.NET Core built-in logging providers -> Console, Debug, EventSource, EventLog, TraceSource, AzureAppServicesFile, AzureAppServicesBlob, ApplicationInsights
+                	- Console -> console displays logs on the console window
+                	- EventLog -> log the messages to the Windows Event log
+                	- AzureAppServicesFile ->  logs messages to the azure app services
+                	- AzureAppServicesBlob -> logs app services blob storage
+		- Third party logging providers for ASP.NET Core -> NLog, elmah, Serilog, Sentry, Gelf, JSNLog, KissLog.net, Loggr, Stackdriver
+		
+Logging exceptions in ASP.NET Core
+----------------------------------
+	- display custom messages, warnings or exceptions along with the log information that we already have in the debug output window
+	- Logging exceptions is required to know what exceptions are occurring on production server as the application is being used.
+
+		public class ErrorController : Controller
+		{
+		    private readonly ILogger<ErrorController> logger;
+
+		    // Inject ASP.NET Core ILogger service. Specify the Controller
+		    // Type as the generic parameter. This helps us identify later
+		    // which class or controller has logged the exception
+		    public ErrorController(ILogger<ErrorController> logger)
+		    {
+			this.logger = logger;
+		    }
+
+		    [AllowAnonymous]
+		    [Route("Error")]
+		    public IActionResult Error()
+		    {
+			// Retrieve the exception Details
+			var exceptionHandlerPathFeature =
+			    HttpContext.Features.Get<IExceptionHandlerPathFeature>();
+			// LogError() method logs the exception under Error category in the log
+			logger.LogError($"The path {exceptionHandlerPathFeature.Path} " +
+			    $"threw an exception {exceptionHandlerPathFeature.Error}");
+
+			return View("Error");
+		    }
+
+		    [Route("Error/{statusCode}")]
+		    public IActionResult HttpStatusCodeHandler(int statusCode)
+		    {
+			var statusCodeResult =
+			    HttpContext.Features.Get<IStatusCodeReExecuteFeature>();
+
+			switch (statusCode)
+			{
+			    case 404:
+				ViewBag.ErrorMessage = "Sorry, the resource could not be found";
+				// LogWarning() method logs the message under
+				// Warning category in the log
+				logger.LogWarning($"404 error occured. Path = " +
+				    $"{statusCodeResult.OriginalPath} and QueryString = " +
+				    $"{statusCodeResult.OriginalQueryString}");
+				break;
+			}
+
+			return View("NotFound");
+		    }
+		}
+	- Logging Exceptions in ASP.NET Core
+		- Two simple steps to log your own custom messages, warnings or exceptions
+			- Inject an instance of ILogger where you need the logging functionality
+			- The type of the class or controller into which ILogger is injected can be specified as the argument for the generic parameter of ILogger. 
+			- because, the fully qualified name of the class or controller is then included in the log output as the log category. 
+				- why we are doing this?  take a look at the log output "Microsoft.AspNetCore.Hosting.Internal.WebHost:Information: Request starting ..."
+				  first three lines of log are coming from the web host class so basically they using the fully qualified name of the class 
+				  that is logging the information as the log category yeah we use the log category to group log information 
+		- Since we have specified the type of ErrorController as the generic argument for ILogger, 
+		  the fully qualified name of ErrorController is also included in the log output below.
+
+			private readonly ILogger<ErrorController> logger;
+
+			public ErrorController(ILogger<ErrorController> logger)
+			{
+			    this.logger = logger;
+			}
+	- LogError() method logs the exception under Error category. 
+		- logger.LogError($"The path {exceptionHandlerPathFeature.Path} " + $"threw an exception {exceptionHandlerPathFeature.Error}");
+		- Here is the log generated by LogError() method 
+			- EmployeeManagement.Controllers.ErrorController:Error: The path /home/details/1 threw an exception System.Exception: Error in Details Controller
+   	- LogWarning() method logs the message under Warning category. 
+		- EmployeeManagement.Controllers.ErrorController:Warning: 404 error occured. Path = /foo/bar and QueryString = ?email=abc@gmail.com&abc=xyz
+	- change to "Microsoft": "Warning" for warning erros instaed of "Information"
+
+Logging to file in asp.net core using nlog
+-----------------------------------------
+	- Using NLog in ASP.NET Core, Step 1 : Install NLog.Web.AspNetCore nuget package
+		- Step 2 : Create nlog.config file in the root of your project. I have included the minimum configuration required.
+
+			<?xml version="1.0" encoding="utf-8" ?>
+			<nlog xmlns="http://www.nlog-project.org/schemas/NLog.xsd"
+			      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+			  <!-- the targets to write to -->
+			  <targets>
+			    <!-- write logs to file  -->
+			    <target name="allfile" xsi:type="File"
+				    fileName="c:\DemoLogs\nlog-all-${shortdate}.log"/>
+			  </targets>
+
+			  <!-- rules to map from logger name to target -->
+			  <rules>
+			    <!--All logs, including from Microsoft-->
+			    <logger name="*" minlevel="Trace" writeTo="allfile" />
+			  </rules>
+			</nlog>
+
+			- To learn more about the nlog.config file please refer to the following github wiki page https://github.com/NLog/NLog/wiki/Configuration-file
+		- Step 3 : Enable copy to bin folder, nlog.config = > Copy to Output Directory = Copy if newer
+		- Step 4 : Enable NLog as one of the Logging Provider
+			- In addition to using the default logging providers (i.e Console, Debug & EventSource) from github WebHost.cs, 
+			  we also added NLog using the extension method AddNLog(). This method is in NLog.Extensions.Logging namespace.
+
+			public class Program
+			{
+			    public static void Main(string[] args)
+			    {
+				CreateWebHostBuilder(args).Build().Run();
+			    }
+
+			    public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
+				WebHost.CreateDefaultBuilder(args)
+				.ConfigureLogging((hostingContext, logging) =>
+				{
+				    logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+				    logging.AddConsole();
+				    logging.AddDebug();
+				    logging.AddEventSourceLogger();
+				    // Enable NLog as one of the Logging Provider
+				    logging.AddNLog();
+				})
+				.UseStartup<Startup>();
+			}
+	- If you want only NLog as the logging provider, clear all the logging providers and then add NLog.
+
+		public class Program
+		{
+		    public static void Main(string[] args)
+		    {
+			CreateWebHostBuilder(args).Build().Run();
+		    }
+
+		    public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
+			WebHost.CreateDefaultBuilder(args)
+			.ConfigureLogging((hostingContext, logging) =>
+			{
+			    // Remove all the default logging providers
+			    logging.ClearProviders();
+			    logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+			    // Add NLog as the Logging Provider
+			    logging.AddNLog();
+			})
+		       .UseStartup<Startup>();
+		}
+
+ASP.NET Core LogLevel configuration
+------------------------------------
+	- LogLevel indicates the severity of the logged message. It can be any of the following. They are listed here from lowest to highest severity.
+		Trace = 0
+		Debug = 1
+		Information = 2
+		Warning = 3
+		Error = 4
+		Critical = 5
+		None = 6
+		- type LogLevel => go to definition
+
+	
+		- LogLevel setting in appsettings.json file is used to control how much log data is logged or displayed. Changed to "Trace" 
+
+			{
+			  "Logging": {
+			    "LogLevel": {
+			      "Default": "Trace",
+			      "Microsoft": "Warning"
+			    }
+			  }
+			}
+		- ILogger Methods, On the ILogger interface, we have log methods that include the log level in the method name. 
+
+			public class HomeController : Controller
+			{
+			    public ViewResult Details(int? id)
+			    {
+				logger.LogTrace("Trace Log");
+				logger.LogDebug("Debug Log");
+				logger.LogInformation("Information Log");
+				logger.LogWarning("Warning Log");
+				logger.LogError("Error Log");
+				logger.LogCritical("Critical Log");
+
+				// Rest of the code
+			    }
+			}
+			-Run, log msg in the  Debug Output window.Since Trace is the lowest level we see all the logs.
+
+				EmployeeManagement.Controllers.HomeController:Trace: Trace Log
+				EmployeeManagement.Controllers.HomeController:Debug: Debug Log
+				EmployeeManagement.Controllers.HomeController:Information: Information Log
+				EmployeeManagement.Controllers.HomeController:Warning: Warning Log
+				EmployeeManagement.Controllers.HomeController:Error: Error Log
+				EmployeeManagement.Controllers.HomeController:Critical: Critical Log
+	- Log filtering in ASP.NET Core
+		{
+		  "Logging": {
+		    "LogLevel": {
+		      "Default": "Warning",
+		      "EmployeeManagement.Controllers.HomeController": "Trace",
+		      "EmployeeManagement.Models.SQLEmployeeRepository": "Error",
+		      "Microsoft": "Warning"
+		    }
+		  }
+		}
+	- Log Filtering by Log Category and by Logging Provider
+
+		{
+		  "Logging": {
+		    "Debug": {
+		      "LogLevel": {
+			"Default": "Warning",
+			"EmployeeManagement.Controllers.HomeController": "Warning",
+			"EmployeeManagement.Models.SQLEmployeeRepository": "Warning",
+			"Microsoft": "Warning"
+		      }
+		    },
+		    "LogLevel": {
+		      "Default": "Trace",
+		      "EmployeeManagement.Controllers.HomeController": "Trace",
+		      "EmployeeManagement.Models.SQLEmployeeRepository": "Trace",
+		      "Microsoft": "Trace"
+		    }
+		  }
+		}
+
+	- LogLevel configuration in environment specific appsettings.json file
+	
+Install and use Bootstrap in ASP.NET Core
+----------------------------------------
+	- Tools to install client-side packages 
+		- many tools that we can use with VS to install client-side packages like Bootstrap and jQuery. For example we could use tools like Bower, NPM, WebPack etc.
+		- However, we are not going to use any of these tools. We will instead use Library Manager (LibMan for short). 
+		- Library Manager is a light-weight, client-side library acquisition tool. 
+		- It downloads client-side libraries and frameworks from the file system or from a CDN (Content Delivery Network).
+	- Install Bootstrap Using LibMan
+		- "Project Name"->Add > Client-Side Library->Provider:cdnjs -> Library:, type "twitter-bootstrap"
+		   -> Upon selecting the matching entry, it tries to install the latest version. 
+		- However, you can manually type the version you want. You also have intellisense support. We will install the lates Bootstrap version 4.
+		- You can either include "All the library file" or "Just the files you need"
+		- In the "Target Location" text box specify the folder where you want the library files to be copied.(wwwroot/lib/booststrap/)
+		- Click the "Install" Button
+	- libman.json file - is the Library Manager manifest file. 
+		{
+		  "version": "1.0",
+		  "defaultProvider": "cdnjs",
+		  "libraries": [
+		    {
+		      "library": "twitter-bootstrap@4.3.1",
+		      "destination": "wwwroot/lib/bootstrap/"
+		    }
+		  ]
+		}
+		- in the manifest file we have an entry for the Bootstrap client-side library that we just installed. 
+		- We can also directly edit the manifest file to install client-side packages, instead of using the user interface provided by LibMan.
+		- add in manifest, type jquery@ to choose version, change the pathe and save, you can jquery folde created.
+		  {
+		      "library": "twitter-bootstrap@4.3.1",
+		      "destination": "wwwroot/lib/bootstrap/"
+		    }
+		- Clean and Restore Client-Side Libraries
+			- right click on libman.json file -> select "Clean Client-Side Libraries" -> deletes the library files from the destination folder. 
+			  However, the entries in libman.json will not be deleted.
+			- To restore the deleted files, libman.json file -> select "Restore Client-Side Libraries" -> download/copy the library files into the destination folder.
+	- uninstall or Update a Client-Side Library
+		- Open libman.json file -> Click on the client-side library you want to uninstall -> A light bulb icon appears & click -> options to either update or uninstall
+		- Alternatively, just delete the client-side library entry in libman.json file and upon saving the file, the respective client-side library will be uninstalled.
+	- upgrade or downgrade a client-side library, change the version number in libman.json file by type "@",  you can see all version, pick and save it
+	- Site Specific wwwroot/CSS/site.css
+		.btn {
+		    width: 75px;
+		}
+	- Using Bootstrap in ASP.NET Core Application
+		- include a reference to the Boostrap.css file in the layout file _Layout.cshtml. Also include a reference to our custom stylesheet site.css.
+
+		<html>
+		<head>
+		    <meta name="viewport" content="width=device-width" />
+		    <link href="~/lib/bootstrap/css/bootstrap.css" rel="stylesheet" />
+		    <link href="~/css/site.css" rel="stylesheet" />
+		    <title>@ViewBag.Title</title>
+		</head>
+		<body>
+
+		    <div class="container">
+			@RenderBody()
+		    </div>
+
+		    @if (IsSectionDefined("Scripts"))
+		    {
+			@RenderSection("Scripts", required: false)
+		    }
+
+		</body>
+		</html>
+		-  We are using the Bootstrap "container" class for positioning elements on the page.
+	- Styling Details.cshtml View, We are using Bootstrap 4 styling class to position and style elements on the page.
+
+		@model HomeDetailsViewModel
+
+		@{
+		    ViewBag.Title = "Employee Details";
+		}
+
+		<div class="row justify-content-center m-3">
+		    <div class="col-sm-8">
+			<div class="card">
+			    <div class="card-header">
+				<h1>@Model.Employee.Name</h1>
+			    </div>
+
+			    <div class="card-body text-center">
+				<img class="card-img-top" src="~/images/noimage.jpg" />
+
+				<h4>Employee ID : @Model.Employee.Id</h4>
+				<h4>Email : @Model.Employee.Email</h4>
+				<h4>Department : @Model.Employee.Department</h4>
+
+			    </div>
+			    <div class="card-footer text-center">
+				<a href="#" class="btn btn-primary">Back</a>
+				<a href="#" class="btn btn-primary">Edit</a>
+				<a href="#" class="btn btn-danger">Delete</a>
+			    </div>
+			</div>
+		    </div>
+		</div>
+
+		@section Scripts {
+		    <script src="~/js/CustomScript.js"></script>
+		}
+
+	- Styling Index.cshtml View, We are using Bootstrap 4 styling class to position and style elements on the page.
+
+		@model IEnumerable<Employee>
+
+		@{
+		    ViewBag.Title = "Employee List";
+		}
+
+		<div class="card-deck">
+		    @foreach (var employee in Model)
+		    {
+			<div class="card m-3">
+			    <div class="card-header">
+				<h3>@employee.Name</h3>
+			    </div>
+			    <img class="card-img-top" src="~/images/noimage.jpg" />
+			    <div class="card-footer text-center">
+				<a href="#" class="btn btn-primary">View</a>
+				<a href="#" class="btn btn-primary">Edit</a>
+				<a href="#" class="btn btn-danger">Delete</a>
+			    </div>
+			</div>
+		    }
+		</div>
+
+
+ASP.NET Core Identity tutorial from scratch
+-------------------
+	- ANC Identity is a membership system. It allows us to create, read, update and delete user accounts. 
+	- Supports account confirmation, authentication, authorisation, password recovery, two-factor authentication with SMS. 
+	- It also supports external login providers like Microsoft, Facebook, Google etc.
+	- Adding ASP.NET Core Identity Support in ASP.NET Core Application
+		- Step 1 : Inherit from IdentityDbContext class
+
+			public class AppDbContext : IdentityDbContext
+			{
+			    // Rest of the code
+			}
+			- Your application DbContext class must inherit from IdentityDbContext class instead of DbContext class. 
+			- This is required because IdentityDbContext provides all the DbSet properties needed to manage the identity tables in SQL Server. 
+			- If you go through the hierarchy chain of IdentityDbContext class->...DbContext class. because this no need to explicitly inherit DbContext class
+		- Step 2 : Configure ASP.NET Core Identity Services
+			- In ConfigureServices() method of the Startup class, include the following line of code. 
+				services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>();
+			- AddIdentity() method adds the default identity system configuration for the specified user and role types.
+			- IdentityUser class is provided by ANC and contains properties for UserName, PasswordHash, Email etc. 
+			  This is the class that is used by default by the ANC Identity framework to manage registered users of your application. 
+				- Add additional info like Gender, City etc. Create a custom class that derives from IdentityUser. 
+			- IdentityRole is also a builtin class provided by ASP.NET Core Identity and contains Role information.
+			- AddEntityFrameworkStores<AppDbContext>() - To store/retrieve User/Role info of the users using EntityFrameWork Core from SQL db. 
+			  Passing our application DbContext class as the generic argument
+		- Step 3 : Add Authentication middleware to the request pipeline
+
+			public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+			{
+			    if (env.IsDevelopment())
+			    {
+				app.UseDeveloperExceptionPage();
+			    }
+			    else
+			    {
+				app.UseExceptionHandler("/Error");
+				app.UseStatusCodePagesWithReExecute("/Error/{0}");
+			    }
+
+			    app.UseStaticFiles();
+			    app.UseAuthentication();
+			    app.UseMvc(routes =>
+			    {
+				routes.MapRoute("default", "{controller=Home}/{action=Index}/{id?}");
+			    });
+			}
+			- Authenticate users before the request reaches the MVC middleware. So add it before the MVC middleware in the request processing pipeline.
+		- Step 4 : Add Identity Migration, Add-Migration AddingIdentity
+			- This migration contains code that creates the tables required by the ANC.
+			- Error : The entity type 'IdentityUserLogin<string>' requires a primary key to be defined
+				- bcaze overriding OnModelCreating() method in your application DbContext class but not calling the base IdentityDbContext.OnModelCreating() method. 
+				- Keys of Identity tables are mapped in IdentityDbContext.OnModelCreating methods.
+			- Error: Unable to create an object of type 'AppDbContext'. For the different patterns supported at design time,
+			    	- bcaz add the code  services.AddDbContextPool<AppDbContext>(options => options.UseSqlServer(_configuration.GetConnectionString("MyAzureSQLServerDB")));
+
+			public class AppDbContext : IdentityDbContext
+			{
+			    public AppDbContext(DbContextOptions<AppDbContext> options)
+				: base(options)
+			    {
+			    }
+
+			    public DbSet<Employee> Employees { get; set; }
+
+			    protected override void OnModelCreating(ModelBuilder modelBuilder)
+			    {
+				base.OnModelCreating(modelBuilder);
+				modelBuilder.Seed();
+			    }
+			}
+		- Step 4 : Generate ASP.NET Core Identity Tables, execute "Update-Database" cmdto apply the identity migration and have the required identity tables created.
+
+Register new user using asp.net core identity
+----------------------
+	- RegisterViewModel Class ->as the model for Register view. It carries the information from the view to the controller class
+		using System.ComponentModel.DataAnnotations;
+
+		namespace EmployeeManagement.ViewModels
+		{
+		    public class RegisterViewModel
+		    {
+			[Required]
+			[EmailAddress]
+			public string Email { get; set; }
+
+			[Required]
+			[DataType(DataType.Password)]
+			public string Password { get; set; }
+
+			[DataType(DataType.Password)]
+			[Display(Name = "Confirm password")]
+			[Compare("Password",
+			    ErrorMessage = "Password and confirmation password do not match.")]
+			public string ConfirmPassword { get; set; }
+		    }
+		}
+	- AccountController - All the user account related CRUD operations will be in this AccountController. 
+		//GET request to /account/register
+		using Microsoft.AspNetCore.Mvc;
+
+		namespace EmployeeManagement.Controllers
+		{
+		    public class AccountController : Controller
+		    {
+			[HttpGet]
+			public IActionResult Register()
+			{
+			    return View();
+			}
+		    }
+		}
+	- Register View, Views/Account folder
+		@model RegisterViewModel
+
+		@{
+		    ViewBag.Title = "User Registration";
+		}
+
+		<h1>User Registration</h1>
+
+		<div class="row">
+		    <div class="col-md-12">
+			<form method="post">
+			    <div asp-validation-summary="All" class="text-danger"></div>
+			    <div class="form-group">
+				<label asp-for="Email"></label>
+				<input asp-for="Email" class="form-control" />
+				<span asp-validation-for="Email" class="text-danger"></span>
+			    </div>
+			    <div class="form-group">
+				<label asp-for="Password"></label>
+				<input asp-for="Password" class="form-control" />
+				<span asp-validation-for="Password" class="text-danger"></span>
+			    </div>
+			    <div class="form-group">
+				<label asp-for="ConfirmPassword"></label>
+				<input asp-for="ConfirmPassword" class="form-control" />
+				<span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+			    </div>
+			    <button type="submit" class="btn btn-primary">Register</button>
+			</form>
+		    </div>
+		</div>
+
+	- Register Link in the Layout View
+		<div class="collapse navbar-collapse" id="collapsibleNavbar">
+		    <ul class="navbar-nav">
+			<li class="nav-item">
+			    <a class="nav-link" asp-controller="home" asp-action="index">List</a>
+			</li>
+			<li class="nav-item">
+			    <a class="nav-link" asp-controller="home" asp-action="create">Create</a>
+			</li>
+		    </ul>
+		    <ul class="navbar-nav ml-auto">
+			<li class="nav-item">
+			    <a class="nav-link" asp-controller="account" asp-action="register">
+				Register
+			    </a>
+			</li>
+		    </ul>
+		</div>
+
+ASP.NET Core Identity UserManager and SignInManager
+------------------------------------------------------
+	- asp.net core identity usermanager
+		 - UserManager<IdentityUser> class contains the required methods to manage users in the underlying data store. 
+		 - For example, this class has methods like CreateAsync, DeleteAsync, UpdateAsync to create, delete and update users.
+	- asp.net core identity signinmanager
+		- SignInManager<IdentityUser> class contains the required methods for users signin. 
+		- For example, this class has methods like SignInAsync, SignOutAsync to signin and signout a user.
+	- Both UserManager and SignInManager services are injected into the AccountController using constructor injection
+	- Both these services accept a generic parameter. We use the generic parameter to specify the User class that these services should work with. 
+	- At the moment, we are using the built-in IdentityUser class as the argument for the generic parameter.
+	- The generic parameter on these 2 services is an extension point. 
+	- This means, we can create our own custom user with any additional data that we want to capture about the user and 
+	  then plug-in this custom class as an argument for the generic parameter instead of the built-in IdentityUser class. 
+		using EmployeeManagement.ViewModels;
+		using Microsoft.AspNetCore.Identity;
+		using Microsoft.AspNetCore.Mvc;
+		using System.Threading.Tasks;
+
+		namespace EmployeeManagement.Controllers
+		{
+		    public class AccountController : Controller
+		    {
+			private readonly UserManager<IdentityUser> userManager;
+			private readonly SignInManager<IdentityUser> signInManager;
+
+			public AccountController(UserManager<IdentityUser> userManager,
+			    SignInManager<IdentityUser> signInManager)
+			{
+			    this.userManager = userManager;
+			    this.signInManager = signInManager;
+			}
+
+			[HttpGet]
+			public IActionResult Register()
+			{
+			    return View();
+			}
+
+			[HttpPost]
+			public async Task<IActionResult> Register(RegisterViewModel model)
+			{
+			    if (ModelState.IsValid)
+			    {
+				// Copy data from RegisterViewModel to IdentityUser
+				var user = new IdentityUser
+				{
+				    UserName = model.Email,
+				    Email = model.Email
+				};
+
+				// Store user data in AspNetUsers database table
+				var result = await userManager.CreateAsync(user, model.Password);
+
+				// If user is successfully created, sign-in the user using
+				// SignInManager and redirect to index action of HomeController
+				// create a session cookie or a permanent cookie 
+				// a session cookie is immediately lost after we close the browser window whereas a permanent cookie is retained on the client machine 
+				// even after the browser window is closed in our case we want to create a session cookie.
+				if (result.Succeeded)
+				{
+				    await signInManager.SignInAsync(user, isPersistent: false);
+				    return RedirectToAction("index", "home");
+				}
+
+				// If there are any errors, add them to the ModelState object
+				// which will be displayed by the validation summary tag helper
+				foreach (var error in result.Errors)
+				{
+				    ModelState.AddModelError(string.Empty, error.Description);
+				}
+			    }
+
+			    return View(model);
+			}
+		    }
+		}
+
+ASP.NET core identity password complexity
+------------------------------------------
+	- By default, ANC identity does not allow creating simple passwords to protect our application from automated brute-force attacks., like password "abc", throw validation error
+	- ASP.NET Core Identity Password Default Settings
+		- In ANC Identity, Password Default Settings are specified in the PasswordOptions class. From, search PasswordOptions class, https://github.com/aspnet/AspNetCore
+			public class PasswordOptions
+			{
+			    public int RequiredLength { get; set; } = 6;
+			    public int RequiredUniqueChars { get; set; } = 1;
+			    public bool RequireNonAlphanumeric { get; set; } = true;
+			    public bool RequireLowercase { get; set; } = true;
+			    public bool RequireUppercase { get; set; } = true;
+			    public bool RequireDigit { get; set; } = true;
+			}
+	- How to override password default settings in asp.net core identity
+		- using the Configure() method of the IServiceCollection interface in the ConfigureServices() method of the Startup class
+
+			services.Configure<IdentityOptions>(options =>
+			{
+			    options.Password.RequiredLength = 10;
+			    options.Password.RequiredUniqueChars = 3;
+			    options.Password.RequireNonAlphanumeric = false;
+			});
+		- OR, by adding Identity services 
+			services.AddIdentity<IdentityUser, IdentityRole>(options =>
+			{
+			    options.Password.RequiredLength = 10;
+			    options.Password.RequiredUniqueChars = 3;
+			    options.Password.RequireNonAlphanumeric = false;
+			})
+			.AddEntityFrameworkStores<AppDbContext>();
+
+	- ASP.NET Core IdentityOptions 
+		- In this example, we are using the IdentityOptions object to configure PasswordOptions. We could also use this IdentityOptions object to configure
+			UserOptions
+			SignInOptions
+			LockoutOptions
+			TokenOptions
+			StoreOptions
+			ClaimsIdentityOptions
+			
+Show or hide login and logout links based on login status in asp.net core
+-------------------------------------------------------------------------
+	- If the user is not logged-in, display Login and Register links.
+	- If the user is logged-in, hide Login and Register links and display Logout link.
+	- how to logout a user in asp.net core
+		- Inject SignInManager, so we could check if the user is signed-in
+
+			@using Microsoft.AspNetCore.Identity
+			@inject SignInManager<IdentityUser> SignInManager
+
+			<div class="collapse navbar-collapse" id="collapsibleNavbar">
+			    <ul class="navbar-nav ml-auto">
+				@*If the user is signed-in display Logout link*@
+				@if (SignInManager.IsSignedIn(User))
+				{
+				    <li class="nav-item">
+					<form method="post" asp-controller="account" asp-action="logout">
+					    <button type="submit" style="width:auto"
+						    class="nav-link btn btn-link py-0">
+						Logout @User.Identity.Name
+					    </button>
+					</form>
+				    </li>
+				}
+				else
+				{
+				    <li class="nav-item">
+					<a class="nav-link" asp-controller="account" asp-action="register">
+					    Register
+					</a>
+				    </li>
+				    <li class="nav-item">
+					<a class="nav-link" asp-controller="account" asp-action="login">
+					    Login
+					</a>
+				    </li>
+				}
+			    </ul>
+			</div>
+
+	- Use a POST request to log the user out. Using a GET request to log out the user is not recommended because the approach may be abused. 
+	- A malicious user may trick you into clicking an image element where the src attribute is set to the application logout url. As a result you are unknowingly logged out.
+
+		public class AccountController : Controller
+		{
+		    private readonly SignInManager<IdentityUser> signInManager;
+
+		    public AccountController(SignInManager<IdentityUser> signInManager)
+		    {
+			this.signInManager = signInManager;
+		    }
+
+		    [HttpPost]
+		    public async Task<IActionResult> Logout()
+		    {
+			await signInManager.SignOutAsync();
+			return RedirectToAction("index", "home");
+		    }
+		}
+
+Implementing login functionality in asp.net core
+-------------------------------------------------
+	- To implement the login functionality in an asp.net core application, we need to implement the following
+		Login View Model, Login View & A pair of Login action methods in the AccountController
+	- LoginViewModel, To login a user, we need their Email which is the username, password and whether if they want a persistent cookie or session cookie.
+
+		public class LoginViewModel
+		{
+		    [Required]
+		    [EmailAddress]
+		    public string Email { get; set; }
+
+		    [Required]
+		    [DataType(DataType.Password)]
+		    public string Password { get; set; }
+
+		    [Display(Name = "Remember me")]
+		    public bool RememberMe { get; set; }
+		}
+
+	- Session Cookie vs Persistent Cookie
+		- Goto developer tools -> Application -> Cookies -> click localhost url -> it contains 2 key, 
+			- 1).AspNetCore.Antiforgery.4mx8t-xa9uw 
+			- 2) .AspNetCore.Identity.Application  - it creats based on user login,
+				- if you set remembe me, this key store. if browser close, it won't delete. if next time browse the page until logout ( A persistent cookie)
+				- if not remember me, it won't store, delete the key when you close the browser
+		- Upon a successful login, a cookie is issued and sent with each request to the server to know that the user is already authenticated and logged-in.  (A session cookie)
+		- This cookie can either be a session cookie or a persistent cookie.
+		- A session cookie is created and stored within the session instance of the browser. 
+		  A session cookie does not contain an expiration date and is permanently deleted when the browser window is closed.
+		- A persistent cookie on the other hand is not deleted when the browser window is closed. It usually has an expiry date and deleted on the date of expiry.
+	- Login View
+		@model LoginViewModel
+
+		@{
+		    ViewBag.Title = "User Login";
+		}
+
+		<h1>User Login</h1>
+
+		<div class="row">
+		    <div class="col-md-12">
+			<form method="post">
+			    <div asp-validation-summary="All" class="text-danger"></div>
+			    <div class="form-group">
+				<label asp-for="Email"></label>
+				<input asp-for="Email" class="form-control" />
+				<span asp-validation-for="Email" class="text-danger"></span>
+			    </div>
+			    <div class="form-group">
+				<label asp-for="Password"></label>
+				<input asp-for="Password" class="form-control" />
+				<span asp-validation-for="Password" class="text-danger"></span>
+			    </div>
+			    <div class="form-group">
+				<div class="checkbox">
+				    <label asp-for="RememberMe">
+					<input asp-for="RememberMe" />
+					@Html.DisplayNameFor(m => m.RememberMe)
+				    </label>
+				</div>
+			    </div>
+			    <button type="submit" class="btn btn-primary">Login</button>
+			</form>
+		    </div>
+		</div>
+
+	- Login Action in AccountController
+
+			[HttpGet]
+			public IActionResult Login()
+			{
+			    return View();
+			}
+
+			[HttpPost]
+			public async Task<IActionResult> Login(LoginViewModel model)
+			{
+			    if (ModelState.IsValid)
+			    {
+				var result = await signInManager.PasswordSignInAsync(
+				    model.Email, model.Password, model.RememberMe, false);
+
+				if (result.Succeeded)
+				{
+				    return RedirectToAction("index", "home");
+				}
+
+				ModelState.AddModelError(string.Empty, "Invalid Login Attempt");
+			    }
+
+			    return View(model);
+			}
+		    }
+	
+Authorization in ASP.NET Core
+-----------------------------
+	- What is Authorization in ASP.NET Core
+		- Authentication is the process of identifying who the user is. 
+		- Authorization is the process of identifying what the user can and cannot do.
+			- For example, if the logged in user is an administrator he may be able to Create, Read, Update and Delete orders, 
+			  where as a normal user may only view orders but not Create, Update or Delete orders.
+			- Authorization in ASP.NET Core MVC is controlled through the AuthorizeAttribute
+	- Authorize Attribute in ASP.NET Core
+		- When the Authorize attribute is used in it's simplest form, without any parameters, it only checks if the user is authenticated.
+		- As the Authorize attribute is applied on the Controller, it is applicable to all the action methods in the controller. 
+		  The user must be logged in, to access any of the controller action methods.
+			[Authorize]
+			public class HomeController : Controller
+			{
+			    public ViewResult Details(int? id)
+			    { 
+			    }
+
+			    public ViewResult Create()
+			    {   
+			    }
+
+			    public ViewResult Edit(int id)
+			    {
+			    }
+			}
+		- Authorize attribute can be applied on individual action methods as well. Example, only the Details action method is protected from anonymous access.
+			public class HomeController : Controller
+			{
+			    [Authorize]
+			    public ViewResult Details(int? id)
+			    {
+			    }
+
+			    public ViewResult Create()
+			    {
+			    }
+
+			    public ViewResult Edit(int id)
+			    {
+			    }
+			}
+
+		- AllowAnonymous Attribute in ASP.NET Cor allows anonymous access. 
+			- As the Authorize attribute is applied at the controller level, all the action methods in the controller are protected from anonymous access. 
+			  However, since the Details action method is decorated with AllowAnonymous attribute, it will be allowed anonymous access.
+				[Authorize]
+				public class HomeController : Controller
+				{
+				    [AllowAnonymous]
+				    public ViewResult Details(int? id)
+				    {
+				    }
+
+				    public ViewResult Create()
+				    {
+				    }
+
+				    public ViewResult Edit(int id)
+				    {
+				    }
+				}
+		- Please note: If you apply [AllowAnonymous] attribute at the controller level, any [Authorize] attribute attribute on the same controller actions is ignored.
+
+	 	- Apply Authorize attribute globally
+			- To apply [Authorize] attribute globally on all controllers
+				public void ConfigureServices(IServiceCollection services)
+				{
+				    // Other Code
+
+				    services.AddMvc(config => {
+					var policy = new AuthorizationPolicyBuilder()
+							.RequireAuthenticatedUser()
+							.Build();
+					config.Filters.Add(new AuthorizeFilter(policy));
+				    });
+
+				    // Other Code
+				}
+				- AuthorizationPolicyBuilder is in Microsoft.AspNetCore.Authorization namespace 
+				- AuthorizeFilter is in Microsoft.AspNetCore.Mvc.Authorization namespace
+				- If you do not have [AllowAnonymous] attribute on the Account/Login actions, you will get the error because the application is stuck in an infinite loop. 
+					- HTTP Error 404.15 - Not Found
+						The request filtering module is configured to deny a request where the query string is too long.
+
+						Most likely causes:
+						Request filtering is configured on the Web server to deny the request because the query string is too long.
+						You try to access /Account/login
+						Since the [Authorize] attribute is applied globally, you cannot access the URL /Account/login
+						To login you have to go to /Account/login
+						So the application is stuck in this infinite loop and every time we are redirected, the query string ?ReturnUrl=/Account/Login is appended to the URL
+						This is the reason we get the error - Web server denied the request because the query string is too long.
+						To fix this error, decorate Login() actions in the AccountController with [AllowAnonymous] attribute.
+Redirect user to original url after login in asp.net core
+---------------------------------------------------------
+	- By default, ANC redirects to the login URL with ReturnUrl query string parameter. The trying to  access URL  will be the value of the ReturnUrl query string parameter.
+	- Example, ReturnUrl is set to ReturnUrl=/home/create. I was trying to Create a New Employee by navigating to /home/create without first signing in. 
+	  Since I do not have access to /home/create until I login, ASP.NET core redirected to the login URL which is /Account/Login with the query string parameter ReturnUrl 
+		- http://localhost:4901/Account/Login?ReturnUrl=%2Fhome%2Fcreate
+		- The characters %2F are the encoded characters for a forward slash (/). To decode these characters in the URL, you may use the following website.
+		- https://meyerweb.com/eric/tools/dencoder/
+	- Redirect to ReturnUrl after Login
+		- ANC model binding automatically maps the value 1) from the URL query string parameter ReturnUrl  2 to the Login() action method parameter returnUrl
+		- ASP.NET Core Redirect(returnUrl) method, redirects the user to the specified returnUrl
+			[HttpPost]
+			[AllowAnonymous]
+			public async Task<IActionResult> Login(LoginViewModel model, string returnUrl)
+			{
+			    if (ModelState.IsValid)
+			    {
+				var result = await signInManager.PasswordSignInAsync(model.Email,
+				    model.Password, model.RememberMe, false);
+
+				if (result.Succeeded)
+				{
+				    if (!string.IsNullOrEmpty(returnUrl))
+				    {
+					return Redirect(returnUrl);
+				    }
+				    else
+				    {
+					return RedirectToAction("index", "home");
+				    }
+				}
+
+				ModelState.AddModelError(string.Empty, "Invalid Login Attempt");
+			    }
+
+			    return View(model);
+			}
+	- Serious flaw, This opens a serious security hole with in our application which is commonly known as open redirect vulnerability. 
+
+Application Vulnerable to Open Redirect Attacks
+------------------------------------------------
+	- Your application is vulnerable to open redirect attacks if the following 2 conditions are true
+		- Your application redirects to a URL that's specified via the request such as the querystring or form data
+		- The redirection is performed without checking if the URL is a local URL
+	- What is Open Redirect Vulnerability 
+		- Most of the web applications redirect users to a login page when they access resources that require authentication. 
+		- For example, to see the list of all orders, you must be already logged in. If you are not logged in and try to see the list of orders, 
+		  by navigating to http://example.com/orders/list, you will be redirected to the login page. 
+		- The redirection includes a returnUrl with query string, it will be returned to the requested URL after logged in.  http://e.com/Account/Login?ReturnUrl=/orders/list
+		- A malicious user can use this returnUrl query string parameter to initiate an open redirect attack.
+	- Open Redirect Vulnerability Example
+		- The user of your application is tricked into clicking a link in an email where the returnUrl is set to the attackers website.
+			- http://example.com/account/login?returnUrl=http://exampie.com/account/login (the returnUrl is "exampie.com", instead of "l" there is an "i")
+		- The user logs in successfully on the authentic site and he is then redirected to the attackers website (http://exampie.com/account/login)
+		- The login page of the attackers website looks exactly like the authentic site.
+		- The user logs in again on the attackers website, thinking that the first login attempt was unsuccessful
+		- The user is then redirected back to the authentic site.
+		- During this entire process, the user does not even know his credentials are stolen.
+	- Prevent open redirect attacks in ASP.NET Core
+		- We have an open redirect vulnerability because, the URL is supplied to the application from the query string. 
+		- We are simply redirecting to that URL without any validation which is what is making our application vulnerable to open redirect attacks.
+		- To prevent open redirect attacks, check if the provided URL is a local URL or you are only redirecting to known trusted websites.
+		- ASP.NET Core has built-in support for local redirection. Simply use the LocalRedirect() method. If a non-local URL is specified an exception is thrown.
+			public IActionResult Login(string returnUrl)
+			{
+			    return LocalRedirect(returnUrl);
+			}
+		- OR To check if the provided URL is a local URL, use IsLocalUrl() method.
+			public IActionResult Login(string returnUrl)
+			{
+			    if (Url.IsLocalUrl(returnUrl))
+			    {
+				return Redirect(returnUrl);
+			    }
+			    else
+			    {
+				return RedirectToAction("index", "home");
+			    }
+			}
+
+ASP.NET Core client side validation
+----------------------------------
+	- Server Side Validation in ASP.NET Core
+		- Server side validation is implemented by using validation attributes such as Required, StringLength etc, done on the server. 
+		- So there is a round trip between the client browser and the web server. The request has to be sent over the network to the web server for processing. 
+		- If the network is slow or the server is busy processing other requests, the end user may have to wait a few seconds and it also increases load on the server. 
+	- Client side validation can be performed on the client machine itself, which means no round trip & waiting time, client instant feedback 
+	  and the load on the server is also reduced to a great extent.
+	- Server Side Validation Example
+		- To make the Email and Password fields required, we decorate the [Required] attribute. 
+		  These same validation attributes are also used to implement client side validation in asp.net core.
+			public class LoginViewModel
+			{
+			    [Required]
+			    public string Email { get; set; }
+
+			    [Required]
+			    public string Password { get; set; }
+			}
+	- Client Side Validation
+		- There are 2 approaches that you could take to implement client side validation in asp.net core.
+		- Approach 1 : Write your own custom JavaScript code to implement client-side validation which is obviously tedious and time consuming.
+		- Approach 2 : Use the unobtrusive client-side validation libraries provided by asp.net core.
+			- With the second approach, we do not have to write a single line of code. All we have to do is include the following 3 scripts in the order specified.
+				<script src="~/lib/jquery/jquery.js"></script>
+				<script src="~/lib/jquery-validate/jquery.validate.js"></script>
+				<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js"></script>
+	- What does "Unobtrusive Validation" Mean
+		- Unobtrusive Validation allows us to take the already-existing server side validation attributes and use them to implement client-side validation. 
+		  We do not have to write a single line of custom JavaScript code. All we need is the above 3 script files in the order specified.
+		- The unobtrusive validation is done using the jquery.validate.unobtrusive.js library. This library is built on top of jquery.validate.js library, 
+		  which in turns uses jQuery. This is the reason we need to import these 3 libraries in the order specified.
+	- How does client side validation work in ASP.NET Core
+		- The Email property is decorated with [Required] attribute. To generate input field for Email, we use asp.net core input tag helper
+			- <input asp-for="Email"/>
+		- ANC tag helpers work in combination with the model validation attributes and generate the following HTML. Notice in the generated HTML we have data-* attributes.
+			- <input id="Email" name="Email" type="email" data-val="true" data-val-required="The Email field is required." />
+			- The data-* attributes allow us to add extra information to an HTML element. 
+			  These data-* attributes carry all the information required to perform the client-side validation. 
+			  It is the unobtrusive library (i.e jquery.validate.unobtrusive.js) that reads these data-val attributes and performs the client side validation.
+ASP.NET core remote validation
+--------------------------------
+	- What is Remote Validation in ASP.NET Core
+		- Remote validation allows a controller action method to be called using client side script. 
+		This is very useful when you want to call a server side method without a full page post back.
+	- Remote validation example
+		- Checking if the provided email is already taken by another user can only be done on the server. 
+		- The following IsEmailInUse() controller action method checks if the provided email is in use.
+			[AcceptVerbs("Get", "Post")] //or use [HttpGet][HttpPost]
+			[AllowAnonymous]
+			public async Task<IActionResult> IsEmailInUse(string email)
+			{
+			    var user = await userManager.FindByEmailAsync(email);
+
+			    if (user == null)
+			    {
+				return Json(true);
+			    }
+			    else
+			    {
+				return Json($"Email {email} is already in use.");
+			    }
+			}
+		- This method should respond to both HTTP GET and POST. 
+		- This is the reason we specified both the HTTP verbs (Get and Post) using [AcceptVerbs] attribute.
+		- ANC MVC uses jQuery remote() method which in turn issues an AJAX call to invoke the server side method. 
+		- The jQuery remote() method expects a JSON response, this is the reason we are returning JSON response from the server-side method (IsEmailInUse)
+	- ASP.NET core remote attribute
+		- The following is the model class for the User Registration View. 
+		- Notice, we have decorated the Email property with the [Remote] attribute pointing it to the action method that should be invoked when the email value changes.
+
+			public class RegisterViewModel
+			{
+			    [Required]
+			    [EmailAddress]
+			    [Remote(action: "IsEmailInUse", controller: "Account")]
+			    public string Email { get; set; }
+
+			    // Other properties
+			}
+	- ASP.NET core remote validation not working
+		- 3 client-side libraries are required for the remote validation to work. -> jquery.js, jquery.validate.js, jquery.validate.unobtrusive.js
+
+Custom validation attribute in asp.net core
+------------------------------------------
+	- ASP.NET Core built-in attributes
+		- For most use cases ANC has several built-in attributes for model validation. 
+		- Some of the built-in attributes are listed below. Required, Range, StringLength, Compare, Regular Expression
+	- Custom Attribute in ASP.NET Core
+		- If you have a complex validation requirement that you cannot implement using the built-in attributes, you can create a custom validation attribute 
+		  and reuse it in your project or even in multiple projects if you create it in a separate class library project.
+	- Custom Validation Attribute Example
+		- User Registration Page, only allow email where the domain name is solera.com. If not throw a validation error. Achieve using the built-in regular expression validator
+		- , but let's create a custom validator.
+	- ValidationAttribute class in ASP.NET Core
+		- To create a custom validation attribute, create a class that derives from the built-in abstract ValidationAttribute class and override IsValid() method.
+			public class ValidEmailDomainAttribute : ValidationAttribute
+			{
+			    private readonly string allowedDomain;
+
+			    public ValidEmailDomainAttribute(string allowedDomain)
+			    {
+				this.allowedDomain = allowedDomain;
+			    }
+
+			    public override bool IsValid(object value)
+			    {
+				string[] strings = value.ToString().Split('@');
+				return strings[1].ToUpper() == allowedDomain.ToUpper();
+			    }
+			}
+		- Using Custom Validation Attribute in ASP.NET Core
+			public class RegisterViewModel
+			{
+			    [ValidEmailDomain(allowedDomain: "solera.com",
+				ErrorMessage = "Email domain must be solera.com")]
+			    public string Email { get; set; }
+
+			    // Other Properties
+			}
+		- Email property is decorated with ValidEmailDomain attribute which is our custom validation attribute.
+		- AllowedDomain property specifies the email domain that we want to validate against.
+		- ErrorMessage property specifies the error message that should be displayed if the validation fails.
+		- The ErrorMessage property is inherited from the built-in base class ValidationAttribute.
+		- The validation error message is then picked up and displayed by the built-in validation tag helper.
+Extend IdentityUser in ASP.NET Core
+-----------------------------------
+	- Why should we extend IdentityUser class
+		- The built-in IdentityUser class has very limited set of properties like Id, Username, Email, PasswordHash etc. The source code of this class is shown below.
+			public class IdentityUser<TKey> where TKey : IEquatable<TKey>
+			{
+			    public IdentityUser() { }
+			    public IdentityUser(string userName) : this()
+			    {
+				UserName = userName;
+			    }
+			    [PersonalData]
+			    public virtual TKey Id { get; set; }
+			    [ProtectedPersonalData]
+			    public virtual string UserName { get; set; }
+			    public virtual string NormalizedUserName { get; set; }
+			    [ProtectedPersonalData]
+			    public virtual string Email { get; set; }
+			    public virtual string NormalizedEmail { get; set; }
+			    [PersonalData]
+			    public virtual bool EmailConfirmed { get; set; }
+			    public virtual string PasswordHash { get; set; }
+			    public virtual string SecurityStamp { get; set; }
+			    public virtual string ConcurrencyStamp { get; set; } = Guid.NewGuid().ToString();
+			    [ProtectedPersonalData]
+			    public virtual string PhoneNumber { get; set; }
+			    [PersonalData]
+			    public virtual bool PhoneNumberConfirmed { get; set; }
+			    [PersonalData]
+			    public virtual bool TwoFactorEnabled { get; set; }
+			    public virtual DateTimeOffset? LockoutEnd { get; set; }
+			    public virtual bool LockoutEnabled { get; set; }
+			    public virtual int AccessFailedCount { get; set; }
+			    public override string ToString()
+				=> UserName;
+			}
+		- What if I want to store additional data about the user like Gender, City, Country etc. 
+		- The built-in IdentityUser class does not have these properties. To store custom user data like Gender, City, Country etc, extend the IdentityUser class.
+	- Extend IdentityUser Class
+		- You can name the class that extends the IdentityUser class anything you want, but it is customary to name it ApplicationUser. 
+		- In the example below, ApplicationUser class extends the IdentityUser class.Just included 1 custom property City, but you can include as many as  you want.
+			public class ApplicationUser : IdentityUser
+			{
+			    public string City { get; set; }
+			}
+		- Find all references of IdentityUser class and replace it with our custom ApplicationUser class. 
+
+	- if i run Add-Migration Extend_IdentityUser without adding <ApplicationUser>, it will generate "Up(MigrationBuilder mb){}" code, reason it doesn't know ApplicationUser
+		
+    	- Specify ApplicationUser class as the generic argument for the IdentityDbContext class
+		public class AppDbContext : IdentityDbContext<ApplicationUser>
+		{
+		    public AppDbContext(DbContextOptions<AppDbContext> options)
+			: base(options)
+		    { }
+
+		    public DbSet<Employee> Employees { get; set; }
+
+		    protected override void OnModelCreating(ModelBuilder modelBuilder)
+		    {
+			base.OnModelCreating(modelBuilder);
+			modelBuilder.Seed();
+		    }
+		}
+		
+	- Generate a new migration to add columns to AspNetUsers table, Add-Migration Extend_IdentityUser
+		- The above command generates the required migration code to add City column to AspNetUsers table. 
+			public partial class Extend_IdentityUser : Migration
+			{
+			    protected override void Up(MigrationBuilder migrationBuilder)
+			    {
+				migrationBuilder.AddColumn<string>(
+				    name: "City",
+				    table: "AspNetUsers",
+				    nullable: true);
+			    }
+
+			    protected override void Down(MigrationBuilder migrationBuilder)
+			    {
+				migrationBuilder.DropColumn(
+				    name: "City",
+				    table: "AspNetUsers");
+			    }
+			}
+	- Next, apply the migration to the database using the following command, "Update-Database"
+	- To be able to store data for the custom City column in AspNetUsers table we need to alter
+		public class RegisterViewModel
+		{
+		    // Other Properties
+
+		    public string City { get; set; }
+		}
+		
+		Register View
+		    <div class="form-group">
+			<label asp-for="City"></label>
+			<input asp-for="City" class="form-control" />
+		    </div>
+		AccountController - Register action
+		 Register(RegisterViewModel model)
+			var user = new ApplicationUser
+			{
+			    UserName = model.Email,
+			    Email = model.Email,
+			    City = model.City
+			};
+Creating roles in asp.net core
+--------------------------------
+	- RoleManager in ASP.NET Core, to create a role
+	- The built-in IdentityRole class represents a Role
+	- RoleManager class performs all the CRUD operations from the table AspNetRoles
+	- To tell the RoleManager class to work with IdentityRole class, we specify IdentityRole class as the generic argument to RoleManager 
+	- RoleManager is made available to any controller or view by ANC dependency injection system
+		public class AdministrationController : Controller
+		{
+		    private readonly RoleManager<IdentityRole> roleManager;
+
+		    public AdministrationController(RoleManager<IdentityRole> roleManager)
+		    {
+			this.roleManager = roleManager;
+		    }
+		}
+	- Controller code to create a new role
+		- You get a validation error, if you try to create a role with the same name that already exists.
+
+		using EmployeeManagement.ViewModels;
+		using Microsoft.AspNetCore.Identity;
+		using Microsoft.AspNetCore.Mvc;
+		using System.Threading.Tasks;
+
+		namespace EmployeeManagement.Controllers
+		{
+		    public class AdministrationController : Controller
+		    {
+			private readonly RoleManager<IdentityRole> roleManager;
+
+			public AdministrationController(RoleManager<IdentityRole> roleManager)
+			{
+			    this.roleManager = roleManager;
+			}
+
+			[HttpGet]
+			public IActionResult CreateRole()
+			{
+			    return View();
+			}
+
+			[HttpPost]
+			public async Task<IActionResult> CreateRole(CreateRoleViewModel model)
+			{
+			    if (ModelState.IsValid)
+			    {
+				// We just need to specify a unique role name to create a new role
+				IdentityRole identityRole = new IdentityRole
+				{
+				    Name = model.RoleName
+				};
+
+				// Saves the role in the underlying AspNetRoles table
+				IdentityResult result = await roleManager.CreateAsync(identityRole);
+
+				if (result.Succeeded)
+				{
+				    return RedirectToAction("index", "home");
+				}
+
+				foreach (IdentityError error in result.Errors)
+				{
+				    ModelState.AddModelError("", error.Description);
+				}
+			    }
+
+			    return View(model);
+			}
+		    }
+		}
+
+	- Create Role View Model
+		- In ANC to create a role, all we need is a unique name for the role. We decorated the RoleName property with the [Required] attribute as it is a required field.
+
+		using System.ComponentModel.DataAnnotations;
+
+		namespace EmployeeManagement.ViewModels
+		{
+		    public class CreateRoleViewModel
+		    {
+			[Required]
+			[Display(Name = "Role")]
+			public string RoleName { get; set; }
+		    }
+		}
+	- Create Role View
+
+		@model CreateRoleViewModel
+
+		@{
+		    ViewBag.Title = "Create New Role";
+		}
+
+		<form asp-action="CreateRole" method="post" class="mt-3">
+		    <div asp-validation-summary="All" class="text-danger">
+		    </div>
+		    <div class="form-group row">
+			<label asp-for="RoleName" class="col-sm-2 col-form-label"></label>
+			<div class="col-sm-10">
+			    <input asp-for="RoleName" class="form-control" placeholder="Name">
+			    <span asp-validation-for="RoleName" class="text-danger"></span>
+			</div>
+		    </div>
+
+		    <div class="form-group row">
+			<div class="col-sm-10">
+			    <button type="submit" class="btn btn-primary" style="width:auto">
+				Create Role
+			    </button>
+			</div>
+		    </div>
+		</form>
+Get list of roles in asp.net core
+----------------------------------
+	- We want to display -> Role ID, Role Name and A pair of buttons to Edit and Delete a role
+	- Roles property of RoleManager class returns the list of all IdentityRole objects
+	- Pass the list of IdentityRole objects to the view for display
+		[HttpGet]
+		public IActionResult ListRoles()
+		{
+		    var roles = roleManager.Roles;
+		    return View(roles);
+		}
+
+	- List Roles View 
+		- ID property of the IdentityRole object returns the role ID
+		- Name property of the IdentityRole object returns the role Name
+			@model IEnumerable<IdentityRole>
+
+			@{
+			    ViewBag.Title = "All Roles";
+			}
+
+			<h1>All Roles</h1>
+
+			@if (Model.Any())
+			{
+			    <a class="btn btn-primary mb-3" style="width:auto" asp-action="CreateRole"
+			       asp-controller="administration">Add new role</a>
+
+			    foreach (var role in Model)
+			    {
+				<div class="card mb-3">
+				    <div class="card-header">
+					Role Id : @role.Id
+				    </div>
+				    <div class="card-body">
+					<h5 class="card-title">@role.Name</h5>
+				    </div>
+				    <div class="card-footer">
+					<a href="#" class="btn btn-primary">Edit</a>
+					<a href="#" class="btn btn-danger">Delete</a>
+				    </div>
+				</div>
+			    }
+			}
+			else
+			{
+			    <div class="card">
+				<div class="card-header">
+				    No roles created yet
+				</div>
+				<div class="card-body">
+				    <h5 class="card-title">
+					Use the button below to create a role
+				    </h5>
+				    <a class="btn btn-primary" style="width:auto"
+				       asp-controller="administration" asp-action="CreateRole">
+					Create Role
+				    </a>
+				</div>
+			    </div>
+			}
+Edit role in asp.net core
+--------------------------
+	- When Edit button on one of the roles is clicked, we want to go to EditRole action in the AdministrationController. 
+	  We are using asp-action and asp-controller tag helpers to do that. We also want to pass the ID of the role to edit. We pass the Role ID using asp-route-id tag helper.
+
+		<a asp-controller="Administration" asp-action="EditRole"
+		   asp-route-id="@role.Id" class="btn btn-primary">
+		    Edit
+		</a>
+		- asp-route-id tag helper includes the Role ID in the URL /Administration/EditRole/7360350f-2662-4842-8a78-58a308043477
+	- Edit Role View
+		- Role ID is non-editable, so keep the input element disabled
+		- Only Role Name is editable
+		- Display the list of Users in the Role
+	- Edit Role View Model
+		using System.Collections.Generic;
+		using System.ComponentModel.DataAnnotations;
+
+		namespace EmployeeManagement.ViewModels
+		{
+		    public class EditRoleViewModel
+		    {
+			public EditRoleViewModel()
+			{
+			    Users = new List<string>();
+			}
+
+			public string Id { get; set; }
+
+			[Required(ErrorMessage = "Role Name is required")]
+			public string RoleName { get; set; }
+
+			public List<string> Users { get; set; }
+		    }
+		}
+	- Edit Role Action Methods
+		// Role ID is passed from the URL to the action
+		[HttpGet]
+		public async Task<IActionResult> EditRole(string id)
+		{
+		    // Find the role by Role ID
+		    var role = await roleManager.FindByIdAsync(id);
+
+		    if (role == null)
+		    {
+			ViewBag.ErrorMessage = $"Role with Id = {id} cannot be found";
+			return View("NotFound");
+		    }
+
+		    var model = new EditRoleViewModel
+		    {
+			Id = role.Id,
+			RoleName = role.Name
+		    };
+
+		    // Retrieve all the Users
+		    foreach (var user in userManager.Users)
+		    {
+			// If the user is in this role, add the username to
+			// Users property of EditRoleViewModel. This model
+			// object is then passed to the view for display
+			if (await userManager.IsInRoleAsync(user, role.Name))
+			{
+			    model.Users.Add(user.UserName);
+			}
+		    }
+
+		    return View(model);
+		}
+
+		// This action responds to HttpPost and receives EditRoleViewModel
+		[HttpPost]
+		public async Task<IActionResult> EditRole(EditRoleViewModel model)
+		{
+		    var role = await roleManager.FindByIdAsync(model.Id);
+
+		    if (role == null)
+		    {
+			ViewBag.ErrorMessage = $"Role with Id = {model.Id} cannot be found";
+			return View("NotFound");
+		    }
+		    else
+		    {
+			role.Name = model.RoleName;
+
+			// Update the Role using UpdateAsync
+			var result = await roleManager.UpdateAsync(role);
+
+			if (result.Succeeded)
+			{
+			    return RedirectToAction("ListRoles");
+			}
+
+			foreach (var error in result.Errors)
+			{
+			    ModelState.AddModelError("", error.Description);
+			}
+
+			return View(model);
+		    }
+		}
+	- Edit Role View
+
+		@model EditRoleViewModel
+
+		@{
+		    ViewBag.Title = "Edit Role";
+		}
+
+		<h1>Edit Role</h1>
+
+		<form method="post" class="mt-3">
+		    <div class="form-group row">
+			<label asp-for="Id" class="col-sm-2 col-form-label"></label>
+			<div class="col-sm-10">
+			    <input asp-for="Id" disabled class="form-control">
+			</div>
+		    </div>
+		    <div class="form-group row">
+			<label asp-for="RoleName" class="col-sm-2 col-form-label"></label>
+			<div class="col-sm-10">
+			    <input asp-for="RoleName" class="form-control">
+			    <span asp-validation-for="RoleName" class="text-danger"></span>
+			</div>
+		    </div>
+
+		    <div asp-validation-summary="All" class="text-danger"></div>
+
+		    <div class="form-group row">
+			<div class="col-sm-10">
+			    <button type="submit" class="btn btn-primary">Update</button>
+			    <a asp-action="ListRoles" class="btn btn-primary">Cancel</a>
+			</div>
+		    </div>
+
+		    <div class="card">
+			<div class="card-header">
+			    <h3>Users in this role</h3>
+			</div>
+			<div class="card-body">
+			    @if (Model.Users.Any())
+			    {
+				foreach (var user in Model.Users)
+				{
+				    <h5 class="card-title">@user</h5>
+				}
+			    }
+			    else
+			    {
+				<h5 class="card-title">None at the moment</h5>
+			    }
+			</div>
+			<div class="card-footer">
+			    <a href="#" class="btn btn-primary" style="width:auto">Add Users</a>
+			    <a href="#" class="btn btn-primary" style="width:auto">Remove Users</a>
+			</div>
+		    </div>
+		</form>
+Add or remove users from role in asp.net core
+---------------------------------------------
+	- On Edit role view, when Add or remove users from this role button is clicked, we want to redirect to Edit users in role view
+		<div class="card-footer">
+		    <a asp-controller="Administration" asp-action="EditUsersInRole"
+		       asp-route-roleId="@Model.Id" class="btn btn-primary">
+			Add or remove users from this role
+		    </a>
+		</div>
+	- Edit users in role view is as shown below. If you want the user to be a member of the given role, check the checkbox, otherwise leave it unchecked.
+	- Once the Update button is clicked the data should be updated in the underlying AspNetUserRoles database table.
+	- AspNetUserRoles identity database table
+		- users are stored in AspNetUsers table, where as roles are stored in AspNetRoles table. UserRoles i.e user to role mapping data is stored in AspNetUserRoles table.
+		- There is a Many-to-Many relationship between AspNetUsers and AspNetRoles table. 
+		- A user can be a member of many roles and a role can contain many users as it's members. This User and Role mapping data is stored in AspNetUserRoles table.
+		- This table has just 2 columns - UserId and RoleId. Both are foreign keys.
+		- UserId column references Id column in AspNetUsers table and RoleId column references Id column in AspNetRoles table.
+			public class UserRoleViewModel
+			{
+			    public string UserId { get; set; }
+			    public string UserName { get; set; }
+			    public bool IsSelected { get; set; }
+			}
+		- In the UserRoleViewModel class, in addition to UserId property, we have UserName and IsSelected properties. 
+			- UserName property is required so we can display the UserName on the view. 
+			- IsSelected property is required to determine if the user is selected to be a member of the role.
+			- We could include RoleId property also in the UserRoleViewModel class, but as far as this view is concerned, there is a one-to-many relationship 
+			  from Role to Users. So, in order not to repeat RoleId for each User, we will use ViewBag to pass RoleId from controller to the view.
+	- HttpGet EditUsersInRole Action
+		[HttpGet]
+		public async Task<IActionResult> EditUsersInRole(string roleId)
+		{
+		    ViewBag.roleId = roleId;
+
+		    var role = await roleManager.FindByIdAsync(roleId);
+
+		    if (role == null)
+		    {
+			ViewBag.ErrorMessage = $"Role with Id = {roleId} cannot be found";
+			return View("NotFound");
+		    }
+
+		    var model = new List<UserRoleViewModel>();
+
+		    foreach (var user in userManager.Users)
+		    {
+			var userRoleViewModel = new UserRoleViewModel
+			{
+			    UserId = user.Id,
+			    UserName = user.UserName
+			};
+
+			if (await userManager.IsInRoleAsync(user, role.Name))
+			{
+			    userRoleViewModel.IsSelected = true;
+			}
+			else
+			{
+			    userRoleViewModel.IsSelected = false;
+			}
+
+			model.Add(userRoleViewModel);
+		    }
+
+		    return View(model);
+		}
+
+	- HttpPost EditUsersInRole Action
+		[HttpPost]
+		public async Task<IActionResult> EditUsersInRole(List<UserRoleViewModel> model, string roleId)
+		{
+		    var role = await roleManager.FindByIdAsync(roleId);
+
+		    if (role == null)
+		    {
+			ViewBag.ErrorMessage = $"Role with Id = {roleId} cannot be found";
+			return View("NotFound");
+		    }
+
+		    for (int i = 0; i < model.Count; i++)
+		    {
+			var user = await userManager.FindByIdAsync(model[i].UserId);
+
+			IdentityResult result = null;
+
+			if (model[i].IsSelected && !(await userManager.IsInRoleAsync(user, role.Name)))
+			{
+			    result = await userManager.AddToRoleAsync(user, role.Name);
+			}
+			else if (!model[i].IsSelected && await userManager.IsInRoleAsync(user, role.Name))
+			{
+			    result = await userManager.RemoveFromRoleAsync(user, role.Name);
+			}
+			else
+			{
+			    continue;
+			}
+
+			if (result.Succeeded)
+			{
+			    if (i < (model.Count - 1))
+				continue;
+			    else
+				return RedirectToAction("EditRole", new { Id = roleId });
+			}
+		    }
+
+		    return RedirectToAction("EditRole", new { Id = roleId });
+		}
+	- EditUsersInRole View
+		@model List<UserRoleViewModel>
+
+		@{
+		    var roleId = ViewBag.roleId;
+		}
+
+		<form method="post">
+		    <div class="card">
+			<div class="card-header">
+			    <h2>Add or remove users from this role</h2>
+			</div>
+			<div class="card-body">
+			    @for (int i = 0; i < Model.Count; i++)
+			    {
+				<div class="form-check m-1">
+				    <input type="hidden" asp-for="@Model[i].UserId" />
+				    <input type="hidden" asp-for="@Model[i].UserName" />
+				    <input asp-for="@Model[i].IsSelected" class="form-check-input" />
+				    <label class="form-check-label" asp-for="@Model[i].IsSelected">
+					@Model[i].UserName
+				    </label>
+				</div>
+			    }
+			</div>
+			<div class="card-footer">
+			    <input type="submit" value="Update" class="btn btn-primary"
+				   style="width:auto" />
+			    <a asp-action="EditRole" asp-route-id="@roleId"
+			       class="btn btn-primary" style="width:auto">Cancel</a>
+			</div>
+		    </div>
+		</form>
+ASP.NET Core role based authorization
+--------------------------------------
+	- Authentication and Authorization in ASP.NET Core
+		- Authentication is the process of identifying who the user is. 
+		- Authorization is the process of identifying what the user can and cannot do.
+		- Authorization in ASP.NET Core MVC is controlled through the AuthorizeAttribute
+	- ASP.NET Core Simple Authorization using Authorize attribute, without any parameters, it only checks if the user is authenticated.
+		[Authorize]
+		public class SomeController : Controller
+		{
+		}
+	- Role Based Authorization checks can be applied either against a controller or an action within a controller.
+		- Role Based Authorization Example, Only those users who are members of the Administrator role can access the actions in the AdministrationController
+			[Authorize(Roles = "Administrator")]
+			public class AdministrationController : Controller
+			{
+			}
+		- Multiple Roles separated by comma. The actions in this controller are accessible only to those users who are members of either Administrator or User role.
+			[Authorize(Roles = "Administrator,User")]
+			public class AdministrationController : Controller
+			{
+			}
+	- Multiple Instances of Authorize Attribute, to be able to access the actions in this controller, users have to be members of both - the Administrator role and the User role.
+		[Authorize(Roles = "Administrator")]
+		[Authorize(Roles = "User")]
+		public class AdministrationController : Controller
+		{
+		}
+	- Role Based Authorization Check on a Controller Action
+		- Members of the Administrator role or the User role can access the controller and the ABC action, 
+		  but only members of the Administrator role can access the XYZ action. 
+		  The action Anyone() can be accessed by anyone including the anonymous users as it is decorated with AllowAnonymous attribute.
+			[Authorize(Roles = "Administrator, User")]
+			public class AdministrationController : Controller
+			{
+			    public ActionResult ABC()
+			    {
+			    }
+
+			    [Authorize(Roles = "Administrator")]
+			    public ActionResult XYZ()
+			    {
+			    }
+
+			    [AllowAnonymous]
+			    public ActionResult Anyone()
+			    {
+			    }
+			}
+Show or hide navigation menu based on user role in asp.net core
+----------------------------------------------------------------
+	- If the logged-in user is in Admin role, then we want to display Manage Roles navigation menu item.
+	- If the logged-in user IS NOT in Admin role, then Manage Roles navigation menu item should not be displayed.
+	- Show or hide navigation menu based on logged-in user role
+		- Navigation menu is in the laylout view (_Layout.cshtml). 
+		- Inject SignInManager service into the layout view using @inject directive
+		- Use the SignInManager service, IsSignedIn() method and IsInRole() method to check if the user is signed in and if the user is in the Admin role
+			<ul class="navbar-nav">
+			    <li class="nav-item">
+				<a class="nav-link" asp-controller="home" asp-action="index">List</a>
+			    </li>
+			    <li class="nav-item">
+				<a class="nav-link" asp-controller="home" asp-action="create">Create</a>
+			    </li>
+			    @if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin"))
+			    {
+				<li class="nav-item">
+				    <a class="nav-link" asp-controller="Administration" asp-action="ListRoles">
+					Manage Roles
+				    </a>
+				</li>
+			    }
+			</ul>
+		- What if the user types the URL in address bar
+			- The URL associated with Manage Roles navigation menu item is /Account/ListRoles. What if the user types this URL directly in the address bar.
+			- The Authorize attribute on the AccountController protects from the unauthorised access. 
+			  If the logged-in user is not in Admin role, asp.net core automatically redirects the user to /Account/AccessDenied.
+
+			[Authorize(Roles = "Admin")]
+			public class AdministrationController : Controller
+			{
+			    // Code
+			}
+
+	 - AccessDenied action in AccountController
+		public class AccountController : Controller
+		{
+		    [HttpGet]
+		    [AllowAnonymous]
+		    public IActionResult AccessDenied()
+		    {
+			return View();
+		    }
+
+		    // Other actions
+		}
+
+		AccessDenied View
+
+		<div class="text-center">
+		    <h1 class="text-danger">Access Denied</h1>
+		    <h6 class="text-danger">You do not have persmission to view this resource</h6>
+		    <img src="~/images/noaccess.png" style="height:300px; width:300px" />
+		</div>
+
+List all users from asp.net core identity database
+--------------------------------------------------
+	- The registered users of our application are stored in AspNetUsers identity database table. We want to retrieve and display them on a view as you can see below.
+	- Users property of UserManager service returns a list of all application users
+		[Authorize(Roles = "Admin")]
+		public class AdministrationController : Controller
+		{
+		    private readonly UserManager<ApplicationUser> userManager;
+
+		    public AdministrationController(UserManager<ApplicationUser> userManager)
+		    {
+			this.userManager = userManager;
+		    }
+
+		    [HttpGet]
+		    public IActionResult ListUsers()
+		    {
+			var users = userManager.Users;
+			return View(users);
+		    }
+		}
+
+		@model IEnumerable<ApplicationUser>
+
+		@{
+		    ViewBag.Title = "All Users";
+		}
+
+		<h1>All Users</h1>
+
+		@if (Model.Any())
+		{
+		    <a asp-action="Register" asp-controller="Account"
+		       class="btn btn-primary mb-3" style="width:auto">
+			Add new user
+		    </a>
+
+		    foreach (var user in Model)
+		    {
+			<div class="card mb-3">
+			    <div class="card-header">
+				User Id : @user.Id
+			    </div>
+			    <div class="card-body">
+				<h5 class="card-title">@user.UserName</h5>
+			    </div>
+			    <div class="card-footer">
+				<a href="#" class="btn btn-danger">Edit</a>
+				<a href="#" class="btn btn-danger">Delete</a>
+			    </div>
+			</div>
+		    }
+		}
+		else
+		{
+		    <div class="card">
+			<div class="card-header">
+			    No users created yet
+			</div>
+			<div class="card-body">
+			    <h5 class="card-title">
+				Use the button below to create a user
+			    </h5>
+			    <a class="btn btn-primary" style="width:auto"
+			       asp-controller="Account" asp-action="Register">
+				Add new user
+			    </a>
+			</div>
+		    </div>
+		}
+
+	- Manage Users navigation menu
+		- In the navigation menu we want to display Manage dropdown menu
+		- It should contain 2 options - Users and Roles
+		- This dropdown menu should only be displayed if the user is signed-in and in the Admin role
+		- We are using Bootstrap 4 for the navigation menu, 
+		
+		@inject SignInManager<ApplicationUser> signInManager;
+
+		@if (signInManager.IsSignedIn(User) && User.IsInRole("Admin"))
+		{
+		    <li class="nav-item dropdown">
+			<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink"
+			   data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+			    Manage
+			</a>
+			<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+			    <a class="dropdown-item" asp-controller="Administration"
+			       asp-action="ListUsers">Users</a>
+			    <a class="dropdown-item" asp-controller="Administration"
+			       asp-action="ListRoles">Roles</a>
+			</div>
+		    </li>
+		}
+
+	- An anonymous user can also register himself as an application user, using the following Register action method. 
+	  This method is in the AccountController. The required change is commented.
+
+		[HttpPost]
+		[AllowAnonymous]
+		public async Task<IActionResult> Register(RegisterViewModel model)
+		{
+		    if (ModelState.IsValid)
+		    {
+			var user = new ApplicationUser
+			{
+			    UserName = model.Email,
+			    Email = model.Email,
+			    City = model.City
+			};
+
+			var result = await userManager.CreateAsync(user, model.Password);
+
+			if (result.Succeeded)
+			{
+			    // If the user is signed in and in the Admin role, then it is
+			    // the Admin user that is creating a new user. So redirect the
+			    // Admin user to ListRoles action
+			    if (signInManager.IsSignedIn(User) && User.IsInRole("Admin"))
+			    {
+				return RedirectToAction("ListUsers", "Administration");
+			    }
+
+			    await signInManager.SignInAsync(user, isPersistent: false);
+			    return RedirectToAction("index", "home");
+			}
+
+			foreach (var error in result.Errors)
+			{
+			    ModelState.AddModelError(string.Empty, error.Description);
+			}
+		    }
+
+		    return View(model);
+		}
+Edit identity user in asp.net core
+-----------------------------------
+	- Edit button on List Users View
+		<div class="card-footer">
+		    <a asp-action="EditUser" asp-controller="Administration"
+			asp-route-id="@user.Id" class="btn btn-primary">Edit</a>
+		    <a href="#" class="btn btn-danger">Delete</a>
+		</div>
+	- Edit User View Model 
+		public class EditUserViewModel
+		{
+		    public EditUserViewModel()
+		    {
+			Claims = new List<string>();
+			Roles = new List<string>();
+		    }
+
+		    public string Id { get; set; }
+
+		    [Required]
+		    public string UserName { get; set; }
+
+		    [Required]
+		    [EmailAddress]
+		    public string Email { get; set; }
+
+		    public string City { get; set; }
+
+		    public List<string> Claims { get; set; }
+
+		    public IList<string> Roles { get; set; }
+		}
+		- To avoid NullReferenceExceptions at runtime, initialise Claims and Roles with a new list in the constructor.
+	- EditUser HttpGet Action
+
+		[HttpGet]
+		public async Task<IActionResult> EditUser(string id)
+		{
+		    var user = await userManager.FindByIdAsync(id);
+
+		    if (user == null)
+		    {
+			ViewBag.ErrorMessage = $"User with Id = {id} cannot be found";
+			return View("NotFound");
+		    }
+
+		    // GetClaimsAsync retunrs the list of user Claims
+		    var userClaims = await userManager.GetClaimsAsync(user);
+		    // GetRolesAsync returns the list of user Roles
+		    var userRoles = await userManager.GetRolesAsync(user);
+
+		    var model = new EditUserViewModel
+		    {
+			Id = user.Id,
+			Email = user.Email,
+			UserName = user.UserName,
+			City = user.City,
+			Claims = userClaims.Select(c => c.Value).ToList(),
+			Roles = userRoles
+		    };
+
+		    return View(model);
+		}
+
+		[HttpPost]
+		public async Task<IActionResult> EditUser(EditUserViewModel model)
+		{
+		    var user = await userManager.FindByIdAsync(model.Id);
+
+		    if (user == null)
+		    {
+			ViewBag.ErrorMessage = $"User with Id = {model.Id} cannot be found";
+			return View("NotFound");
+		    }
+		    else
+		    {
+			user.Email = model.Email;
+			user.UserName = model.UserName;
+			user.City = model.City;
+
+			var result = await userManager.UpdateAsync(user);
+
+			if (result.Succeeded)
+			{
+			    return RedirectToAction("ListUsers");
+			}
+
+			foreach (var error in result.Errors)
+			{
+			    ModelState.AddModelError("", error.Description);
+			}
+
+			return View(model);
+		    }
+		}
+
+	- EditUser View
+
+		@model EditUserViewModel
+
+		@{
+		    ViewBag.Title = "Edit User";
+		}
+
+		<h1>Edit User</h1>
+
+		<form method="post" class="mt-3">
+		    <div class="form-group row">
+			<label asp-for="Id" class="col-sm-2 col-form-label"></label>
+			<div class="col-sm-10">
+			    <input asp-for="Id" disabled class="form-control">
+			</div>
+		    </div>
+		    <div class="form-group row">
+			<label asp-for="Email" class="col-sm-2 col-form-label"></label>
+			<div class="col-sm-10">
+			    <input asp-for="Email" class="form-control">
+			    <span asp-validation-for="Email" class="text-danger"></span>
+			</div>
+		    </div>
+		    <div class="form-group row">
+			<label asp-for="UserName" class="col-sm-2 col-form-label"></label>
+			<div class="col-sm-10">
+			    <input asp-for="UserName" class="form-control">
+			    <span asp-validation-for="UserName" class="text-danger"></span>
+			</div>
+		    </div>
+		    <div class="form-group row">
+			<label asp-for="City" class="col-sm-2 col-form-label"></label>
+			<div class="col-sm-10">
+			    <input asp-for="City" class="form-control">
+			</div>
+		    </div>
+
+		    <div asp-validation-summary="All" class="text-danger"></div>
+
+		    <div class="form-group row">
+			<div class="col-sm-10">
+			    <button type="submit" class="btn btn-primary">Update</button>
+			    <a asp-action="ListUsers" class="btn btn-primary">Cancel</a>
+			</div>
+		    </div>
+
+		    <div class="card">
+			<div class="card-header">
+			    <h3>User Roles</h3>
+			</div>
+			<div class="card-body">
+			    @if (Model.Roles.Any())
+			    {
+				foreach (var role in Model.Roles)
+				{
+				    <h5 class="card-title">@role</h5>
+				}
+			    }
+			    else
+			    {
+				<h5 class="card-title">None at the moment</h5>
+			    }
+			</div>
+			<div class="card-footer">
+			    <a href="#" style="width:auto" class="btn btn-primary">
+				Manage Roles
+			    </a>
+			</div>
+		    </div>
+
+		    <div class="card mt-3">
+			<div class="card-header">
+			    <h3>User Claims</h3>
+			</div>
+			<div class="card-body">
+			    @if (Model.Claims.Any())
+			    {
+				foreach (var claim in Model.Claims)
+				{
+				    <h5 class="card-title">@claim</h5>
+				}
+			    }
+			    else
+			    {
+				<h5 class="card-title">None at the moment</h5>
+			    }
+			</div>
+			<div class="card-footer">
+			    <a href="#" style="width:auto" class="btn btn-primary">
+				Manage Claims
+			    </a>
+			</div>
+		    </div>
+		</form>
+
+Delete identity user in asp.net core
+-----------------------------------
+	- When the Delete button is clicked, the respective user must be deleted from the AspNetUsers table 
+	- Deleting data using a GET request is not recommended.
+	- <img src="http://localhost/Administration/DeleteUser/123" />, the mailicious image tries to load and issues a GET request, which would delete the data.
+ 	- Also, when search engines index your page, they issue a GET request which would delete the data. 
+ 		- In general GET request should be free of any side-effects, meaning it should not change the state on the server. 
+ 		- Deletes should always be performed using a POST request.
+	- Deleting data using a POST request
+		- Delete button type is set to submit
+		- It is placed inside the form element and the method attribute is set to post
+		- So when the Delete button is clicked a POST request is issued to DeleteUser() action passing it the ID of the user to delete
+			<form method="post" asp-action="DeleteUser" asp-route-id="@user.Id">
+			    <button type="submit" class="btn btn-danger">Delete</button>
+			</form>
+	- DeleteUser Action in the Controller
+
+		Use the UserManager service DeleteAsync() method to delete the user
+
+		public class AdministrationController : Controller
+		{
+		    private readonly UserManager<ApplicationUser> userManager;
+
+		    public AdministrationController(UserManager<ApplicationUser> userManager)
+		    {
+			this.userManager = userManager;
+		    }
+
+		    [HttpPost]
+		    public async Task<IActionResult> DeleteUser(string id)
+		    {
+			var user = await userManager.FindByIdAsync(id);
+
+			if (user == null)
+			{
+			    ViewBag.ErrorMessage = $"User with Id = {id} cannot be found";
+			    return View("NotFound");
+			}
+			else
+			{
+			    var result = await userManager.DeleteAsync(user);
+
+			    if (result.Succeeded)
+			    {
+				return RedirectToAction("ListUsers");
+			    }
+
+			    foreach (var error in result.Errors)
+			    {
+				ModelState.AddModelError("", error.Description);
+			    }
+
+			    return View("ListUsers");
+			}
+		    }
+		}
+ASP.NET Core delete confirmation
+----------------------------------
+	- Delete confirmation dialog in asp.net core
+		- When the DELETE button is clicked we want to display the following browser confirm dialog.
+		- This is very easy to achieve. All we need is the onclick attribute on the DELETE button.
+		- The JavaScript confirm() function displays the confirmation dialog to the user.
+		- If the Cancel button is clicked on the confirmation dialog, the confirm() function returns false and nothing happens.
+		- If the OK button is clicked, the form is submitted and the respective user record is deleted from the database
+			<button type="submit" class="btn btn-danger"
+				onclick="return confirm('Are you sure you want to delete user : @user.UserName')">
+			    Delete
+			</button>
+	- Yes or No Delete buttons instead of confirmation dialog
+		- These days most people do not like confirmation dialog. Instead they want something inline, like the Yes and No buttons below. 
+		- The span elements that surround the Delete, Yes and No buttons will be dynamically generated for every user on the list page.
+		- If you have more than one user on the page there will be more than one span element
+		- To ensure these span elements have unique ID's we are appending User.Id which is a Guid and guaranteed to be unique
+			<div class="card-footer">
+			    <form method="post" asp-action="DeleteUser" asp-route-id="@user.Id">
+				<a asp-controller="Administration" asp-action="Edituser"
+				    asp-route-id="@user.Id" class="btn btn-primary">Edit</a>
+
+				<span id="confirmDeleteSpan_@user.Id" style="display:none">
+				    <span>Are you sure you want to delete?</span>
+				    <button type="submit" class="btn btn-danger">Yes</button>
+				    <a href="#" class="btn btn-primary"
+					onclick="confirmDelete('@user.Id', false)">No</a>
+				</span>
+
+				<span id="deleteSpan_@user.Id">
+				    <a href="#" class="btn btn-danger"
+					onclick="confirmDelete('@user.Id', true)">Delete</a>
+				</span>
+			    </form>
+			</div>
+
+			confirmDelete JavaScript function
+
+			function confirmDelete(uniqueId, isDeleteClicked) {
+			    var deleteSpan = 'deleteSpan_' + uniqueId;
+			    var confirmDeleteSpan = 'confirmDeleteSpan_' + uniqueId;
+
+			    if (isDeleteClicked) {
+				$('#' + deleteSpan).hide();
+				$('#' + confirmDeleteSpan).show();
+			    } else {
+				$('#' + deleteSpan).show();
+				$('#' + confirmDeleteSpan).hide();
+			    }
+			}
+	- How to get confirmDelete JavaScript function into the view
+		- We need confirmDelete() JavaScript function on ListUsers view
+		- In the layout file (_Layout.cshtml) we have a defined a "Scripts" section. This section is optional.
+		- We need this confirmDelete() function only in this ListUsers view
+		- So, we are using the optional Scripts section to include CustomScript.js file which contains confirmDelete() function.
+		@section Scripts {
+		    <script src="~/js/CustomScript.js"></script>
+		}
+		-layout.cshtml
+		 @if (IsSectionDefined("Scripts"))
+		    {
+		        @RenderSection("Scripts", required:true)
+    		}
+		
+Delete identity role in asp.net core
+--------------------------------------
+	- When the Delete button is clicked, the respective role must be deleted from the AspNetRoles table
+		<form asp-action="DeleteRole" asp-route-id="@role.Id" method="post">
+		    <span id="confirmDeleteSpan_@role.Id" style="display:none">
+			<span>Are you sure you want to delete?</span>
+			<button type="submit" class="btn btn-danger">Yes</button>
+			<a href="#" class="btn btn-primary"
+			    onclick="confirmDelete('@role.Id', false)">No</a>
+		    </span>
+
+		    <span id="deleteSpan_@role.Id">
+			<a href="#" class="btn btn-danger"
+			    onclick="confirmDelete('@role.Id', true)">Delete</a>
+		    </span>
+		</form>
+		
+		@section Scripts {
+				    <script src="~/js/CustomScript.js"></script>
+		}
+	- Delete button type is set to submit
+	- It is placed inside the form element and the method attribute is set to post
+	- So when the Delete button is clicked a POST request is issued to DeleteRole() action passing it the ID of the role to delete
+	- The span elements that surround the Delete, Yes and No buttons will be dynamically generated for every role on the list page.
+	- If you have more than one role on the page there will be more than one span element
+	- To ensure these span elements have unique ID's we are appending Role.Id which is a Guid and guaranteed to be unique
+		function confirmDelete(uniqueId, isTrue) {
+
+		    var deleteSpan = 'deleteSpan_' + uniqueId;
+		    var confirmDeleteSpan = 'confirmDeleteSpan_' + uniqueId;
+
+		    if (isTrue) {
+			$('#' + deleteSpan).hide();
+			$('#' + confirmDeleteSpan).show();
+		    } else {
+			$('#' + deleteSpan).show();
+			$('#' + confirmDeleteSpan).hide();
+		    }
+		}
+
+	- DeleteRole Action in the Controller
+	- Use the RoleManager service DeleteAsync() method to delete the role
+
+		public class AdministrationController : Controller
+		{
+		    private readonly RoleManager<IdentityRole> roleManager;
+
+		    public AdministrationController(RoleManager<IdentityRole> roleManager)
+		    {
+			this.roleManager = roleManager;
+		    }
+
+		    [HttpPost]
+		    public async Task<IActionResult> DeleteRole(string id)
+		    {
+			var role = await roleManager.FindByIdAsync(id);
+
+			if (role == null)
+			{
+			    ViewBag.ErrorMessage = $"Role with Id = {id} cannot be found";
+			    return View("NotFound");
+			}
+			else
+			{
+			    var result = await roleManager.DeleteAsync(role);
+
+			    if (result.Succeeded)
+			    {
+				return RedirectToAction("ListRoles");
+			    }
+
+			    foreach (var error in result.Errors)
+			    {
+				ModelState.AddModelError("", error.Description);
+			    }
+
+			    return View("ListRoles");
+			}
+		    }
+		}
+
+Enforce ON DELETE NO ACTION in entity framework core
+---------------------------------------------------
+	- Users are stored in AspNetUsers table
+	- Roles are stored in AspNetRoles table
+	- User and Role mapping data is stored in AspNetUserRoles table
+	- This table has just 2 columns : UserId & RoleId
+	- Both are foreign keys
+	- Cascading referential integrity constraint allows to define the actions SQL Server should take when a user attempts to delete/update a key to which an existing foreign keys points.
+	- Foreign key with Cascade DELETE
+		- In Entity Framework Core, by default the foreign keys in AspNetUserRoles table have Cascade DELETE behaviour. 
+		- This means, if a record in the parent table (AspNetRoles) is deleted, then the corresponding records in the child table (AspNetUserRoles ) are automatically be deleted.
+	- Foreign key with NO ACTION ON DELETE
+		- What if you want to customise this default behaviour. We do not want to allow a role to be deleted, 
+		  if there are rows in the child table (AspNetUserRoles) which point to a role in the parent table (AspNetRoles).
+	- To achieve this, modify foreign keys DeleteBehavior to Restrict. We do this in OnModelCreating() method of AppDbContext class
+		protected override void OnModelCreating(ModelBuilder modelBuilder)
+		{
+		    base.OnModelCreating(modelBuilder);
+
+		    foreach (var foreignKey in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
+		    {
+			foreignKey.DeleteBehavior = DeleteBehavior.Restrict;
+		    }
+		}
+	- Build the solution. Add a new migration and update the database.
+	- With this change, if you view the properties of the foreign key you will see ON DELETE is set to NO ACTION
+	- At this point, an error will be thrown, if you try to delete a role from AspNetRoles table, for which there are child rows in AspNetUserRoles table 
+	  and the DELETE action will be rolled back. You have to delete the CHILD rows before deleting the parent row.
+	 	- SqlException: The DELETE statement conflicted with the REFERENCE constraint "FK_AspNetUserRoles_AspNetRoles_RoleId". 
+	 	   The conflict occurred in database "ft-db-name", table "dbo.AspNetUserRoles", column 'RoleId'. The statement has been terminated. 
