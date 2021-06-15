@@ -1,0 +1,48 @@
+Entity framework is an Object/Relational Mapping (ORM) framework. It is an enhancement to ADO.NET that gives developers an automated mechanism for accessing & storing the data in the database.
+It basically generates business objects and entities according to the database tables and provides the mechanism for:
+Performing basic CRUD (Create, Read, Update, Delete) operations.
+Easily managing "1 to 1", "1 to many", and "many to many" relationships.
+Ability to have inheritance relationships between entities.
+
+an alternative to ADO.NET, yes or no, Yes because the developer will not be writing ADO.NET methods and classes for performing data operations and no because this model is actually written on top of ADO.NET, 
+
+ORM is a tool for storing data from domain objects to relational database, in an automated way, without much programming. ORM includes three main parts: Domain class objects, Relational database objects and Mapping information on how domain objects map to relational database objects (tables, views & storedprocedures). ORM allows us to keep our database design separate from our domain class design. This makes the application maintainable and extendable. 
+
+Entity Framework is an open source framework by Microsoft.
+
+ADO.NET Entity Data Model or LINQ to SQL Classes (dbml)
+
+Insert AddObjects(con),DeleteObject, UpdateObject and SaveChanges
+
+LINQ (Language Integrated Query ) - that retrieves data from a data source.
+LINQ to SQL is a .Net framework component from Microsoft which is used to access to Microsoft SQL Server databases. 
+System.Data.Linq
+System.Data.Linq.Mapping
+DataContext
+
+Not every SQL statement can be converted to LINQ
+
+Providing a single querying interface for a multitude of data sources. 
+
+LINQ is in most cases a significantly more productive querying language than SQL.
+
+SELECT UPPER(Name) FROM (SELECT *, RN = row_number() OVER (ORDER BY Name) FROM Customer WHERE Name LIKE 'A%' A
+WHERE RN BETWEEN 21 AND 30 ORDER BY Name
+
+var query = from c in db.Customers where c.Name.StartsWith ("A") orderby c.Name select c.Name.ToUpper();
+var thirdPage = query.Skip(20).Take(10);
+
+it is complicated and messy, but simple query in LINQ
+
+Associations - you can query across relationships without having to join. 
+
+for exampele, list all purchases of $1000 or greater made by customers who live in Washington. 
+from p in db.Purchases where p.Customer.Address.State == "WA" || p.Customer == null 
+where p.PurchaseItems.Sum (pi => pi.SaleAmount) > 1000 select p
+
+When not to use LINQ for querying databases
+LINQ doesn't deprecate SQL. It takes more than 95% of the querying brunt, but you still sometimes need SQL for:
+
+Hand-tweaked queries (especially with optimization or locking hints)
+Queries that involve selecting into temporary tables, then querying those tables
+Predicated updates and bulk inserts

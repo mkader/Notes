@@ -1,0 +1,130 @@
+Example 1 - join with single & more conditions, left outer join, select with alias
+=================================================================================
+var result = (from v in crmDB.Contacts
+	      join sm in crmDB.StringMaps on
+		     new { sc = v.StatusCode.ToString(), ansc = "StatusCode", otc = 2 } equals
+		     new { sc = sm.AttributeValue.ToString(), ansc = sm.AttributeName, otc = sm.ObjectTypeCode } //join on more condition
+	      join a in crmDB.Addresses on v.HomeAddressID equals a.AddressId into v_a  //join on one condition
+	      from a in v_a.DefaultIfEmpty() //left outer join
+	      join d in crmDB.Leads on ddc.Leadsid equals d.LeadsId
+	      where 
+	      	v.StatusCode != 757580012 && d.LeadTypeName.ToLower() == "book"  // where and condition
+	      select new
+	      {
+		  v.ContactId,
+		  v.FirstName,
+		  DOB = v.BirthDate,
+		  LeadComboID = a.LeadComboID,
+		  Order = d.LeadOrder != null ? d.LeadOrder.Value : 0,
+	      });
+
+EQUAL SQL 
+select 
+	v.ContactId,  v.FirstName,  v.BirthDate DOB,  a.LeadComboID LeadComboID
+from 
+	contact v
+	inner join stringmap sm on sm.AttributeValue = v.StatusCode and sm.AttributeName = 'StatusCode' and sm.ObjectTypeCode = 2 
+	left outer join address a on v.HomeAddressID = a.AddressId 
+	inner join leads_leadscombos ddc on a.LeadComboID = ddc.LeadCombosid
+	inner join leads d on ddc.leadsid = d.leadsId
+where
+	v.StatusCode != 757580012 and d.LeadTypeName = 'book'
+	
+	
+Example 2 - one linq to another linq , assign back to result linq
+=================================================================
+result = (from v in result join dc in crmDB.leadscombos on v.MuniId equals dc.JuriId
+      where dc.CountyId.ToString() == sfId && dc.leadscombosId == v.LeadComboID 
+      select v);
+
+Example 3 - starts with 'ac%', ends with '%ac' And  contains '%ac% & distinct 
+==================================================================
+result = (from v in result
+	      join vpn in crmDB.names on v.ContactId equals vpn.ContactID
+	      where vpn.FirstName.StartsWith(sPFirst) && vpn.LastName.Contains(sPLast) && vpn.FullName.EndsWith(sPLast)
+	      select v).Distinct();      
+	     
+Example 4 -  just where conditions another way
+===================================
+result = result.Where(c => c.LeadComboID.ToString() == sLeadsCombo && c.LeadName == sLeadt);	      
+
+Example 5 -  where conditions and or, sql in statement
+===================================
+List<string> listLeads = JsonConvert.DeserializeObject<List<string>>("[" + sLeads + "]");
+ where
+    listLeads.Contains(d.LeadsId.ToString())
+    && (j.edm_ParentLeadId.ToString() == sfId || dc.LeadId.ToString() == sfId)
+    
+Example 6 -  where date condition equal
+========================================
+var dt = Convert.ToDateTime(sDOB);
+result = result.Where(c =>
+	c.DOB.Value.Year == dt.Year
+	&& c.DOB.Value.Month == dt.Month
+	&& c.DOB.Value.Day == dt.Day);
+
+Example 7 -  where date  condition >= and <=
+===========================================
+var rfrom = Convert.ToDateTime(sRegFrom);
+var rto = Convert.ToDateTime(sRegTo).AddDays(1);
+result = result.Where(c => c.RegDate >= rfrom    && c.RegDate <= rto);
+
+Example 8 -  take first 1000 
+===========================================
+result = result.Take(1000);
+
+Example 9 -  linq to list 
+===========================================
+var aes = (from a in xContext.LeadSet
+		       join e in xContext.ContactSet on a.Contactid.Id equals e.Leadid.Value
+		       where a.Contactid.Id == contactid && a.statecode.Value == 1
+			     && e.RegDate.Value > today
+		       select a.Id).ToList();
+
+foreach (Guid vaid in aes)
+{
+	//vaid
+}
+
+Example 10 -  where date  condition >= and <=, get, FirstOrDefault-  no result, return default null value
+==============================================
+DateTime today = DateTime.Today;
+var Day65 = today.AddDays(65);
+var Day10 = today.AddDays(-10);
+
+// allow to create child lead 10 days after contact
+var ele = (from e in xContext.contactSet
+	    join et in xContext.contacttypeSet
+	    on e.contactTypeId.Id equals et.contacttypeId
+	    where e.contactDate.Value <= Day65 && e.contactDate.Value >= Day10
+	    select new
+	    {
+		e.contactDate,                                        
+		e.contactId
+	    }
+	   ).FirstOrDefault();
+
+var stateWideLead = (from c in xContext.leadSet
+		    join d in xContext.contactSet
+		    on c.applicationid.Id equals d.applicationid.Value
+		    where c.contactid.Id == ele.contactid.Value && d.name == "USA"
+		    select c
+		       ).FirstOrDefault();
+
+if (stateWideLead == null)
+	return result;
+
+Example 11 - another where and select
+======================================
+var dcName = xcontext.leadcombosSet
+                        .Where(d => d.Id == leadDetails.leadComboID.Id)
+                        .Select(d => d.name).FirstOrDefault();
+                        
+
+Example 11 - order by, ignore case sensitive  when compare 
+==============================================================
+	.OrderBy(e => e.leadDate).Select(e => e).FirstOrDefault();                        
+	.OrderByDescending(a => a.CreatedOn)
+	orderby f.leadStartDate descending
+	.OrderBy(id => id, StringComparer.Ordinal).ToArray()); //StringComparer.Ordinal - ignore upper or lower case
+	orderby e.leadDate, e.Name

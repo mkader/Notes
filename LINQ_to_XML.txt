@@ -1,0 +1,379 @@
+LINQ to XML
+=========== 
+	What is Functional Construction? (it's a technical term)
+		Functional construction is the ability to create an XML tree in a single statement. 
+
+	XDeclaration 	-> encoding="utf-8" 
+	XComment 	-> <!--Creating
+	XElement	-> <TotalMarks>800</TotalMarks>, <Student Id="101">
+	XAttribute	-> Id="101"
+	<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+	<!--Creating an XML Tree using LINQ to XML-->
+	<Students>
+	  <Student Id="101">
+	    <Name>Mark</Name>
+	    <Gender>Male</Gender>
+	    <TotalMarks>800</TotalMarks>
+	  </Student>
+	</Students>
+
+	All the classes to create an XML document are present in System.Xml.Linq namespace. To create
+		XML Document use XDocument class
+		XML Declaration use XDeclaration class
+		XML Comment use XComment class
+		XML Element use XElement class
+		XML Attribute use XAttribute class 
+
+	Creating an XML document by hard-coding the XML elements in code.
+	using System.Xml.Linq;
+	public static void Main(){
+	    XDocument xmlDocument = new XDocument(
+		new XDeclaration("1.0", "utf-8", "yes"),
+
+		new XComment("Creating an XML Tree using LINQ to XML"),
+
+		new XElement("Students",
+
+		    new XElement("Student", new XAttribute("Id", 101),
+			new XElement("Name", "Mark"),
+			new XElement("Gender", "Male"),
+			new XElement("TotalMarks", 800)),
+		   
+		    new XElement("Student", new XAttribute("Id", 104),
+			new XElement("Name", "John"),
+			new XElement("Gender", "Male"),
+			new XElement("TotalMarks", 950))));
+
+	    xmlDocument.Save(@"C:\Demo\Demo\Data.xml");
+	}
+	
+Creating an XML document using in-memory collection of objects
+=============================================================
+	In real time applications we usually have the data residing in a database table. 
+	There are many data access technologies available to retrieve data from the database. For example we could use 
+		1. Entity Framework or 	2. LINQ to SQL or 	3. ADO.NET
+
+	Once the data is retrieved from the database, the application may store the data in in-memory data structures 
+	like arrays, list, queue etc. 
+	
+	Creating an XML document from an array of Student objects. 
+
+	    public class Student    {
+		public int Id { get; set; }
+		public string Name { get; set; }
+		public string Gender { get; set; }
+		public int TotalMarks { get; set; }
+
+		public static Student[] GetAllStudents()        {
+		    Student[] students = new Student[4];
+
+		    students[0] = new Student { Id = 101, Name = "Mark",
+						Gender = "Male", TotalMarks = 800 };
+		    students[1] = new Student { Id = 102, Name = "Rosy",
+						Gender = "Female", TotalMarks = 900 };
+		    students[2] = new Student { Id = 103, Name = "Pam",
+						Gender = "Female", TotalMarks = 850 };
+		    students[3] = new Student { Id = 104, Name = "John",
+						Gender = "Male", TotalMarks = 950 };
+
+		    return students;
+		}}
+
+
+		public static void Main()       {
+		    XDocument xmlDocument = new XDocument(
+			new XDeclaration("1.0", "utf-8", "yes"),
+
+			new XComment("Creating an XML Tree using LINQ to XML"),
+
+			new XElement("Students",
+
+			    from student in Student.GetAllStudents()
+			    select new XElement("Student", new XAttribute("Id", student.Id),
+					new XElement("Name", student.Name),
+					new XElement("Gender", student.Gender),
+					new XElement("TotalMarks", student.TotalMarks))
+				    ));
+
+		    xmlDocument.Save(@"C:\Demo\Demo\Data.xml");
+		}
+
+Querying xml document using linq to xml
+========================================
+	Retrieve all the student names who has TotalMarks greater than 800. 
+	Students names should be sorted by TotalMarks in descending order.
+	
+	IEnumerable<string> names = from student in XDocument
+						.Load(@"C:\Demo\Demo\Data.xml")
+						.Descendants("Student") 
+						//OR   .Element("Students").Elements("Student")
+					where (int)student.Element("TotalMarks") > 800
+					orderby (int)student.Element("TotalMarks") descending
+					select student.Element("Name").Value;
+
+	foreach (string name in names) { Console.WriteLine(name);}
+
+	Output => John, Rosy, Pam
+
+Modifying xml document using linq to xml
+========================================
+	Add, AddFirst, AddBeforeSelf, AddAfterSelf
+	XDocument xmlDocument = XDocument.Load(@"C:\Demo\Demo\Data.xml");
+	xmlDocument.Element("Students").Add(
+		new XElement("Student", new XAttribute("Id", 105),
+		    new XElement("Name", "Todd"),
+		    new XElement("Gender", "Male"),
+		    new XElement("TotalMarks", 980)
+		    ));
+
+	xmlDocument.Save(@"C:\Demo\Demo\Data.xml");
+
+	xmlDocument.Element("Students")
+           .Elements("Student")
+           .Where(x => x.Attribute("Id").Value == "103").FirstOrDefault()
+           .AddBeforeSelf(
+                new XElement("Student", new XAttribute("Id", 106),
+                    new XElement("Name", "Todd"),
+                    new XElement("Gender", "Male"),
+                    new XElement("TotalMarks", 980)));
+
+	To disable formatting - all in one line
+	xmlDocument.Save(@"C:\Demo\Demo\Data.xml", SaveOptions.DisableFormatting);
+
+	Updating element
+		The following code updates student (with Id = 106) TotalMarks to 999
+	
+		xmlDocument.Element("Students")
+                        .Elements("Student")
+                        .Where(x => x.Attribute("Id").Value == "106").FirstOrDefault()
+                        .SetElementValue("TotalMarks", 999);
+
+		xmlDocument.Element("Students")
+		    .Elements("Student")
+		    .Where(x => x.Attribute("Id").Value == "106")
+		    .Select(x => x.Element("TotalMarks")).FirstOrDefault().SetValue(999);
+
+	Updating xml comment 
+		xmlDocument.Nodes().OfType<XComment>().FirstOrDefault().Value = "Comment Updated";
+
+	Deleting
+		xDocument.Element("Students").Elements("Student")
+                    .Where(x => x.Attribute("Id").Value == "103").FirstOrDefault().Remove();
+                    OR
+		xmlDocument.Root.Elements().Where(x => x.Attribute("Id").Value == "106").Remove();
+
+		removes all "Student" elements that are present under root node "Students"
+			xmlDocument.Root.Elements().Remove();
+
+		Deleting xml comments from the xml document
+			//xDocument.Nodes().OfType<XComment>().FirstOrDefault().Remove(); //first comment
+			xmlDocument.Nodes().OfType<XComment>().Remove(); 	
+
+Transforming XML to CSV 
+=======================
+	<?xml version="1.0" encoding="utf-8"?>
+	<Students>
+	  <Student Country="USA">
+	    <Name>Mark</Name>
+	    <Gender>Male</Gender>
+	    <TotalMarks>800</TotalMarks>
+	  </Student>
+	</Students>
+
+	After transformation, data in the CSV file should look as shown below.
+	USA,Mark,Male,800
+	USA,Rosy,Female,900
+	India,Pam,Female,850
+	India,John,Male,950
+	
+	StringBuilder sb = new StringBuilder();
+	string delimiter = ",";
+
+	XDocument.Load(@"C:\Demo\Demo\Data.xml").Descendants("Student")
+		 .ToList().ForEach(element => sb.Append(
+				    element.Attribute("Country").Value + delimiter +
+				    element.Element("Name").Value + delimiter +
+				    element.Element("Gender").Value + delimiter +
+				    element.Element("TotalMarks").Value + "\r\n"));
+
+	StreamWriter sw = new StreamWriter(@"C:\Demo\Demo\Result.csv");
+	sw.WriteLine(sb.ToString());
+	sw.Close();		
+
+Transforming XML to HTML table 
+==============================
+	After transformation, data in the HTML file should look as shown below.
+	<table border="1">
+	  <thead>
+	    <tr>
+	      <th>Country</th>
+	      <th>Name</th>
+	      <th>Gender</th>
+	      <th>TotalMarks</th>
+	    </tr>
+	  </thead>
+	  <tbody>
+	    <tr>
+	      <td>USA</td>
+	      <td>Mark</td>
+	      <td>Male</td>
+	      <td>800</td>
+	    </tr>
+	  </tbody>
+	</table>
+
+	Code to transform XML to HTML
+	XDocument xmlDocument = XDocument.Load(@"C:\Demo\Demo\Data.xml");
+
+	XDocument result = new XDocument
+	    (new XElement("table", new XAttribute("border", 1),
+		    new XElement("thead",
+			new XElement("tr",
+			    new XElement("th", "Country"),
+			    new XElement("th", "Name"),
+			    new XElement("th", "Gender"),
+			    new XElement("th", "TotalMarks"))),
+		    new XElement("tbody",
+			from student in xmlDocument.Descendants("Student")
+			select new XElement("tr",
+				    new XElement("td", student.Attribute("Country").Value),
+				    new XElement("td", student.Element("Name").Value),
+				    new XElement("td", student.Element("Gender").Value),
+				    new XElement("td", student.Element("TotalMarks").Value)))));
+
+	result.Save(@"C:\Demo\Demo\Result.htm");	
+
+Transform one XML format to another XML
+========================================
+	The tranformed XML format should be as shown below.
+	<?xml version="1.0" encoding="utf-8"?>
+	<Students>
+	  <USA>
+	    <Student>
+	      <Name>Mark</Name>
+	      <Gender>Male</Gender>
+	      <TotalMarks>800</TotalMarks>
+	    </Student>
+	  </USA>
+	  <India>
+	    <Student>
+	      <Name>Pam</Name>
+	      <Gender>Female</Gender>
+	      <TotalMarks>850</TotalMarks>
+	    </Student>
+	  </India>
+	</Students>
+
+	Code to transform XML to a different format
+	XDocument xmlDocument = XDocument.Load(@"C:\Demo\Demo\Data.xml");
+
+	XDocument result = new XDocument(
+		new XElement("Students",
+		    new XElement("USA",
+			from s in xmlDocument.Descendants("Student")
+			where s.Attribute("Country").Value == "USA"
+			select new XElement("Student",
+			    new XElement("Name", s.Element("Name").Value),
+			    new XElement("Gender", s.Element("Gender").Value),
+			    new XElement("TotalMarks", s.Element("TotalMarks").Value))),
+		    new XElement("India",
+			from s in xmlDocument.Descendants("Student")
+			where s.Attribute("Country").Value == "India"
+			select new XElement("Student",
+			    new XElement("Name", s.Element("Name").Value),
+			    new XElement("Gender", s.Element("Gender").Value),
+			    new XElement("TotalMarks", s.Element("TotalMarks").Value)))));
+
+	result.Save(@"C:\Demo\Demo\Result.xml");	
+
+Part 8 - XML validation against XSD (XML Schema Definition Language)
+====================================
+	What is an XSD file
+	An XSD file defines the structure of the XML file, 
+		i.e which elements in which order, 
+		how many times, with which attributes, 
+		how they are nested, etc. 
+	Without an XSD, an XML file is a relatively free set of elements and attributes.  
+
+	Student.xsd.
+	<?xml version="1.0" encoding="utf-8"?>
+	<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	  <xsd:element name="Students">
+	    <xsd:complexType>
+	      <xsd:sequence>
+		<xsd:element name="Student" minOccurs="1" maxOccurs="4">
+		  <xsd:complexType>
+		    <xsd:sequence>
+		      <xsd:element name="Name" minOccurs="1" maxOccurs="1"/>
+		      <xsd:element name="Gender" minOccurs="1" maxOccurs="1"/>
+		      <xsd:element name="TotalMarks" minOccurs="1" maxOccurs="1"/>
+		    </xsd:sequence>
+		  </xsd:complexType>
+		</xsd:element>
+	      </xsd:sequence>
+	    </xsd:complexType>
+	  </xsd:element>
+	</xsd:schema>
+
+	The above XSD specifies that
+		1. The root element must be Students
+		2. Students root element should contain at least 1 Student element. 
+		   More than 4 Student elements are not allowed.
+		3. Each Student element should contain the following 
+		   3 elements in the order specified. 
+			    i) Name
+			    ii) Gender 
+			    iii) TotalMarks
+
+	Data.xml.
+	<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+	<Students>
+	  <Student>
+	    <Name>Mark</Name>
+	    <Gender>Male</Gender>
+	    <TotalMarks>800</TotalMarks>
+	  </Student>
+	  <Student>
+	    <Name>Rosy</Name>
+	    <Gender>Female</Gender>
+	    <TotalMarks>900</TotalMarks>
+	  </Student>
+	  <Student>
+	    <Name>Pam</Name>
+	    <Gender>Female</Gender>
+	    <TotalMarks>850</TotalMarks>
+	  </Student>
+	  <Student>
+	    <Name>John</Name>
+	    <Gender>Male</Gender>
+	    <TotalMarks>950</TotalMarks>
+	  </Student>
+	</Students>
+
+	XmlSchemaSet schema = new XmlSchemaSet();
+	schema.Add("", @"C:\Demo\Demo\Student.xsd");
+
+	XDocument xmlDocument = XDocument.Load(@"C:\Demo\Demo\Data.xml");
+	bool validationErrors = false;
+
+	xmlDocument.Validate(schema, (s, e) =>
+	{
+	    Console.WriteLine(e.Message);
+	    validationErrors = true;
+	});
+
+	if (validationErrors)
+	{
+	    Console.WriteLine("Validation failed");
+	}
+	else
+	{
+	    Console.WriteLine("Validation succeeded");
+	}
+
+	Run. Validation succeeded.
+
+	Remove <Name> element from one of the <Student> elements in Data.xml file. 
+	Run, the validation fails and we get the following error.
+	"The element 'Student' has invalid child element 'TotalMarks'. 
+	List of possible elements expected: 'Gender'."

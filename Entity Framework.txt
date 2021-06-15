@@ -1,0 +1,1427 @@
+Entity Framework
+
+Entity Framework supports the following three approaches
+	1. Schema First Approach - Part 1
+	2. Model First Approach - Part 2
+	3. Code First Approach - Part 3
+
+
+Part 1 - What is Entity Framework
+==================================
+	What is Entity Framework - Entity Framework is an ORM (Object Relational Mapping) framework.
+		Entity Framework is an open source framework by Microsoft.
+
+	What is ORM framework - ORM framework automatically creates classes based on database tables and the vice versa. 
+	It can also automatically generate necessary SQL to create database tables based on classes. 
+
+	Means, it generates business objects and entities according to the database tables and provides the mechanism for:
+		Performing basic CRUD (Create, Read, Update, Delete) operations.
+		Easily managing "1 to 1", "1 to many", and "many to many" relationships.
+		Ability to have inheritance relationships between entities.
+		
+	ORM includes three main parts: Domain class objects, Relational database objects and Mapping information 
+		on how domain objects map to relational database objects (tables, views & storedprocedures). 
+	ORM allows us to keep our database design separate from our domain class design. 
+		This makes the application maintainable and extendable. 
+		
+	ADO.NET Entity Data Model or LINQ to SQL Classes (dbml)
+	Insert AddObjects(con),DeleteObject, UpdateObject and SaveChanges
+	LINQ (Language Integrated Query ) - that retrieves data from a data source.
+	LINQ to SQL is a .Net framework component from Microsoft which is used to access to Microsoft SQL Server databases. 
+		System.Data.Linq,  System.Data.Linq.Mapping, DataContext
+		Not every SQL statement can be converted to LINQ
+		LINQ is in most cases a significantly more productive querying language than SQL.
+		
+		SELECT 
+			UPPER(Name) 
+		FROM 
+			(SELECT *, RN = row_number() OVER (ORDER BY Name) FROM Customer WHERE Name LIKE 'A%'
+				and RN BETWEEN 21 AND 30 ORDER BY Name)
+		
+		var query = from c in db.Customers where c.Name.StartsWith ("A") orderby c.Name select c.Name.ToUpper();
+		var thirdPage = query.Skip(20).Take(10);
+		
+		it is complicated and messy, but simple query in LINQ
+
+	Associations - you can query across relationships without having to join. 
+
+	For exampele, list all purchases of $1000 or greater made by customers who live in Washington. 
+		from p in db.Purchases where p.Customer.Address.State == "WA" || p.Customer == null 
+		where p.PurchaseItems.Sum (pi => pi.SaleAmount) > 1000 select p
+
+	When not to use LINQ for querying databases
+		LINQ doesn't deprecate SQL. It takes more than 95% of the querying brunt, but you still sometimes need SQL for:
+	
+		Hand-tweaked queries (especially with optimization or locking hints)
+		Queries that involve selecting into temporary tables, then querying those tables
+		Predicated updates and bulk inserts	
+		
+	2 Tables - Employee & Department, display department employee list
+
+	To achieve this
+	1. Create Department and Employee classes
+	2. Write ADO.NET code to retrieve data from the database
+	3. Once the data is retrieved, create Department and Employee objects and populate them with data.
+
+	Entity Framework can do all of the above automatically, if we provide it with the database schema.
+
+	Installing NuGet Package Manager - VS Tools menu -> Extension & Updates -> Online -> Search NuGet -> Download NuGet Package Manager
+
+Part 1 - Schema First approach Project
+======================================
+	Create a new "Empty ASP.NET Web Application" (Part1Demo)
+
+	Installing Entity Framework -> Tools -> NuGet Package Manager -> Manage NuGet Packages for solution -> Online 
+	-> Type "EntityFramework" -> Install -> EntityFramework assembly added automatically.
+	
+	i didn't install, use ef5, copy webform code to ef6.
+	Install Microsoft.AspNet.EntityDataSource EF6 does not support EntityDataSoruce (support only EF5)
+			Install-Package Microsoft.AspNet.DynamicData.EFProvider -Version 6.0.0
+			Install-Package Microsoft.AspNet.EntityDataSource -Version 6.0.0
+	
+	You will get error "Could not determine storage version; a valid storage connection or a version hint is required."
+		Right click on "xxx.edmx" file -> "Open with" Editor XML Editor -> Change ProviderManifestToken="XXXX" with 2008.
+
+	Create table Departments (
+	     ID int primary key identity,
+	     Name nvarchar(50),
+	     Location nvarchar(50)
+	)
+
+	Create table Employees(
+	     ID int primary key identity,
+	     FirstName nvarchar(50),
+	     LastName nvarchar(50),
+	     Gender nvarchar(50),
+	     Salary int,
+	     DepartmentId int foreign key references Departments(Id)
+	)
+
+	Insert into Departments values ('IT', 'New York'), ('HR', 'London'), ('Payroll', 'Sydney')
+
+	Insert into Employees values ('Mark', 'Hastings', 'Male', 60000, 1), ('Steve', 'Pound', 'Male', 45000, 3),
+	('Ben', 'Hoskins', 'Male', 70000, 1), ('Philip', 'Hastings', 'Male', 45000, 2), ('Mary', 'Lambeth', 'Female', 30000, 2),
+	('Valarie', 'Vikings', 'Female', 35000, 3), ('John', 'Stanmore', 'Male', 80000, 1)
+
+	Creating ADO.NET Entity Data Model using Schema First approach 
+	Add ADO.NET Entity Data Model(EmployeeModel.edmx) ->  EF Designer from database (save web.config in EmployeeDBContext ) 
+	-> select Departments & Employees tables (EmployeeModel) -> Finish -> 	EmployeeModel.edmx created, 
+	-> it contains Employee and Department classes. Tables are mapped to classes and columns are mapped to class properties.
+
+	Build the solution
+	
+	Add a webform -> Add GridView &EntityDataSource control 
+		EntityDataSource1 control -> select "EmployeeDBContext" -> EntitySetName select "Departments" -> "Finish"
+					  -> "Properties" -> set Include=Employees
+		GridView1 control -> "Choose Data Source" select "EntityDataSource1" 
+				  -> Click on "Eidt Columns" -> Add  "Template Field" -> set HeaderText=Employees -> click OK 
+				  -> Now click "Edit Templates" link -> Add GridView2 control 
+				  					-> slect "Edit DataBindings" link -> Select "Custom binding", type Eval("Employees") in "Code expression" textbox and click OK.
+				-> Select "End Template Editing" option from "GridView1".
+		
+	Run the web application
+	
+Part 2 - Entity Framework Model First Approach
+==============================================
+	In the Model First Approach, we first create the Entity Model. That is we create
+		1. Entities
+		2. Relationships between entities
+		3. Inheritance hierarchies etc.
+
+	We do all this directly on the design surface of the EDMX file. 
+
+	Add a new "ADO.NET Entity Data Model"(EmployeeModel) ->  select Empty EF Designer model -> blank EmployeeModel.edmx file added. 
+
+	Add New Entity -> Entity Name = Department (default Entity Set = Departments) ->Ok
+		       -> Add New Scalar Property -> Name, Location 
+
+	Property	Entity Key	Type	StoredGeneratedPattern	Getter & Setter	Nullable	Max Length
+	Id		True		Int32	Idenity			True		False
+	Name		False		String	None (|Computed)	True		False		50		
+	
+	Add New Entity - Employee (FirstName, LastName, Gender, Salary (int))
+
+	Add New Association
+	Add "Employees" navigation property for the "Department" entity, and "Department" navigation property for the "Employee" entity. 
+		Association Name - DepartmentEmployee		
+		End					End
+		Entity(Department)			Entity(Employee)
+		Multiplicity(1 One)			Multiplicity(* Many)
+		Navigation Property Checked 		Navigation Property Checked
+		  Employees (collection of employee)	  Department (instance of department class)
+		Add Foreign key properties to the 'Emplyoee' entity (DepartmentId)
+		
+	Added	a) Employees navigation property in the Department entity
+		b) Department navigation property in the Employee entity
+		c) DepartmentId scalar property 
+
+	select "Genedrate Database from Model..." option -> add new connection
+	got error "Expression of type 'System.Data.Entity.Core.Metadata.Edm.EdmItemCollection' cannot be used for return type 'System.Data.Entity.Core.Metadata.Edm.EdmItemCollection'.", restart vs
+
+	At this point, we should have the required SQL generated to create (EmployeeModel.edmx.sql)
+		a) Departments table
+		b) Employees table
+		c) Primary key constraints for Departments and Employees tables
+		d) Foreign key constraint
+		e) Indexes
+
+	Run the EmployeeModel.edmx.sql file on the database or -> over the file Connectin to Connect -> Execute
+	
+
+Part 3 - Entity Framework Code First Approach
+==============================================
+	Code-first approach allows us to create our custom classes first and based on those custom classes 
+	entity framework can generate database automatically for us. 
+	
+	public class Employee {
+	    // Scalar Properties
+	    public int Id { get; set; }
+	    public string FirstName { get; set; }
+	    public string LastName { get; set; }
+	    public string Gender { get; set; }
+	    public int Salary { get; set; }
+
+	    // Navigation Property
+	    public Department Department { get; set; }
+	}
+
+	public class Department {
+	    // Scalar Properties
+	    public int Id { get; set; }
+	    public string Name { get; set; }
+	    public string Location { get; set; }
+
+	    // Navigation Property
+	    public List<Employee> Employees { get; set; }
+	}
+
+	public class EmployeeDBContext : DbContext	{
+	    public DbSet<Department> Departments { get; set; }
+	    public DbSet<Employee> Employees { get; set; }
+	}
+
+	public class EmployeeRepository {
+    		public List<Department> GetDepartments() {
+        		EmployeeDBContext employeeDBContext = new EmployeeDBContext();
+        		return employeeDBContext.Departments.Include("Employees").ToList();
+    	}}
+
+	 Add the database connection string in web.config file.
+	<connectionStrings>
+  		<add name="EmployeeDBContext" connectionString="server=.; database=Sample; integrated security=true;"
+       			providerName="System.Data.SqlClient"/>
+	</connectionStrings>
+
+	Add ObjectDataSource control -> Click on "Configure Data Source..." 
+	-> "Choose a Business Object" -> select "EmployeeRepository" -> "Define Data Methods" screen, select GetDepartments() method
+	
+	Configure GridView control -> Select "ObjectDataSource1" from "Choose Data Source" dropdownlist
+
+	Rebuild the solution, Delete the already existing database from SQL Server Management Studio.
+
+	At this point we have the following created automatically. a) Sample database b) Departments table c) Employees table 
+	
+Part 4 - Customizing table, column and foreign key column names when using entity framework code first approach
+===============================================================================================================
+	The above example create "Department_Id" instead of DepartmentId, to fix this issue
+		[ForeignKey("DepartmentId")]
+	
+	To customize the table name, use Table attribute and to customize column name use Column attribute. 
+		[Table("tblEmployees")]
+			
+	[Table("tblEmployees")]
+	public class Employee	{
+	    public int Id { get; set; }
+	    [Column("First_Name")]
+	    public string FirstName { get; set; }
+	    public string LastName { get; set; }
+	    public string Gender { get; set; }
+	    public int Salary { get; set; }
+	    public int DepartmentId { get; set; }
+	    [ForeignKey("DepartmentId")]
+	    public Department Department { get; set; }
+	}
+
+Part 5 - How to handle model changes in entity framework
+=========================================================
+	Add JobTitle property
+	[Table("tblEmployees")]
+	public class Employee
+	{
+	    public int Id { get; set; }
+	    [Column("First_Name")]
+	    public string FirstName { get; set; }
+	    public string LastName { get; set; }
+	    public string Gender { get; set; }
+	    public int Salary { get; set; }
+	    public int DepartmentId { get; set; }
+	    [ForeignKey("DepartmentId")]
+	    public Department Department { get; set; }
+	    public string JobTitle { get; set; }
+	}
+
+	At this point if we run the application, we get the following error. 
+	"The model backing the 'EmployeeDBContext' context has changed since the database was created. 
+	Consider using Code First Migrations to update the database (http://go.microsoft.com/fwlink/?LinkId=238269)."
+
+	This is because the model (i.e Employee class) has changed since the database was created. 
+	This means the Model and the database are no longer in sync and hence we get the error. 
+	To check if the model has changed since the database was created, entity framework uses 
+	__MigrationHistory table that is auto-generated.
+		ContextKey - Part1Demo.EmployeeDBContext
+		Model - it contains hash key , it will detect if any changes 
+
+	To fix this error, we have to tell entity framework what to do when the model changes.
+
+	Add Global.asax -> Application_Start() method. 
+	we are telling the entity framework to drop and recreate database every time the model changes.
+	Database.SetInitializer(new DropCreateDatabaseIfModelChanges<EmployeeDBContext>());
+
+	Another way, to drop and recreate the database always. Application_Start()
+	Database.SetInitializer(new DropCreateDatabaseAlways<EmployeeDBContext>());
+
+	Add JobTitle, add a boundfield
+
+Part 6 - How to seed database with test data using entity framework
+===================================================================
+	Manually populating the database with test data using the insert sql script. Entity Framework can automate this.
+	
+    	public class EmployeeDBContextSeeder : DropCreateDatabaseIfModelChanges<EmployeeDBContext>    {
+		protected override void Seed(EmployeeDBContext context)    {
+		    Department department1 = new Department() {
+			Name = "IT",
+			Location = "New York",
+			Employees = new List<Employee>(){
+			    new Employee() {
+				FirstName = "Mark",
+				LastName = "Hastings",
+				Gender = "Male",
+				Salary = 60000,
+				JobTitle = "Developer"
+			    },
+			   ...
+			}};
+
+	            Department department2 = new Department() {...}
+
+	            context.Departments.Add(department1);
+	            context.Departments.Add(department2);
+	            context.Departments.Add(department3);
+	            base.Seed(context);
+	        }    }}
+
+	Application_Start() => Database.SetInitializer(new EmployeeDBContextSeeder());
+	
+
+Part 7 - Using sql & stored procedures with entity framework- insert, update, delete
+=======================================================
+	Create table Employees (
+	     ID int primary key identity,
+	     Name nvarchar(50),
+	     Gender nvarchar(50),
+	     Salary int
+	)
+
+	Insert into Employees values ('Mark', 'Male', 60000)
+	Insert into Employees values ('Steve', 'Male', 45000)
+	Insert into Employees values ('Ben', 'Male', 70000)
+	Insert into Employees values ('Philip', 'Male', 45000)
+	Insert into Employees values ('Mary', 'Female', 30000)
+	Insert into Employees values ('Valarie', 'Female', 35000)
+	Insert into Employees values ('John', 'Male', 80000)
+
+	Create procedure InsertEmployee
+	@Name nvarchar(50),
+	@Gender nvarchar(50),
+	@Salary int
+	as
+	Begin
+	     Insert into Employees values (@Name, @Gender, @Salary)   
+	End
+	Go
+
+	Create procedure UpdateEmployee
+	@ID int,
+	@Name nvarchar(50),
+	@Gender nvarchar(50),
+	@Salary int
+	as
+	Begin
+	     Update Employees Set Name = @Name, Gender = @Gender,
+	     Salary = @Salary
+	     where ID = @ID
+	End
+	Go
+
+	Create procedure DeleteEmployee
+	@ID int
+	as
+	Begin
+	     Delete from Employees where ID = @ID
+	End
+	Go
+
+	Add a new ADO.NET Entity Data Model ->  select Employees Table and the 3 stored procedures (EmployeeModel)
+	To view the stored procedures, -> Entity model designer surface -> select "Model Broswer" -> Expand Stored Procedures
+	
+	Add 1. GridView 2. DetailsView 3. EntityDataSource
+
+	Configure EntityDataSource control -> Configure Data Source link -> Select EmployeeDBContext 
+		->  Select the options on "Configure Data Selection" screen  (enable automatic inserts...)
+
+	Configure GridView control ->  Select "EntityDataSource1" from "Choose Data Source"
+		- > Select Enable Editing and Enable Deleting checkboxes 
+	
+	Configure DetailsView control -> Select "EntityDataSource1" from "Choose Data Source" 
+		-> Select Enable Inserting checkbox -> properties Set DeafultMode=Insert -> Set InsertVisible="false".
+	GridView refresh after insert
+	protected void DetailsView1_ItemInserted (object sender, DetailsViewInsertedEventArgs e)	{
+	    GridView1.DataBind();
+	}
+
+	At this point, insert, update and delete employees, by default entity framework will use the sql it auto-generates.
+	
+	To use the stored procedures, we have to map them to the Employee entity. -> "Employee" entity -> select "Stored Procedure Mapping"
+	In the "Mapping Details" -> specify the Insert, Update and Delete stored procedures that you want to use with "Employee" entity 
+		-> Use Original value, it won;t update
+
+
+Part 8 - Using stored procedures with entity framework code first approach
+===========================================================================
+    public class Employee {
+        public int ID { get; set; }
+        public string Name { get; set; }
+        public string Gender { get; set; }
+        public int Salary { get; set; }
+    }
+    
+    public class EmployeeDBContext : DbContext    {
+        public DbSet<Employee> Employees { get; set; }
+
+        protected override void OnModelCreating(DbModelBuilder modelBuilder)   {
+            // This line will tell entity framework to use stored procedures
+            // when inserting, updating and deleting Employees
+            modelBuilder.Entity<Employee>().MapToStoredProcedures();
+            base.OnModelCreating(modelBuilder);
+        }    }
+
+
+    public class EmployeeRepository    {
+        EmployeeDBContext employeeDBContext = new EmployeeDBContext();
+
+        public List<Employee> GetEmployees()         {
+            return employeeDBContext.Employees.ToList();
+        }
+
+        public void InsertEmployee(Employee employee)        {
+            employeeDBContext.Employees.Add(employee);
+            employeeDBContext.SaveChanges();
+        }
+
+        public void UpdateEmployee(Employee employee)        {
+            Employee employeeToUpdate = employeeDBContext
+                .Employees.SingleOrDefault(x => x.ID == employee.ID);
+            employeeToUpdate.Name = employee.Name;
+            employeeToUpdate.Gender = employee.Gender;
+            employeeToUpdate.Salary = employee.Salary;
+            employeeDBContext.SaveChanges();
+        }
+
+        public void DeleteEmployee(Employee employee)        {
+            Employee employeeToDelete = employeeDBContext
+                .Employees.SingleOrDefault(x => x.ID == employee.ID);
+            employeeDBContext.Employees.Remove(employeeToDelete);
+            employeeDBContext.SaveChanges();
+        }    }
+
+
+	web.config
+	<connectionStrings>
+	  <add name="EmployeeDBContext" connectionString="server=.; database=Sample; integrated security=true;"  providerName="System.Data.SqlClient" />
+	</connectionStrings>
+
+	webform  -  
+		1. GridView -> Select "ObjectDataSource1" from "Choose Data Source" -> Select Enable Editing and Enable Deleting -> Set DataKeyNames="ID".properties
+		2. DetailsView -> Select "ObjectDataSource1" from "Choose Data Source" -> Enable Inserting -> Set DeafultMode=Insert.properties -> InsertVisible="false"
+		3. ObjectDataSource - > Configure -> select Demo.EmployeeRepository  on Choose a Business Object screen -> On Define Data Methods screen
+		    i) On SELECT tab - Select GetEmployees() method
+		    ii) On UPDATE tab - Select UpdateEmployees(Employee employee) method
+		    iii) On INSERT tab - Select InsertEmployees(Employee employee) method
+		    iv) On DELETE tab - Select DeletEmployees(Employee employee) method
+
+
+	Run, the Sample database and Employees table, sp are created automatically - Employee_Delete, Employee_Insert, Employee_Update
+
+Part 9 - Overriding stored procedure defaults with entity framework code first approach
+=======================================================================================
+	- Changing the default Insert (Employee_Insert), Update and Delete stored procedure names that are auto-generated by entity framework code first approach. 
+
+    protected override void OnModelCreating(DbModelBuilder modelBuilder) {
+        modelBuilder.Entity<Employee>()
+            .MapToStoredProcedures(p => p.Insert(x => x.HasName("InsertEmployee")));
+        modelBuilder.Entity<Employee>()
+            .MapToStoredProcedures(p => p.Update(x => x.HasName("UpdateEmployee")));
+        modelBuilder.Entity<Employee>()
+            .MapToStoredProcedures(p => p.Delete(x => x.HasName("DeleteEmployee")));
+
+	//OR	
+        /*modelBuilder.Entity<Employee>().MapToStoredProcedures
+            (p => p.Insert(i => i.HasName("InsertEmployee"))
+                    .Update(u => u.HasName("UpdateEmployee"))
+                    .Delete(d => d.HasName("DeleteEmployee"))
+            );*/
+        base.OnModelCreating(modelBuilder);
+    }
+
+	The default parameter names of the stored procedures can also be changed using the following code.
+    protected override void OnModelCreating(DbModelBuilder modelBuilder)    {
+        modelBuilder.Entity<Employee>().MapToStoredProcedures
+            (p => p.Insert(i => i.HasName("InsertEmployee")
+                                    .Parameter(n => n.Name, "EmployeeName")
+                                    .Parameter(n => n.Gender, "EmployeeGender")
+                                    .Parameter(n => n.Salary, "EmployeeSalary"))
+                    .Update(u => u.HasName("UpdateEmployee")
+                                    .Parameter(n => n.ID, "EmployeeID")
+                                    .Parameter(n => n.Name, "EmployeeName")
+                                    .Parameter(n => n.Gender, "EmployeeGender")
+                                    .Parameter(n => n.Salary, "EmployeeSalary"))
+                    .Delete(d => d.HasName("DeleteEmployee")
+                                    .Parameter(n => n.ID, "EmployeeID"))
+            );
+        base.OnModelCreating(modelBuilder);
+    }
+
+Part 10 - Entity splitting in entity framework with db first apporach (one entity to mutiple table)
+======================================================================
+	Entity splitting refers to mapping an entity to two or more tables when the tables share a common key. 
+	
+	Share the common key - EmployeeID. 
+
+	Create table Employees	(
+	     EmployeeID int primary key identity,
+	     FirstName nvarchar(50),
+	     LastName nvarchar(50),
+	     Gender nvarchar(50)
+	)
+	
+	Create table EmployeeContactDetails	(
+	     EmployeeID int primary key,
+	     Email nvarchar(50),
+	     Mobile nvarchar(50),
+	     LandLine nvarchar(50)
+	)
+
+	Insert into Employees values ('Mark', 'Hastings', 'Male'),('Steve', 'Pound', 'Male'),
+		('Ben', 'Hoskins', 'Male'),('Philip', 'Hastings', 'Male'),('Mary', 'Lambeth', 'Female')
+
+	Insert into EmployeeContactDetails values
+		(1, 'Mark@pragimtech.com', '111111111', '111111111'),
+		(2, 'Steve@pragimtech.com', '2222222222', '2222222222'),
+		(3, 'Ben@pragimtech.com', '3333333333', '3333333333'),
+		(4, 'Philip@pragimtech.com', '44444444444', '44444444444'),
+		(5, 'Mary@pragimtech.com', '5555555555', '5555555555')
+
+	ADO.NET Entity Framework to generate entities from the database using database first approach, 
+	by default 2 entities will be created, i.e Empoyee and EmployeeContactDetail entities. 
+
+	There is a one to one mapping between tables and entities. 
+	We want a single Employee to map to both Employees & EmployeeContactDetails table.
+
+	To achieve this
+		1. Cut Email, Mobile and LandLine properties from EmployeeContactDetail entity and paste them in Employee entity
+		2. Delete EmployeeContactDetail entity. On "Delete Unmapped Tables and Views" window click NO.
+		3. Right click on Employee entity and select "Table Mapping" option from the context menu. 
+		   Map EmployeeId, Email, Mobile and LandLine properties to the respective columns of EmployeeContactDetails table. 
+
+
+Part 11 - Entity splitting in entity framework with code first approach
+=======================================================================
+	Entity splitting refers to mapping an entity to two or more tables when the tables share a common key. 
+	
+	    public class Employee   {
+		// These property values should be stored in Employees Table
+		[Key]
+		public int EmployeeId { get; set; }
+		public string FirstName { get; set; }
+		public string LastName { get; set; }
+		public string Gender { get; set; }
+
+		// These property values should be stored in EmployeeContactDetails Table
+		public string Email { get; set; }
+		public string Mobile { get; set; }
+		public string Landline { get; set; }
+	    }
+
+	    public class EmployeeDBContext : DbContext
+	    {
+		public DbSet<Employee> Employees { get; set; }
+	    }
+
+
+	    public class EmployeeRepository    {
+		EmployeeDBContext employeeDBContext = new EmployeeDBContext();
+
+		public List<Employee> GetEmployees()		{
+		    return employeeDBContext.Employees.ToList();
+		}
+
+		public void InsertEmployee(Employee employee)		{
+		    employeeDBContext.Employees.Add(employee);
+		    employeeDBContext.SaveChanges();
+		}
+
+		public void UpdateEmployee(Employee employee)		{
+		    Employee employeeToUpdate = employeeDBContext.Employees
+			.SingleOrDefault(x => x.EmployeeId == employee.EmployeeId);
+		    employeeToUpdate.EmployeeId = employee.EmployeeId;
+		    employeeToUpdate.FirstName = employee.FirstName;
+		    employeeToUpdate.Gender = employee.Gender;
+		    employeeToUpdate.Email = employee.Email;
+		    employeeToUpdate.Mobile = employee.Mobile;
+		    employeeToUpdate.Landline = employee.Landline;
+
+		    employeeDBContext.SaveChanges();
+		}
+
+		public void DeleteEmployee(Employee employee)		{
+		    Employee employeeToDelete = employeeDBContext.Employees
+			.SingleOrDefault(x => x.EmployeeId == employee.EmployeeId);
+		    employeeDBContext.Employees.Remove(employeeToDelete);
+		    employeeDBContext.SaveChanges();
+		}
+	    }
+
+
+	Run,  By default entity framework creates one Table i.e Employees table. But we want entity framework to create the following 2 tables.
+
+	Override OnModelCreating() method to tell entity framework to generate 2 tables(Employees & EmployeeContactDetails) for the Employee entity. 
+	OnModelCreating() method is a virtual method present in DbContext class. So, modify EmployeeDBContext class.
+	public class EmployeeDBContext : DbContext 	{
+	    public DbSet<Employee> Employees { get; set; }
+
+	    protected override void OnModelCreating(DbModelBuilder modelBuilder)	    {
+		modelBuilder.Entity<Employee>()
+		// Specify properties to map to Employees table
+		.Map(map =>		{
+		    map.Properties(p => new		    {
+			p.EmployeeId,
+			p.FirstName,
+			p.LastName,
+			p.Gender
+		    });
+
+		    map.ToTable("Employees");
+		})
+		// Specify properties to map to EmployeeContactDetails table
+		.Map(map =>		{
+		    map.Properties(p => new		    {
+			p.EmployeeId,
+			p.Email,
+			p.Mobile,
+			p.Landline
+		    });
+
+		    map.ToTable("EmployeeContactDetails");
+		});
+
+		base.OnModelCreating(modelBuilder);
+	    }
+	}
+
+	Delete the database and run the web application.
+	
+
+Part 12 - Table splitting in entity framework (one table to mutiple entity)
+============================================================================
+	Mapping multiple entities to a single table is called table splitting. 
+
+	What is the main reason for using Table Splitting?
+	Table Splitting is useful when you want to delay the loading of some properties with large data when using lazy loading. 
+
+	For example, if you have Employee entity and if it contains Photo property that would return large binary data, 
+	and if we use this Photo property only on a few pages in our application, then it does not make sense from a 
+	performance perspective to load this property every time we load the Employee entity. Using lazy loading load 
+	it only on the pages where we need to display Employee photo.
+
+	Create table Employees	(
+	     EmployeeID int primary key identity,
+	     FirstName nvarchar(50),
+	     LastName nvarchar(50),
+	     Gender nvarchar(50),
+	     Email nvarchar(50),
+	     Mobile nvarchar(50),
+	     LandLine nvarchar(50)
+	)
+
+	Insert into Employees values ('Mark', 'Hastings', 'Male', 'x@x.com', 'XXX', 'XXX')
+	('Steve', 'Pound', 'Male', 'y@y.com', 'YYY', 'YYY'),('Ben', 'Hoskins', 'Male', 'z@z.com', 'ZZZ', 'ZZZ')
+	('Philip', 'Hastings', 'Male', 'a@a.com', 'AAA', 'AAA'), ('Mary', 'Lambeth', 'Female', 'b@b.com', 'BBB', 'BBB')
+
+	ADO.NET Entity Framework to generate entities from the database, Empoyee entity. 
+
+
+	Employee entity - FirstName, LastName, and Gender properties.
+	Add new Entity EmployeeContactDetail - cut & copy here, Email, Mobile and Landline properties, key proprty is EmployeeID 
+		"Add - Association" - one to one
+			Properties ->"Referential Constraint" -> principal Employees
+		select "Table Mapping" -> "Employees" table and map EmployeeId, Email, Mobile and Landline properties
+		
+	    <asp:CheckBox ID="checkBoxIncludeContactDetails" Text="Include Contact Details" runat="server" />
+	    <asp:Button ID="Button1" runat="server" Text="Get Employee Data"  onclick="Button1_Click" />
+	    <asp:GridView ID="GridView1" runat="server"/>
+
+	    private DataTable GetEmployeeData()    {
+		EmployeeDBContext employeeDBContext = new EmployeeDBContext();
+		List<Employee> employees = employeeDBContext.Employees.ToList();
+
+		DataTable dataTable = new DataTable();
+		DataColumn[] columns = { new DataColumn("EmployeeID"),
+					 new DataColumn("FirstName"),
+					 new DataColumn("LastName"),
+					 new DataColumn("Gender")};
+
+		dataTable.Columns.AddRange(columns);
+
+		foreach (Employee employee in employees)		{
+		    DataRow dr = dataTable.NewRow();
+		    dr["EmployeeID"] = employee.EmployeeID;
+		    dr["FirstName"] = employee.FirstName;
+		    dr["LastName"] = employee.LastName;
+		    dr["Gender"] = employee.Gender;
+
+		    dataTable.Rows.Add(dr);
+		}
+
+		return dataTable;
+	    }
+
+	    private DataTable GetEmployeeDataIncludingContactDetails()    {
+		
+		List<Employee> employees = employeeDBContext.Employees.Include("EmployeeContactDetail").ToList();
+
+		DataColumn[] columns = { ...
+					 new DataColumn("Email"),
+					 new DataColumn("Mobile"),
+					 new DataColumn("LandLine") };
+
+		    dr["Email"] = employee.EmployeeContactDetail.Email;
+		    dr["Mobile"] = employee.EmployeeContactDetail.Mobile;
+		    dr["LandLine"] = employee.EmployeeContactDetail.LandLine;
+
+		    dataTable.Rows.Add(dr);
+	    }
+
+	    protected void Button1_Click(object sender, EventArgs e)    {
+		if (checkBoxIncludeContactDetails.Checked)   GridView1.DataSource = GetEmployeeDataIncludingContactDetails();
+		else GridView1.DataSource = GetEmployeeData();
+		GridView1.DataBind();
+	    }
+
+	Sql, SELECT [Extent1].[EmployeeID] AS [EmployeeID], [Extent1].[FirstName] AS [FirstName], [Extent1].[LastName] AS [LastName], [Extent1].[Gender] AS [Gender] FROM [dbo].[Employees] AS [Extent1]
+
+	     SELECT ... [Extent1].[Email] AS [Email], [Extent1].[Mobile] AS [Mobile], [Extent1].[LandLine] AS [LandLine] FROM [dbo].[Employees] AS [Extent1]	
+	     
+
+Part 13 - Table splitting in entity framework with code first approach
+======================================================================
+    public class Employee   {
+        public int EmployeeID { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public string Gender { get; set; }
+
+        public EmployeeContactDetail EmployeeContactDetail { get; set; }
+    }
+
+    public class EmployeeContactDetail    {
+        public int EmployeeID { get; set; }
+        public string Email { get; set; }
+        public string Mobile { get; set; }
+        public string LandLine { get; set; }
+
+        public Employee Employee { get; set; }
+    }
+
+    public class EmployeeDBContext : DbContext   {
+        public DbSet<Employee> Employees { get; set; }
+
+        protected override void OnModelCreating(DbModelBuilder modelBuilder)       {
+            modelBuilder.Entity<Employee>()
+                .HasKey(pk => pk.EmployeeID)
+                .ToTable("Employees");
+
+            modelBuilder.Entity<EmployeeContactDetail>()
+                .HasKey(pk => pk.EmployeeID)
+                .ToTable("Employees");
+
+		//Referential Constraint
+            modelBuilder.Entity<Employee>()
+                .HasRequired(p => p.EmployeeContactDetail)
+                .WithRequiredPrincipal(c => c.Employee);
+        }
+        
+Part 14 - Conditional Mapping in entity framework
+==================================================
+	IsTerminated column determines if an employee is a terminated employee or not. 
+	Create table Employees(
+	     EmployeeID int primary key identity,
+	     FirstName nvarchar(50),
+	     LastName nvarchar(50),
+	     Gender nvarchar(50),
+	     IsTerminated bit not null
+	)
+	Insert into Employees values ('Mark', 'Hastings', 'Male', 0),('Steve', 'Pound', 'Male', 0),
+	('Ben', 'Hoskins', 'Male', 0),('Philip', 'Hastings', 'Male', 1), ('Mary', 'Lambeth', 'Female', 0),
+	('Valarie', 'Vikings', 'Female', 0),('John', 'Stanmore', 'Male', 1)
+
+	Only the employees who are not terminated, so include the filter across our entire application. 
+	Conditional Mapping can be used to apply such a permanent filter on the entity, so that the generated SQL query always have the WHERE clause.
+
+	To use Conditional Mapping, "Table Mapping" -> add the condition - When IsTerminated = false
+			when IsTerminated "Is" either null or not null
+			
+	Build or Validate, throw error 
+	"Problem in mapping fragments starting at line 46:Condition member 'Employees.IsTerminated' with a condition other 
+	than 'IsNull=False' is mapped. Either remove the condition on Employees.IsTerminated or remove it from the mapping"
+
+	This is because, a table column cannot be mapped more than once. We have used IsTerminated column in conditional mapping, 
+	so it cannot be used in property mapping as well. For this reason delete it from Employee entity.
+
+	protected void Page_Load(object sender, EventArgs e){
+	    EmployeeDBContext employeeDBContext = new EmployeeDBContext();
+	    GridView1.DataSource = employeeDBContext.Employees;
+	    //employeeDBContext.Employees.Where(em => em.IsTerminated == true).ToList();
+            GridView1.DataBind();
+	}
+	
+Part 15 - Conditional Mapping in entity framework with code first
+==================================================================
+    public class Employee    {
+        public int EmployeeID { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public string Gender { get; set; }
+        public bool IsTerminated { get; set; }
+    }
+
+    public class EmployeeDBContext : DbContext    {
+        public DbSet<Employee> Employees { get; set; }
+
+        protected override void OnModelCreating(DbModelBuilder modelBuilder)        {
+            modelBuilder.Entity<Employee>()
+                .Map(m => m.Requires("IsTerminated")
+                .HasValue(false))
+                .Ignore(m => m.IsTerminated);
+
+            base.OnModelCreating(modelBuilder);
+        }
+    }
+    
+
+Part 16 - Self referencing association in entity framework
+==========================================================
+	This table is a self-referencing table because to get the manager of an employee, 
+	we take ManagerId column value and look up in the EmployeeId column of the same table. 
+	
+	Create table Employees	(
+	     EmployeeID int primary key identity,
+	     EmployeeName nvarchar(50),
+	     ManagerID int foreign key references Employees(EmployeeID)
+	)
+
+	Insert into Employees values ('John', NULL),('Mark', NULL),('Steve', NULL),('Tom', NULL),('Lara', NULL),
+	('Simon', NULL),('David', NULL),('Ben', NULL),('Stacy', NULL),('Sam', NULL)
+
+	Update Employees Set ManagerID = 8 Where EmployeeName IN ('Mark', 'Steve', 'Lara')
+	Update Employees Set ManagerID = 2 Where EmployeeName IN ('Stacy', 'Simon')
+	Update Employees Set ManagerID = 3 Where EmployeeName IN ('Tom')
+	Update Employees Set ManagerID = 5 Where EmployeeName IN ('John', 'Sam')
+	Update Employees Set ManagerID = 4 Where EmployeeName IN ('David')
+
+	ADO.NET entity data model -> Employee entity is generated
+	Notice that a self-referencing association and 2 navigation properties (Employees1 & Employee1) are automatically created.  
+	Employees1 navigation -> properties -> Multiplicity is set to Many -> So, it returns employees who are subordinates. (multiple employees)  
+	Employee1 navigation -> properties -> Multiplicity is set to Zero or One (may or may not data) ->  So, it returns the manager of an employee. 
+
+	From a developer perspective the default navigation property names that entity framework generates are not meaningful. 
+	If you have to write any code based on these navigation properties, it can get even more complicated. 
+
+	Notice that, because of the poor naming of the navigation properties the code is hard to read and maintain.
+	protected void Page_Load(object sender, EventArgs e){
+	    EmployeeDBContext employeeDBContext = new EmployeeDBContext();
+	    GridView1.DataSource = employeeDBContext.Employees.Select(emp => new{
+		EmployeeName = emp.EmployeeName,
+		ManagerName = emp.Employee1 == null ? "Super Boss": emp.Employee1.EmployeeName
+	    }).ToList();
+	    GridView1.DataBind();
+	}
+
+	Now let's give these navigation properties meaningful names. To do this,
+		1. Right click on Employees1 navigation property and rename it to Subordinates
+		2. Similarly, right click on Employee1 navigation property and rename it to Manager 
+
+	
+	Now the code in the code-behind file would change as shown below which is more readable and maintainable.
+	protected void Page_Load(object sender, EventArgs e){
+	    EmployeeDBContext employeeDBContext = new EmployeeDBContext();
+	    GridView1.DataSource = employeeDBContext.Employees.Select(emp => new	    {
+		EmployeeName = emp.EmployeeName,
+		ManagerName = emp.Manager == null ? "Super Boss"
+					      : emp.Manager.EmployeeName
+	    }).ToList();
+	    GridView1.DataBind();
+	}
+    
+    
+Part 17 - Self referencing association in entity framework with code first
+===========================================================================
+    public class Employee    {
+        // Scalar properties column names same like table
+        public int EmployeeID { get; set; }
+        public string EmployeeName { get; set; }
+        public int? ManagerID { get; set; }
+
+        // Navigation property
+        public Employee Manager { get; set; }
+    }
+    public class EmployeeDBContext : DbContext    {
+        public DbSet<Employee> Employees { get; set; }
+
+        protected override void OnModelCreating(DbModelBuilder modelBuilder)    {
+            modelBuilder.Entity<Employee>()
+                .HasOptional(e => e.Manager) //Employee1 navigation -> Multiplicity is set to Zero or One (may or may not data) 
+                .WithMany() //Employees1 navigation -> Multiplicity is set to Many -> So, it returns employees who are subordinates. (multiple employees)  
+                .HasForeignKey(m => m.ManagerID);
+
+            base.OnModelCreating(modelBuilder);
+        }}
+        
+Part 18 - Table Per Hierarchy (TPH) inheritance in entity framework
+===================================================================
+	In TPH inheritance one database table is used to store data for all of the entity types in the inheritance hierarchy. 
+	
+	Create Table Employees	(
+	     ID int primary key identity,
+	     FirstName nvarchar(50),
+	     LastName nvarchar(50),
+	     Gender nvarchar(50),
+	     AnuualSalary int,
+	     HourlyPay int,
+	     HoursWorked int,
+	     Discriminator nvarchar(50)
+	)
+
+	Insert into Employees values('Mark', 'Hastings', 'Male', 60000, NULL, NULL, 'PermanentEmployee')
+	('Steve', 'Pound', 'Male', NULL, 50, 160, 'ContractEmployee'),
+	('Ben', 'Hoskins', 'Male', NULL, 40, 120, 'ContractEmployee'),
+	('Philip', 'Hastings', 'Male', 45000, NULL, NULL, 'PermanentEmployee'),
+	('Mary', 'Lambeth', 'Female', 30000, NULL, NULL, 'PermanentEmployee')
+	('Valarie', 'Vikings', 'Female', NULL, 30, 140, 'ContractEmployee'), 
+	('John', 'Stanmore', 'Male', 80000, NULL, NULL, 'PermanentEmployee')
+
+	In our organization we have 2 types of employees
+		1. Permanent Employees - AnuualSalary is specific for Permanent Employees
+		2. Contract Employees - HourlyPay & HoursWorked is specific for Contract Employees
+
+	ADO.NET entity data model - Employee entity class is generated.  
+
+	But from an application perspective we want 3 entity classes
+	Employee - This should be an abstract class and should contain all the common properties of permanent and contract employees. 
+		ID, FirstName, LastName & Gender properties should be present in this class.
+	PermanentEmployee - This class should inherit from the abstract Employee class and should contain AnnualSalary property
+	ContractEmployee - This class should inherit from the abstract Employee class and should contain HourlyPay & HoursWorked properties
+
+	To achieve this using the Entity Framework designer
+		1. Add PermanentEmployee entity - base type employee , cut AnnualSalary
+			->Table Mapping -> map Employees table (key is disabled) -> conditional mapping, Discriminator = PermanentEmployee. 
+		2. Add ContractEmployee entity (it shows -> arrow means inheirtance) - base type employee , cut HourlyPay & HoursWorked
+			->Table Mapping -> map Employees table -> conditional mapping, Discriminator = ContractEmployee. 
+		3. using Discriminator column in conditional mapping, delete from Employee entity.
+		4. Employee entity ->  properties ->set Abstract=true. This should make Employee class an abstract class. 
+
+	<div style="font-family: Arial">
+	    <asp:RadioButtonList ID="RadioButtonList1" runat="server" AutoPostBack="True"
+		OnSelectedIndexChanged="RadioButtonList1_SelectedIndexChanged">
+		<asp:ListItem Text="Load all Employees" Value="All"></asp:ListItem>
+		<asp:ListItem Text="Load Permanent Employees" Value="Permanent"></asp:ListItem>
+		<asp:ListItem Text="Load Contract Employees" Value="Contract"></asp:ListItem>
+	    </asp:RadioButtonList>
+	    <asp:GridView ID="GridView1" runat="server">
+	    </asp:GridView>
+	</div>
+
+        protected void RadioButtonList1_SelectedIndexChanged(object sender, EventArgs e)    {
+            EmployeeDBContext employeeDBContext = new EmployeeDBContext();
+
+            switch (RadioButtonList1.SelectedValue)            {
+                case "Permanent":
+                    GridView1.DataSource = employeeDBContext.Employees
+                        .OfType<PermanentEmployee>().ToList();
+                    GridView1.DataBind();
+                    break;
+
+                case "Contract":
+                    GridView1.DataSource = employeeDBContext.Employees
+                        .OfType<ContractEmployee>().ToList();
+                    GridView1.DataBind();
+                    break;
+
+                default:
+                    GridView1.DataSource = ConvertEmployeesForDisplay(
+                        employeeDBContext.Employees.ToList());
+                    GridView1.DataBind();
+                    break;
+            }}
+
+		private DataTable ConvertEmployeesForDisplay(List<Employee> employees){
+		    DataTable dt = new DataTable();
+		    dt.Columns.Add("ID");
+		    dt.Columns.Add("FirstName");
+		    dt.Columns.Add("LastName");
+		    dt.Columns.Add("Gender");
+		    dt.Columns.Add("AnuualSalary");
+		    dt.Columns.Add("HourlyPay");
+		    dt.Columns.Add("HoursWorked");
+		    dt.Columns.Add("Type");
+
+		    foreach (Employee employee in employees){
+			DataRow dr = dt.NewRow();
+			dr["ID"] = employee.ID;
+			dr["FirstName"] = employee.FirstName;
+			dr["LastName"] = employee.LastName;
+			dr["Gender"] = employee.Gender;
+
+			if (employee is PermanentEmployee) {
+			    dr["AnuualSalary"] = ((PermanentEmployee)employee).AnuualSalary;
+			    dr["Type"] = "Permanent";
+			} else {
+			    dr["HourlyPay"] = ((ContractEmployee)employee).HourlyPay;
+			    dr["HoursWorked"] = ((ContractEmployee)employee).HoursWorked;
+			    dr["Type"] = "Contract";
+			}
+			dt.Rows.Add(dr);
+		    }
+
+		    return dt;
+		}}}
+
+	Run
+	When Load All Employees radio button is selected: 
+		SELECT
+		[Extent1].[Discriminator] AS [Discriminator],
+		[Extent1].[ID] AS [ID],
+		[Extent1].[FirstName] AS [FirstName],
+		[Extent1].[LastName] AS [LastName],
+		[Extent1].[Gender] AS [Gender],
+		[Extent1].[AnuualSalary] AS [AnuualSalary],
+		[Extent1].[HoursWorked] AS [HoursWorked],
+		[Extent1].[HourlyPay] AS [HourlyPay]
+		FROM [dbo].[Employees] AS [Extent1]
+		WHERE [Extent1].[Discriminator] IN (N'PermanentEmployee',N'ContractEmployee')
+
+	When Load Permanent Employees radio button is selected:
+		SELECT	'0X0X' AS [C1], ..., [E].[AnuualSalary] AS [AnuualSalary] FROM [dbo].[Employees] AS [Extent1]
+		WHERE [Extent1].[Discriminator] = N'PermanentEmployee'
+
+	When Load Contract Employees radio button is selected:
+		SELECT	'0X0X' AS [C1],...[E].[HoursWorked] AS [HoursWorked], [Extent1].[HourlyPay] AS [HourlyPay]
+		FROM [dbo].[Employees] AS [Extent1] WHERE [Extent1].[Discriminator] = N'ContractEmployee'        
+
+
+Part 19 - Table Per Hierarchy (TPH) inheritance in entity framework with code first
+====================================================================================
+	In TPH inheritance one database table is used to store data for all of the entity types in the inheritance hierarchy.  
+
+    public abstract class Employee    {
+        [Column(Order = 1)]
+        public int ID { get; set; }
+        [Column(Order = 2)]
+        public string FirstName { get; set; }
+        [Column(Order = 3)]
+        public string LastName { get; set; }
+        [Column(Order = 4)]
+        public string Gender { get; set; }
+    }
+
+    public class PermanentEmployee : Employee    {
+        [Column(Order = 5)]
+        public int AnnualSalary { get; set; }
+    }
+    
+    public class ContractEmployee : Employee    {
+        [Column(Order = 6)]
+        public int HoursWorked { get; set; }
+        [Column(Order = 7)]
+        public int HourlyPay { get; set; }
+    }
+
+    public class EmployeeDBContext : DbContext    {
+        public DbSet<Employee> Employees { get; set; }
+    }
+
+        protected void RadioButtonList1_SelectedIndexChanged(object sender, EventArgs e)       
+           ...
+
+        private DataTable ConvertEmployeesForDisplay(List<Employee> employees)
+        ...
+
+        protected void btnAddPermanentEmployee_Click(object sender, EventArgs e)        {
+            PermanentEmployee permanentEmployee = new PermanentEmployee            {
+                FirstName = "Mike",
+                LastName = "Brown",
+                Gender = "Male",
+                AnnualSalary = 70000,
+            };
+
+            EmployeeDBContext employeeDBContext = new EmployeeDBContext();
+            employeeDBContext.Employees.Add(permanentEmployee);
+            employeeDBContext.SaveChanges();
+        }
+
+        protected void btnAddContractEmployee_Click(object sender, EventArgs e)        {
+            ContractEmployee contractEmployee = new ContractEmployee            {
+                FirstName = "Stacy",
+                LastName = "Josh",
+                Gender = "Female",
+                HourlyPay = 50,
+                HoursWorked = 120
+            };
+
+            EmployeeDBContext employeeDBContext = new EmployeeDBContext();
+            employeeDBContext.Employees.Add(contractEmployee);
+            employeeDBContext.SaveChanges();
+        }
+    }
+
+
+Part 20 - Table Per Type (TPT) inheritance in entity framework
+==============================================================
+	In TPT inheritance one database table per type is used to store data for the respective entity types in the inheritance hierarchy. This means there is no problem of de-normalized tables. 
+
+	TPH downside of this is that we have a denormalized table and some columns will have NULL values 
+	depending on the type of the derived object being saved to the database table. 
+
+	Previous example,  The data of all the entity types in the above inheritance hierarchy is stored in the following Employees table 
+	ID	FirstName	LastName	Gender	AnuualSalary	HourlyPay	HoursWorked	Discriminator
+	1	Mark		Hastings	Male	60000		NULL		NULL		PermanentEmployee
+	2	Steve		Pound		Male	NULL		50		160		ContractEmployee
+	3	Ben		Hoskins		Male	NULL		40		120		ContractEmployee
+	4	Philip		Hastings	Male	45000		NULL		NULL		PermanentEmployee
+	5	Mary		Lambeth		Female	30000		NULL		NULL		PermanentEmployee
+	6	Valarie		Vikings		Female	NULL		30		140		ContractEmployee
+	7	John		Stanmore	Male	80000		NULL		NULL		PermanentEmployee
+
+	The problem with TPH is that when we store a PermanentEmployee object to this table, HoursWorked & HourlyPay columns will be left NULL. Along the same lines, when we store a ContractEmployee object, AnnualSalary column will be NULL. 
+	With Table Per Type inheritance we don't have this problem.
+
+	We will be using the followin 3 tables to implement Table Per Type (TPT) inheritance. 
+	Notice that EmployeeID is the primary key of Employees table. In PermanentEmployees & ContractEmployees, EmployeeID is the foreign key. 
+	
+	Create Table Employees	(
+	     EmployeeID int primary key,
+	     FirstName nvarchar(50),
+	     LastName nvarchar(50),
+	     Gender nvarchar(50),
+	)
+
+	Create Table PermanentEmployees	(
+	     EmployeeID int foreign key references
+	     Employees(EmployeeID) not null,
+	     AnnualSalary int
+	)
+
+	Create Table ContractEmployees {
+	     EmployeeID int foreign key references
+	     Employees(EmployeeID) not null,
+	     HourlyPay int,
+	     HoursWorked int
+	)
+
+	Insert into Employees values (1, 'Mark', 'Hastings', 'Male'),(2, 'Steve', 'Pound', 'Male') ,(3, 'Ben', 'Hoskins', 'Male')
+		,(4, 'Philip', 'Hastings', 'Male'),(5, 'Mary', 'Lambeth', 'Female'),(6, 'Valarie', 'Vikings', 'Female')
+		,(7, 'John', 'Stanmore', 'Male')
+
+	Insert into PermanentEmployees values (1, 60000),(3, 45000),(4, 30000),(7, 80000)
+
+	Insert into ContractEmployees values (2, 50, 160), (5, 40, 120),(6, 30, 140)
+
+	ADO.NET entity data model -> 3 entities are generated with an association instead of inheritance relation between the entities. 
+
+	Delete the association between Employee and PermanentEmployee entities. This will also automatically delete the 
+	PermanentEmployee navigation property from Employee entity and Employee navigation property from PermanentEmployee entity.
+
+	Along the same lines, delete the association between Employee and ContractEmployee entities. This will also automatically 
+	delete the ContractEmployee navigation property from Employee entity and Employee navigation property from ContractEmployee entity.
+
+	Now, add the inheritance relationship between Employee & ContractEmployee entities
+		1.  Add - Inheritance -> Select Employee as the Base Entity and ContractEmployee as the Derived entity 
+	
+	Along the same line, add the inheritance relationship between Employee & PermanentEmployee entities
+		1.  Add - Inheritance -> 2. Select Employee as the Base Entity and PermanentEmployee as the Derived entity
+		
+	Now delete the EmployeeID property from both PermanentEmployee & ContractEmployee entities. 
+	For both of these entities EmployeeID property will be available from the base Employee entity thru inheritance.
+
+	Run
+
+Part 21 - Table Per Type (TPT) inheritance in entity framework code first
+=========================================================================
+	In TPT inheritance one database table per type is used to store data for the respective entity types in the inheritance hierarchy. 
+	
+	    [Table("Employees")]
+	    public class Employee	    {
+		public int EmployeeID { get; set; }
+		public string FirstName { get; set; }
+		public string LastName { get; set; }
+		public string Gender { get; set; }
+	    }
+
+	    [Table("PermanentEmployees")]
+	    public class PermanentEmployee : Employee	    {
+		public int AnnualSalary { get; set; }
+	    }
+	    
+	    [Table("ContractEmployees")]
+	    public class ContractEmployee : Employee    {
+		public int HoursWorked { get; set; }
+		public int HourlyPay { get; set; }
+	    }
+
+	    public class EmployeeDBContext : DbContext    {
+		public DbSet<Employee> Employees { get; set; }
+	    }
+
+
+	use Fluent API to do the table mapping by overriding OnModelCreating() as shown below.
+	public class EmployeeDBContext : DbContext	{
+	    public DbSet<Employee> Employees { get; set; }
+
+	    protected override void OnModelCreating(DbModelBuilder modelBuilder)    {
+	    	modelBuilder.Entity<Employee>().ToTable("Employees"); //comment it  [Table("Employees")]
+		modelBuilder.Entity<ContractEmployee>().ToTable("ContractEmployees"); //comment it  [Table("ContractEmployees")]
+		modelBuilder.Entity<PermanentEmployee>().ToTable("PermanentEmployees"); //comment it  [Table("PermanentEmployees")]
+
+		base.OnModelCreating(modelBuilder);
+	    }
+
+Part 22 - Many to many relationship in entity framework
+========================================================
+	3 tables,Many-to-Many relationship between Courses and Students. 
+	A student can enroll into many courses and a single course can have many students enrolled.
+	The data is stored in the StudentCourses bridge table 
+
+	Create Table Courses (
+	     CourseID int identity primary key,
+	     CourseName nvarchar(50)
+	)
+	
+	Create Table Students(
+	     StudentID int identity primary key,
+	     StudentName nvarchar(50)
+	)
+
+	Create Table StudentCourses(
+	     StudentID int not null foreign key references Students(StudentID),
+	     CourseID int not null foreign key references Courses(CourseID)
+	     primary key (StudentID, CourseID)
+	)
+	
+	Insert into Courses values ('C#'),('ASP.NET'),('SQL Server'),('WCF')
+	
+	Insert into Students values ('Mike'),('John')
+
+	Insert into StudentCourses values (1, 1), (1, 2),(2, 1), (2, 2), (2, 3)
+
+	ADO.NET entity data model ->on the above 3 tables, only 2 entities (Student & Course) are generated with a Many-to-Many association between them. 
+	Notice that an entity for the bridge table (StudentCourses) is not generated in the entity model. 
+	Also, notice that we have navigation properties to navigate from Course to Students and from Student to Courses. 
+
+	At this point, Many-to-Many association -> select Table Mapping -> the StudentCourses Many-to-Many association 
+	is mapped to Students & Courses database table. 
+
+	    EmployeeDBContext employeeDBContext = new EmployeeDBContext();
+
+	    GridView1.DataSource = from student in employeeDBContext.Students
+				    from course in student.Courses
+				    select new
+				    {
+					StudentName = student.StudentName,
+					CourseName = course.CourseName
+				    };
+	    GridView1.DataBind();
+
+
+	SQL Query joins all the 3 tables (Students, Courses & StudentCourses)
+	SELECT
+		[Extent1].[StudentID] AS [StudentID],
+		[Extent1].[StudentName] AS [StudentName],
+		[Join1].[CourseName] AS [CourseName]
+	FROM  
+		[dbo].[Students] AS [Extent1] INNER JOIN  
+		(SELECT 
+			[Extent2].[StudentID] AS [StudentID], [Extent3].[CourseName] AS [CourseName] 
+		FROM  
+			[dbo].[StudentCourses] AS [Extent2] INNER JOIN 
+		     	[dbo].[Courses] AS [Extent3] ON [Extent3].[CourseID] = [Extent2].[CourseID] 
+		) AS [Join1] ON [Extent1].[StudentID] = [Join1].[StudentID]
+
+	Modifying data:
+		Assign Mike to WCF course
+		Remove John from SQL Server course
+
+	protected void Button1_Click(object sender, EventArgs e){
+	    EmployeeDBContext employeeDBContext = new EmployeeDBContext();
+	    //add
+	    Course WCFCourse = employeeDBContext.Courses.FirstOrDefault(x => x.CourseID == 4);
+
+	    employeeDBContext.Students.FirstOrDefault(x => x.StudentID == 1).Courses.Add(WCFCourse);
+	    employeeDBContext.SaveChanges();
+
+		//remove
+	    Course SQLServerCourse = employeeDBContext.Courses.FirstOrDefault(x => x.CourseID == 3);
+	    employeeDBContext.Students.FirstOrDefault(x => x.StudentID == 2).Courses.Remove(SQLServerCourse);
+	    employeeDBContext.SaveChanges();
+
+	Turn on SQL Profiler, the queries generated.
+
+	Query to assign WCF course to Mike
+	exec sp_executesql N'insert [dbo].[StudentCourses]([StudentID], [CourseID])values (@0, @1)',N'@0 int,@1 int',@0=1,@1=4
+
+	Query to remove John from SQL Server Course
+	exec sp_executesql N'delete [dbo].[StudentCourses] where (([StudentID] = @0) and ([CourseID] = @1))',N'@0 int,@1 int',@0=2,@1=3	
+	
+
+Part 23 - Many to many relationship in entity framework code first
+==================================================================
+    public class Course    {
+        public int CourseID { get; set; }
+        public string CourseName { get; set; }
+        public IList<Student> Students { get; set; }
+    }
+    public class Student    {
+        public int StudentID { get; set; }
+        public string StudentName { get; set; }
+        public IList<Course> Courses { get; set; }
+    }
+    public class EmployeeDBContext : DbContext  {
+        public DbSet<Course> Courses { get; set; }
+        public DbSet<Student> Students { get; set; }
+
+	//without this function, code will generate StudentCourses table
+	//field is Student_StudentID and Course_CourseID
+	//the below code will fix, create StudentCourses table,
+	//field is StudentID & CourseID
+        protected override void OnModelCreating(DbModelBuilder modelBuilder)        {
+            modelBuilder.Entity<Student>() //you can go <Course> also
+            .HasMany(t => t.Courses) //this student has many courses
+            .WithMany(t => t.Students) //this courses has many students
+            .Map(m =>            {
+                m.ToTable("StudentCourses");
+                m.MapLeftKey("StudentID"); //first key
+                m.MapRightKey("CourseID"); //second key
+            });
+
+            base.OnModelCreating(modelBuilder);
+        }}
+
+        protected void Page_Load(object sender, EventArgs e) {
+            EmployeeDBContext employeeDBContext = new EmployeeDBContext();
+
+            GridView1.DataSource = (from student in employeeDBContext.Students
+                                    from c in student.Courses
+                                    select new
+                                    {
+                                        StudentName = student.StudentName,
+                                        CourseName = c.CourseName
+                                    }).ToList();
+
+            GridView1.DataBind();
+        }
+        
+	//include is must other wise it wll through
+    eDBC.Students.Include("Courses").FirstOrDefault(x => x.StudentID == 1).Courses.Add(WCFCourse);
+
+    eDBC.Students.Include("Courses").FirstOrDefault(x => x.StudentID == 2).Courses.Remove(SQLServerCourse);
+    
+    
+Part 24 - Entity for BridgeTable in many to many relationship
+=============================================================
+
+	Entity framework generates an Entity for the many-to-many relationship bridge table. 
+ 
+	Modify the Bridge Table (StudentCourses) to include EnrolledDate column. 
+	
+	Create Table StudentCourses(
+	     StudentID int not null foreign key references Students(StudentID),
+	     CourseID int not null foreign key references Courses(CourseID),
+	     EnrolledDate DateTime,
+	     primary key (StudentID, CourseID)
+	)
+
+	Insert into StudentCourses values (1, 1, Getdate())
+	Insert into StudentCourses values (1, 2, Getdate())
+	Insert into StudentCourses values (2, 1, Getdate())
+	Insert into StudentCourses values (2, 2, Getdate())
+	Insert into StudentCourses values (2, 3, Getdate())
+
+	DO.NET entity data model - 3 entities (Student, Course & StudentCourse) are generated.
+	An entity (StudentCourse) for the bridge table (StudentCourses) is also generated. 
+		a) Student entity has One-Many relationship with StudentCourse Entity
+		b) Course entity has One-Many relationship with StudentCourse Entity
+
+	Entity Framework interview question : Explain 
+	when an entity will and will not be created by the entity framework for 
+	the bridge table in a many-to-many relationship?
+	An entity for the bridge table is NOT created when the bridge table has only the foreign keys. 
+	On the other if the bridge table has any other columns apart from the foreign key columns 
+	then a bridge table is created.
+
+	protected void Page_Load(object sender, EventArgs e)    {
+            EmployeeDBContext employeeDBContext = new EmployeeDBContext();
+
+            GridView1.DataSource = (from student in employeeDBContext.Students
+                                    from studentCourse in student.StudentCourses
+                                    select new
+                                    {
+                                        StudentName = student.StudentName,
+                                        CourseName = studentCourse.Course.CourseName,
+                                        EnrolledDate = studentCourse.EnrolledDate
+                                    }).ToList();
+
+            // The above query can also be written as shown below
+            //GridView1.DataSource = (from course in employeeDBContext.Courses
+            //                        from studentCourse in course.StudentCourses
+            //                        select new
+            //                        {
+            //                            StudentName = studentCourse.Student.StudentName,
+            //                            CourseName = course.CourseName,
+            //                            EnrolledDate = studentCourse.EnrolledDate
+            //                        }).ToList();
+
+            GridView1.DataBind();
+        }
+
+            employeeDBContext.StudentCourses.AddObject
+                (new StudentCourse { StudentID = 1, CourseID = 4, 
+                                                       EnrolledDate = DateTime.Now });
+
+            StudentCourse studentCourseToRemove = employeeDBContext.StudentCourses
+                .FirstOrDefault(x => x.StudentID == 2 && x.CourseID == 3);
+            employeeDBContext.StudentCourses.DeleteObject(studentCourseToRemove);
+
+
+Part 25 - Entity for BridgeTable in many to many relationship code first
+========================================================================
+    public class StudentCourse    {
+        public Course Course { get; set; }
+
+        public Student Student { get; set; }
+
+        [Key, Column(Order = 1)]
+        public int StudentID { get; set; }
+
+        [Key, Column(Order = 2)]
+        public int CourseID { get; set; }
+
+        public DateTime EnrolledDate { get; set; }
+    }

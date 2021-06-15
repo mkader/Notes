@@ -1,0 +1,933 @@
+Part 1 - LINQ to SQL
+====================
+	What is LINQ to SQL
+	It is an ORM (Object Relational Mapping) framework, that automatically creates strongly typed .net classes 
+	based on database tables. We can then write LINQ to SQL queries (Select, Insert, Update, Delete) in any 
+	.NET supported language (C#, VB etc). The LINQ to SQL provider will then convert LINQ queries to 
+	Transact-SQL that the SQL Server database understands. LINQ to SQL supports transactions, views, 
+	and stored procedures. LINQ to SQL supports only SQL Server database. 
+
+
+	Since LINQ to SQL models a relational database using strongly typed .net classes, we have the following advantages
+		1. Intellisense support 2. Compile time error checking 3. Debugging support
+
+	Create table Departments( ID int primary key identity, Name nvarchar(50), Location nvarchar(50) )GO
+
+	Create table Employees( ID int primary key identity, FirstName nvarchar(50), LastName nvarchar(50),
+     		Gender nvarchar(50), Salary int, DepartmentId int foreign key references Departments(Id))GO
+
+	Insert into Departments values ('IT', 'New York'), ('HR', 'London'), ('Payroll', 'Sydney') GO
+
+	Insert into Employees values ('Mark', 'Hastings', 'Male', 60000, 1), ('Steve', 'Pound', 'Male', 45000, 3)
+		('Ben', 'Hoskins', 'Male', 70000, 1), ('Philip', 'Hastings', 'Male', 45000, 2)
+		('Mary', 'Lambeth', 'Female', 30000, 2), ('Valarie', 'Vikings', 'Female', 35000, 3)
+		('John', 'Stanmore', 'Male', 80000, 1)
+
+	VS 2107 doesn't contain 'LINQ to SQL Classes', install - tools -> get tools & features
+	-> ndividual Components - LINQ To SQL tools -> moddify
+	
+	Empty asp.net web application project - > Add LINQ to SQL Classes (Sample.dbml) -> Click on Server Explorer link 
+	-> Find all the tables in the Sample database ->  Drag and drop the tables on Sample.dbml file. 
+	-> Department and Employee classes, created with the association between them.  (A Department can have 1 or more employees)
+		These associations are modeled based on the primary-key/foreign-key relationships between the tables in the database. 
+		Many relationship between Department and Employee entities. . 
+
+    	SampleDataContext dbContext = new SampleDataContext();
+    	//GridView1.DataSource = dbContext.Employees;
+    	GridView1.DataSource = from employee in dbContext.Employees where employee.Gender == "Male"
+						 orderby employee.Salary descending  select employee;
+    	GridView1.DataBind();
+
+	Understand what is happening behind the scenes.
+		1. Application issues a LINQ Query
+		2. LINQ to SQL provider translates the LINQ query into T-SQL that the SQL Server database can understand
+		3. SQL Server executes the query, and returns the matching rows
+		4. LINQ to SQL provider creates Employee objects, populates properties and return the objects to the application. 
+		
+	|Appli -> LINQ Query( from employee) -> |LINQ   -> exec sp_executesql n'select ...     -> | SQL
+	|cation <- Employee Objects          <- |to SQL <- Matching Employee rows are returned <- | Server	
+
+
+Part 2 - Insert Update Delete using LINQ to SQL
+===============================================
+	Insert
+	using (SampleDataContext dbContext = new SampleDataContext()){
+	    Employee newEmployee = new Employee    {
+		FirstName = "Tim",
+		LastName = "T",
+		Gender = "Male",
+		Salary = 55000,
+		DepartmentId = 1
+	    };
+	    dbContext.Employees.InsertOnSubmit(newEmployee);
+	    dbContext.SubmitChanges();
+	}
+
+	Update using LINQ to SQL
+	using (SampleDataContext dbContext = new SampleDataContext()){
+	    Employee employee = dbContext.Employees.SingleOrDefault(x => x.ID == 8);
+	    employee.Salary = 65000;
+	    dbContext.SubmitChanges();
+	}
+
+	Delete using LINQ to SQL
+	using (SampleDataContext dbContext = new SampleDataContext()){
+	    Employee employee = dbContext.Employees.SingleOrDefault(x => x.ID == 8);
+	    dbContext.Employees.DeleteOnSubmit(employee);
+	    dbContext.SubmitChanges();
+	}
+
+Part 3 - How to view LINQ to SQL generated SQL queries
+=======================================================
+	4 ways
+
+	1.Using the Log property of the DataContext object
+	using (SampleDataContext dbContext = new SampleDataContext()){
+	    // Write the generated sql query to the webform
+	    dbContext.Log = Response.Output;
+
+	    // Write the generated sql query to the Console window
+	    // dbContext.Log = Console.Out;
+
+	    var linqQuery = from employee in dbContext.Employees
+			    select employee;
+	}
+
+	2. Using ToString() method
+	using (SampleDataContext dbContext = new SampleDataContext()){
+	    var linqQuery = from employee in dbContext.Employees
+			    select employee;
+
+	    string sqlQuery = linqQuery.ToString();
+	    Response.Write(sqlQuery);
+	}
+
+	3. Using GetCommand() method of DataContext object
+	    Response.Write(dbContext.GetCommand(linqQuery).CommandText);
+	    Response.Write("<br/>");
+	    Response.Write(dbContext.GetCommand(linqQuery).CommandType);
+
+	4. use SQL profiler. 	
+
+Part 4 - Using stored procedures with LINQ to SQL
+================================================
+	Create procedure GetEmployees
+	as
+	Begin
+	     Select ID, FirstName, LastName, Gender, Salary, DepartmentId
+	     from Employees
+	End
+
+	"Server Explorer" -> Drag "GetEmployees" stored procedure. 
+	This will automatically create a method with the same name as the stored procedure. 
+	Tables and Views are converted to classes. 
+	Stored procedures and functions are converted to methods. 
+
+	GridView1.DataSource = dbContext.GetEmployees();
+
+	Modifying the Return Type of GetEmployees() method
+		Hover the mouse over GetEmployees() method and notice the Return Type. 
+		This method returns System.Data.Linq.ISingleResult<GetEmployeesResult>
+
+		There are 2 things that we need to understand here
+		1. GetEmployeesResult is an auto-generated type and follows the "[StoredProcedureName]Result" naming pattern.
+		2. ISingleResult implies that we are getting back a single result set and not multiple result sets. 
+
+		Can we change the Return Type
+		1.Yes, on the LINQ to SQL designer -> GetEmployees() method properties ->  Return type ->select Employee. 
+		So the return type now is ISingleResult<Employee>.
+
+		2.Another way, when dragging and dropping the stored procedure on the designer surface, 
+		make sure to drop it on the Employee entity. Doing so will also set the return type to ISingleResult<Employee>. 
+		
+
+Part 5 - Insert Update Delete using stored procedures in LINQ to SQL
+=====================================================================
+	-- Insert Stored Procedure
+	Create procedure InsertEmployee
+	@FirstName nvarchar(50),
+	@LastName nvarchar(50),
+	@Gender nvarchar(50),
+	@Salary int,
+	@DepartmentId int
+	as
+	Begin
+	     Insert into Employees(FirstName, LastName, Gender, Salary, DepartmentId)
+	     values (@FirstName, @LastName, @Gender, @Salary, @DepartmentId)
+	End
+	GO
+
+	-- Update Stored Procedure
+	Create procedure UpdateEmployee
+	@ID int,
+	@FirstName nvarchar(50),
+	@LastName nvarchar(50),
+	@Gender nvarchar(50),
+	@Salary int,
+	@DepartmentId int
+	as
+	Begin
+	     Update Employees Set
+	     FirstName = @FirstName, LastName = @LastName, Gender = @Gender,
+	     Salary = @Salary, DepartmentId = @DepartmentId
+	     where ID = @ID
+	End
+	GO
+
+	-- Delete Stored Procedure
+	Create procedure DeleteEmployee
+	@ID int
+	as
+	Begin
+	     Delete from Employees where ID = @ID
+	End
+	GO
+
+	VS -> "Server Explorer" -> Drag Insert, Update and Delete stored procedures
+	This will automatically create respective methods with the same name as the stored procedures.
+
+	Mapping stored procedures to work with LINQ to SQL
+		a) Right click on Employee entity on LINQ to SQL designer and select "Configure Behavior" option.
+		b) In the "Configure Bevior" window, set
+		    Class = Employee
+		    Behavior = Insert
+		    Select "Customize" radio button
+		    From the DropDownList, select InsertEmployee() stored procedure
+		    Map Method Arguments to Class properties
+		c) Finally click OK 
+		d)) In a similar fashion, configure stored procedures for Update and Delete operations.
+
+	Run SQL profiler -> Perform Insert, Update and Delete - > The respective SPs are called as expected. 		
+
+Part 6 - Stored procedures with output parameters in LINQ to SQL
+===============================================================
+	Create procedure GetEmployeesByDepartment
+	@DepartmentId int,
+	@DepartmentName nvarchar(50) out
+	as
+	Begin
+	     Select @DepartmentName = Name
+	     from Departments where ID = @DepartmentId
+
+	     Select * from Employees
+	     where DepartmentId = @DepartmentId
+
+	End
+
+	Use the following SQL to test the stored procedure
+	Declare @DeptName nvarchar(50)
+	Execute GetEmployeesByDepartment 2, @DeptName out
+	Select  @DeptName
+
+	VS -> Drag "GetEmployeesByDepartment" sp
+
+	    string deptName = string.Empty;
+	    GridView1.DataSource = dbContext.GetEmployeesByDepartment(1, ref deptName);
+	    GridView1.DataBind();
+
+	    lblDept.Text = "Department Name = " + deptName;
+
+Part 7 - What is SqlMetal
+=========================
+	What is SqlMetal - SqlMetal is a command-line code generation tool used to generate LINQ-to-SQL classes. 
+	There are 2 ways to generate LINQ-to-SQL classes
+		1. Uisng Visual Studio OR  2. Using SqlMetal
+ 
+	C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\SqlMetal.exe
+	
+	Run VS Command prompt as an Administrator
+
+	C:\SqlMetalGeneratedFiles. This is the folder where we will store the generated dbml file.
+
+	Type the following command and press enter
+
+	SqlMetal.exe  /server:localhost /database:Sample /namespace:Demo 
+			/dbml:C:\DNS\Projects\LinqToSQL\SqlMetalGeneratedFiles\Sample1.dbml 
+			/Context:Sample1DataContext
+
+		server - Database server name.
+		database - database name
+		dbml - The name of the generated dbml file
+		namespace - Namespace for the generated classes
+		context - Name of the data context class
+
+	Sample.dbml file created
+	Refer http://msdn.microsoft.com/en-gb/library/vstudio/bb386987(v=vs.100).aspx
+
+	add web.config
+	<add name="SampleConnectionString"
+	     connectionString="Data Source=venkat-pc;database=Sample;Integrated Security=True"
+	     providerName="System.Data.SqlClient" />
+
+	Add Sample.dbml.
+
+	    string cs = ConfigurationManager.ConnectionStrings["SampleConnectionString"].ConnectionString;
+
+	    using (SampleDataContext dbContext = new SampleDataContext(cs))  {
+		GridView1.DataSource = dbContext.Employees;
+		GridView1.DataBind();
+	    }
+
+Part 8 - Lazy loading in LINQ to SQL
+=====================================
+	Create Console application (ConsoleDemo) -> Add LINQ to SQL Classes (Sample.dbml) -> Drag and drop the tables
+
+	using (SampleDataContext dbContext = new SampleDataContext()){
+	    //dbContext.Log = Console.Out;
+	    foreach (Department dept in dbContext.Departments)    {
+		Console.WriteLine(dept.Name);
+		foreach (Employee emp in dept.Employees) {
+		    Console.WriteLine("\t" + emp.FirstName + " " + emp.LastName);
+		}}}
+
+	The above code prints, Department Name and all the employees FirstName and LastName's belonging to that department. 
+	IT
+		Mark Hastings
+		Ben 
+	HR
+		Philpls
+		....
+	
+	In this example there is a One-to-Many relationship between Department and Employee entities. 
+	A Department can have 1 or more employees. When Departments are loaded the related entities (Employee entities) are not loaded. 
+	Employee entities are only loaded when we iterate thru the employee objects belonging to a given department.
+
+	To prove this, uncomment the following line and run the console application again. 
+	Notice that there is 1 query to retrieve all the departments and 3 queries to retrieve the employees belonging to each department.
+	//dbContext.Log = Console.Out;
+
+	Example in web app
+	<asp:GridView ID="gvDepartments" runat="server" AutoGenerateColumns="False">
+	    <Columns>
+		<asp:BoundField HeaderText="Department" DataField="Name" />
+		<asp:TemplateField HeaderText="Employees">
+		    <ItemTemplate>
+			<asp:GridView ID="gvEmployees" runat="server"
+					AutoGenerateColumns="false"
+					DataSource='<%# Eval("Employees") %>'>
+			    <Columns>
+				<asp:BoundField DataField="FirstName" HeaderText="First Name" />
+				<asp:BoundField DataField="LastName" HeaderText="Last Name" />
+			    </Columns>
+			</asp:GridView>
+		    </ItemTemplate>
+		</asp:TemplateField>
+	    </Columns>
+	</asp:GridView>
+
+	using (SampleDataContext dbContext = new SampleDataContext()) {
+	    dbContext.Log = Response.Output;
+
+	    gvDepartments.DataSource = dbContext.Departments;
+	    gvDepartments.DataBind();
+	}
+
+	Run, there is 1 query to retrieve all the departments and 3 queries to retrieve the employees belonging to each department. 
+	
+	So, what is Lazy Loading
+	Lazy Loading means the related entities are not loaded until we iterate thru them or data bind them. 
+	By default, LINQ to SQL loads related entities by using Lazy Loading.
+
+Part 9 - Eager loading in LINQ to SQL
+=====================================
+	What is Eager loading - It is the process whereby a query for one type of entity also loads related entities as part of the query. 
+
+	In LINQ to SQL there are 2 ways we can eager load data
+		1. Using DataLoadOptions  2. Using Projection 
+
+	Using DataLoadOptions to eager load related entities in LINQ to SQL : 
+	using (SampleDataContext dbContext = new SampleDataContext()) {
+	    dbContext.Log = Console.Out;
+
+	    // Load related Employee entities along with the Department entity
+	    DataLoadOptions loadOptions = new DataLoadOptions();
+	    loadOptions.LoadWith<Department>(d => d.Employees);
+	    dbContext.LoadOptions = loadOptions;
+
+	    foreach (Department dept in dbContext.Departments) {
+		Console.WriteLine(dept.Name);
+		foreach (Employee emp in dept.Employees) {
+		    Console.WriteLine("\t" + emp.FirstName + " " + emp.LastName);
+		}	    }	}
+
+
+	Using Projection to eager load related entities in LINQ to SQL :
+	using (SampleDataContext dbContext = new SampleDataContext()){
+	    dbContext.Log = Console.Out;
+
+	    var linqQuery = from dept in dbContext.Departments
+			    select new { Name = dept.Name, Employees = dept.Employees };
+
+	    foreach (var dept in linqQuery)    {
+		Console.WriteLine(dept.Name);
+		foreach (Employee emp in dept.Employees)	{
+		    Console.WriteLine("\t" + emp.FirstName + " " + emp.LastName);
+		}   }}
+
+	Run, notice that there is only one query which retrieves all the departments and their related employee entities.
+
+	web application
+
+	Using DataLoadOptions to eager load related entities in LINQ to SQL : 
+	using (SampleDataContext dbContext = new SampleDataContext()) {
+	    dbContext.Log = Response.Output;
+
+	    DataLoadOptions loadOptions = new DataLoadOptions();
+	    loadOptions.LoadWith<Department>(d => d.Employees);
+	    dbContext.LoadOptions = loadOptions;
+
+	    gvDepartments.DataSource = dbContext.Departments;
+	    gvDepartments.DataBind();
+	}
+
+	Using Projection to eager load related entities in LINQ to SQL :
+	using (SampleDataContext dbContext = new SampleDataContext()) {
+	    dbContext.Log = Response.Output;
+
+	    gvDepartments.DataSource = from dept in dbContext.Departments
+					select new { Name = dept.Name, Employees = dept.Employees };
+	    gvDepartments.DataBind();
+	}	
+
+
+Part 10 - Difference between eager loading and lazy loading
+===========================================================
+	With lazy loading there is a problem called n + 1 select problem. 
+	For example, A Department can have 1 (one select) or more employees (n select). 
+
+	What is the difference between eager loading and lazy loading? Which is good - eager loading or lazy loading?
+	Without looking at the application architecture and what we are trying to achieve, we cannot say one is better over the other.
+	Both have their own advantages and disadvantages. There are clear performance trade-offs between eager and lazy 
+	loading objects from a database.
+
+	With eager loading, all the data is retrieved in a single query, which can then be cached to improve the application performance.
+	With eager loading we are trading memory consumption for database round trips.
+
+	With lazy loading, we only retrieve just the amount of data that we need in a single query. 
+	When we need more data related to the initial data, additional queries are issued to the database. 
+	This means there are several round trips between the application server and the database server. 
+	In general, these database round trips are very often the major performance bottleneck in most applications. 
+	Lesser the round trips, better the performance.
+
+Part 11 - Single table inheritance in linq to sql
+=================================================
+	With single table inheritance one database table is used to store data for all of the entity types 
+	in the entire inheritance hierarchy. Let us understand this with an example. 
+
+	Create Table Employees (
+	     ID int primary key identity,
+	     Name nvarchar(50),
+	     Gender nvarchar(50),
+	     AnuualSalary int,
+	     HourlyPay int,
+	     HoursWorked int,
+	     Discriminator nvarchar(50)
+	)
+	GO
+
+	Insert into Employees values ('Mark', 'Male', 60000, NULL, NULL, 'PermanentEmployee')
+	('Steve', 'Male', NULL, 50, 160, 'ContractEmployee'), ('Ben', 'Male', NULL, 40, 120, 'ContractEmployee')
+	('Philip', 'Male', 45000, NULL, NULL, 'PermanentEmployee'), ('Mary', 'Female', 30000, NULL, NULL, 'PermanentEmployee')
+	('Valarie', 'Female', NULL, 30, 140, 'ContractEmployee'), ('John', 'Male', 80000, NULL, NULL, 'PermanentEmployee')
+
+	In our organization we have 2 types of employees
+		1. Permanent Employees - AnuualSalary is specific for Permanent Employees
+		2. Contract Employees - HourlyPay & HoursWorked is specific for Contract Employees
+
+	By default LINQ to SQL creates the following Employee entity class, based on Employees table 
+
+	But from an application perspective we want 3 entity classes
+		Employee - This should be an abstract class, all the common properties of both employees. ID, Name & Gender
+		PermanentEmployee - It inherit from the abstract Employee class and should contain AnnualSalary property
+		ContractEmployee - It inherit from the abstract Employee class and should contain HourlyPay & HoursWorked properties
+
+
+	LINQ to SQL class designer
+		1. Add Class(PermanentEmployee - Cut & Copy AnnualSalary property), ContractEmployee(HourlyPay & HoursWorked)
+		2. Add Inheritance option ("Employee" ->"PermanentEmployee" & "ContractEmployee" class)
+		3. Inheritance relationship arrow(Employee and PermanentEmployee classes)->"Properties"
+			->Discriminated Property->set "Discriminator"
+			->Derived Class Discriminatoe -> "PermanentEmployee"
+			->Inheritance Default -> "PermanentEmployee"
+		4. Employee class->properties-> set Inheritance Modifier = abstract.
+		This should make Employee class an abstract class. 
+		
+	GridView1.DataSource = dbContext.Employees.OfType<PermanentEmployee>().ToList();
+		dbContext.Employees.OfType<ContractEmployee>().ToList();
+               dbContext.Employees.ToList())
+
+	same exmple entity framework               
+
+Part 12 - Single table inheritance - saving to database
+=======================================================
+        PermanentEmployee permanentEmployee = new PermanentEmployee
+        {
+            Name = "Emma",
+            Gender = "Female",
+            AnuualSalary = 65000
+        };
+
+        ContractEmployee contractEmployee = new ContractEmployee
+        {
+            Name = "Kristie",
+            Gender = "Female",
+            HourlyPay = 50,
+            HoursWorked = 80
+        };
+
+        dbContext.Employees.InsertOnSubmit(permanentEmployee);
+        dbContext.Employees.InsertOnSubmit(contractEmployee);
+        dbContext.SubmitChanges();
+
+Part 13 - Compiled queries in Linq to SQL
+===========================================
+	The following Linq query retrieves a single student whose ID = 1.
+
+	using (SampleDataContext dbContext = new SampleDataContext()) {
+	    Student student = (from s in dbContext.Students
+					   where s.ID == 1
+					   select s).Single();
+
+	    Console.WriteLine(student.FirstName + " " + student.LastName);
+	}
+
+	When this LINQ query is issued, LINQ has to parse the expression tree and dynamically generate the required T-SQL statements. This happens every time a LINQ query is issued. This overhead can be removed by compiling the linq query.
+
+	To compile a LINQ query use CompiledQuery class that is present in System.Data.Linq namespace.
+	var compiledStudentQuery = CompiledQuery.Compile(
+				    (SampleDataContext dataContext, int studentId) =>
+					(from s in dataContext.Students
+					 where s.ID == 1
+					 select s).Single());
+
+	using (SampleDataContext dbContext = new SampleDataContext())	{
+	    Student student = compiledStudentQuery(dbContext, 1);
+	    Console.WriteLine(student.FirstName + " " + student.LastName);
+	}
+
+	
+
+Part 14 - How to directly execute sql queries using Linq to SQL - use ExecuteQuery() or ExecuteCommand() methods
+===============================================================
+	- can use ExecuteQuery() or ExecuteCommand() methods of the DataContext class.  
+
+	Select * from Students where Gender='Male'
+
+	using DataContext object's ExecuteQuery() method
+	using (SampleDataContext dbContext = new SampleDataContext()){
+	    IEnumerable<Student> students = dbContext.ExecuteQuery<Student>(	
+	    	//"Select * from Students where Gender={0}", "Male");
+	        "Select * from Students where Gender='Male'");
+
+	    foreach (Student student in students)   {
+	        Console.WriteLine(student.FirstName + " " + student.LastName);
+	    }
+	}
+
+	perform an Insert, Update or Delete then use ExecuteCommand() method. 
+	It returns the number of rows affected by the query. 
+	using (SampleDataContext dbContext = new SampleDataContext()){
+	    int count = dbContext.ExecuteCommand(
+	        "Update Students set Gender='Female' where Gender='Male'");
+	    Console.WriteLine("Rows Updated = {0}", count);
+	}
+
+	Is it a good practice to use ExecuteQuery() or ExecuteCommand() methods to directly execute SQL queries?
+	No, for example when LINQ to SQL is not able to generate optimal SQL queries. 
+	Most of the cases LINQ to SQL does a pretty decent job in generating optimal sql queries. 
+	When we use ExecuteQuery() or ExecuteCommand() methods we loose the expressive power of LINQ and 
+	the advantage of having strongly-typed variables in queries.
+
+	What is the difference between ExecuteQuery and ExecuteCommand methods in linq
+	ExecuteQuery is used to perform a Select, 
+	ExecuteCommand is used to perform Insert, Update, Delete or for calling a stored procedure. 
+
+
+Part 15 - Identity Cache in Linq to SQL - DataContext object uses Identity Cache to manage objects. 
+========================================
+	References: http://msdn.microsoft.com/en-us/library/vstudio/dd627203(v=vs.100).aspx
+
+	Example, Retrieving 2 students from the database with the same identity and using the the same datacontext object. 
+		When 1st LINQ query is executed, it translated to T-SQL. The SQL query is executed and the result is 
+		brought back into the application, where a Student object is created. The object identity 
+		is stored in the Identity cache. 
+		
+		When 2nd LINQ query is issued for the same student object, LINQ checks the identity cache and returns 
+		a reference to the student object that already exists. 
+		
+		Notice that there is only one call to the database, inspite of  having 2 linq queries. 
+		S1 and S2 are pointing to the same student object in memory. 
+		
+		using (SampleDataContext dbContext = new SampleDataContext()) {
+		    dbContext.Log = Console.Out;
+
+		    Student S1 = dbContext.Employees.FirstOrDefault(x => x.ID == 1);
+		    Student S2 = dbContext.Employees.FirstOrDefault(x => x.ID == 1);
+
+		    Console.WriteLine("S1 == S2 : {0}", object.ReferenceEquals(S1, S2));
+		}
+
+	Output: 
+		SELECT [t0].[ID], [t0].[FirstName], ... FROM [dbo].[Employees] AS [t0] WHERE [t0].[ID] = @p0
+		-- @p0: Input Int (Size = -1; Prec = 0; Scale = 0) [1]
+		-- Context: SqlProvider(Sql2008) Model: AttributedMetaModel Build: 4.7.2556.0
+
+		True
+
+
+	Each instance of LINQ to SQL DataContext class has its own identity cache. This means if we have 2 different 
+	DataContext instances, and when we issue 2 linq queries to retrieve a student with the same identity, 
+	we get 2 different student objects back. S1 and S2 are two different objects in memory and registered 
+	in two different identity maps. Notice that the database also gets called 2 times. 
+
+	using (SampleDataContext dbContext1 = new SampleDataContext())
+	using (SampleDataContext dbContext2 = new SampleDataContext())	{
+	    dbContext1.Log = Console.Out;
+	    dbContext2.Log = Console.Out;
+
+	    Student S1 = dbContext1.Students.FirstOrDefault(x => x.ID == 1);
+	    Student S2 = dbContext2.Students.FirstOrDefault(x => x.ID == 1);
+
+	    Console.WriteLine("S1 == S2 : {0}", object.ReferenceEquals(S1, S2));
+	}
+
+	Output : 
+		SELECT [t0].[ID], [t0].[FirstName]... FROM [dbo].[Employees] AS [t0] WHERE [t0].[ID] = @p0
+		-- @p0: Input Int (Size = -1; Prec = 0; Scale = 0) [1]
+		-- Context: SqlProvider(Sql2008) Model: AttributedMetaModel Build: 4.7.2556.0
+
+		SELECT [t0].[ID], [t0].[FirstName] ... FROM [dbo].[Employees] AS [t0] WHERE [t0].[ID] = @p0
+		-- @p0: Input Int (Size = -1; Prec = 0; Scale = 0) [1]
+		-- Context: SqlProvider(Sql2008) Model: AttributedMetaModel Build: 4.7.2556.0
+
+		False
+
+	In this example we changed the FirstName of the student using the first datacontext object. We then 
+	called SubmitChanges() method, so the database has stored the new name for this student. However the 
+	student object for datacontext 2 still has the old name, because when we reissue the linq query for 
+	the same student object, this object is retrieved from the identity cache and not from the database. 
+	To have data retrieved from the database and to refresh the cache with updated values, 
+	we need to call the Refresh method of the second datacontext object. 
+
+	using (SampleDataContext dbContext1 = new SampleDataContext())
+	using (SampleDataContext dbContext2 = new SampleDataContext())	{
+	    dbContext1.Log = Console.Out;
+	    dbContext2.Log = Console.Out;
+
+	    Student S1 = dbContext1.Students.FirstOrDefault(x => x.ID == 1);
+	    Student S2 = dbContext2.Students.FirstOrDefault(x => x.ID == 1);
+
+	    Console.WriteLine(sq.FirstName + " - " + s2.FirstName);
+
+	    S1.FirstName = "Updated";
+	    dbContext1.SubmitChanges();
+
+	    S2 = dbContext2.Students.FirstOrDefault(x => x.ID == 1);
+
+	    Console.WriteLine(sq.FirstName + " - " + s2.FirstName);
+
+	    dbContext2.Refresh(System.Data.Linq.RefreshMode.OverwriteCurrentValues, S2);
+
+	    Console.WriteLine(sq.FirstName + " - " + s2.FirstName);
+	}
+
+	Output : 
+		Mark - Mark
+		Updated - Mark
+		Updated - Updated
+		
+
+Part 16 - Difference between optimistic and pessimistic concurrency control
+===========================================================================
+	Why is concurrency control required
+	Concurrency control is required to prevent two users from trying to update the same data at the same time. 
+	It can also prevent one user from seeing out-of-date data while another user is updating the same data.
+
+	Let us understand what can happen if there is no concurrency control in place with an example. 
+
+	John and Mary has a joint account. At the moment the balance in the account is $1000. 
+	John and Mary visits different branches. John wants to deposit $500 and Mary wants to withdraw $500.
+
+	The following are the transactions at the bank branches without concurrency control 
+	John Transaction @ Branch A	Mary Transaction @ Branch B
+		|				|
+		V				|
+	9 am - sees balance $1000		V
+		|			9.01 am - sees balance $1000
+		|				|
+		|				V
+		|			9.02 am - withdrawe $500						
+		|				|
+		|				V
+		V			9.03 am - updates balance
+	9:04 am deposit - 500			|
+		|				V
+		|			Balance = 1000-500 =500						
+		V						
+	9:05 am - update balance
+		|
+		V
+	balance = 1000+500=1500
+	
+	At the end of both the transaction the account balance must be $1000 (1000 - 500 + 500), but the balance 
+	now is $1500 which is incorrect. This happened because 2 users updated the balance at the same time 
+	and since there is no concurrency control in place, the second update has overwritten the changes 
+	made by the first update. This is a concurrency related problem and is called as Lost updates problem. 
+											---------------------
+	With the same example, let us now understand what can happen if there is some sort of concurrency control in place.
+	The following are the transactions at the bank branches with concurrency control in place 
+	John Transaction @ Branch A	Mary Transaction @ Branch B
+		|				|
+		V				|
+	9 am - sees balance $1000		V
+		Account Locked		9.01 am - No Access (Locked)
+		|				|
+		V				|
+	9:04 am deposit - 500			|
+		|				|
+		V				|		
+	9:05 am - update balance		|
+		|				|
+		V				|
+	balance = 1000+500=1500			|
+	Account Lock Released			|
+						V
+					9.06 am - sees balance $1000
+					9.07 am - withdraw - 500
+					9.08 am - updates balance
+					balance = 1500-500=500
+					
+
+	In this example, the account is locked while John is processing his transaction. The lock is released only 
+	after John's transaction is finished. After the lock has been released, Mary can proceed with her transaction. 
+	Since we have a concurrency control in place, we prevented 2 users from updating the balance at the 
+	same time which also prevented lost updates. So, the balance is updated correctly as expected.
+
+	There are 2 different concurrency control mechanisms
+		1. Pessimistic concurrency control 
+		2. Optimistic concurrency control
+
+	What is the difference between optimistic and pessimistic concurrency control
+	Pessimistic concurrency involves locking rows to prevent other users from modifying the same data at the same time. 
+	-----------------------
+	Until the lock is released by the lock owner, no other users will be able to access that data. 
+	Pessimistic locking can very easily lead to performance bottle necks in an application.
+
+	Optimistic concurrency does not involve locking rows when reading. Instead, this model checks if two users 
+	----------------------
+	tried to update the same record at the same time. If that happens one user's changes are committed and 
+	the other user's changes are discarded and an exception will be thrown to notify the user.
+	By default, linq to sql uses optimistic concurrency to handle concurrent updates.
+
+Part 17 - Concurrency in Linq to SQL
+====================================
+	how linq to sql handles concurrent updates i.e when 2 or more users try to update the same data at the same time.  
+
+	Optimistic concurrency 
+	Create Table Accounts (
+	     AccountNumber int primary key,
+	     AccountName nvarchar(50),
+	     AccountBalance int
+	)
+	Insert into Accounts values (1, 'John Mary', 1000)
+
+            <asp:Label ID="lblAccountNumber" runat="server"></asp:Label>
+            <asp:Label ID="lblAccountName" runat="server"></asp:Label>
+            <asp:Label ID="lblAccountBalance" runat="server"></asp:Label>
+	    <asp:Button ID="btnDeposit" runat="server" Text="Deposit $500" onclick="btnDeposit_Click" />
+	    
+        protected void Page_Load(object sender, EventArgs e)      {
+            if (!IsPostBack)           {
+                GetAccountData();
+            }
+        }
+
+        private void GetAccountData()        {
+            using (SampleDataContext db = new SampleDataContext())            {
+                Account account = db.Accounts.First(x => x.AccountNumber == 1);
+                lblAccountNumber.Text = account.AccountNumber.ToString();
+                lblAccountName.Text = account.AccountName;
+                lblAccountBalance.Text = account.AccountBalance.ToString();
+            }        }
+
+        protected void btnDeposit_Click(object sender, EventArgs e)        {
+            using (SampleDataContext db = new SampleDataContext())            {
+                Account account = db.Accounts.First(x => x.AccountNumber == 1);
+                account.AccountBalance = account.AccountBalance + 500;
+                db.SubmitChanges();
+
+                GetAccountData();
+            }        }
+
+	Run, the balance is updated to 1500 as expected. Now inspect the Update query that is generated by linq to sql
+	exec sp_executesql N'UPDATE [dbo].[Accounts] 
+	SET [AccountBalance] = @p3
+	WHERE ([AccountNumber] = @p0) AND ([AccountName] = @p1) AND ([AccountBalance] = @p2)',
+	N'@p0 int,@p1 nvarchar(4000),@p2 int,@p3 int',@p0=1,@p1=N'John Mary',@p2=1000,@p3=1500
+	
+	Let's now simulate the scenario of 2 users updating the same record at the same time. To do this
+
+		1 Throw a break point on the line where we call db.SubmitChanges(),Run
+		2 execute query-  Update Accounts set AccountBalance = AccountBalance - 500 Where AccountNumber = 1
+		3 Now F5 to continue, error "ChangeConflictException: 'Row not found or changed'". 	
+
+Part 18 - Handling ChangeConflictException
+==========================================
+	There are 3 options available to handle ChangeConflictException. 
+	RefreshMode enum values define how to handle optimistic concurrency conflicts. This enum has 3 values
+		KeepCurrentValues - Keeps all the current changes made by the current user in the DataContext object. 
+		SubmitChanges() method will save all changes made by the current user, overwriting any changes made 
+		by other users after the data was loaded by the current user.
+		
+		KeepChanges - Keeps the current values that have been changed, but updates the other values with the database values.
+		SubmitChanges() method will save any changes made by the current user and will preserve any changes made by other users.
+		If another user changed the same value as the current user, the current user's change will overwrite it.
+		
+		OverwriteCurrentValues - Updates the DataContext with the current database values, which means that 
+		all changes made by the current user will be discarded.
+
+	RefreshMode.KeepCurrentValues Example
+	protected void btnDeposit_Click(object sender, EventArgs e){
+	    using (SampleDataContext db = new SampleDataContext())    {
+		try {
+		    Account account = db.Accounts.First(x => x.AccountNumber == 1);
+		    account.AccountBalance = account.AccountBalance + 500;
+		    db.SubmitChanges();
+
+		    GetAccountData();
+		} catch (ChangeConflictException) {
+		    db.ChangeConflicts.ResolveAll(RefreshMode.OverwriteCurrentValues);
+
+		    foreach (ObjectChangeConflict objectChangeConflict in db.ChangeConflicts)  {
+			foreach (MemberChangeConflict memberChangeConflict in objectChangeConflict.MemberConflicts) {
+			    Response.Write("Current Value = " + memberChangeConflict.CurrentValue.ToString() + "<br/>");
+			    Response.Write("Original Value = " + memberChangeConflict.OriginalValue.ToString() + "<br/>");
+			    Response.Write("Database Value = " + memberChangeConflict.DatabaseValue.ToString() + "<br/>");
+			}    }
+
+		    db.SubmitChanges();
+		    GetAccountData();
+		}    }}
+
+	With the above changes
+		1 Throw a break point on the line where we call db.SubmitChanges(), Run
+		2 execute query - Update Accounts set AccountBalance = AccountBalance - 300 Where AccountNumber = 1
+		3 F5, exception "ChangeConflictException" is thrown. Also, the balance gets overwritten with the current value.
+
+	Before break => Database value is 65500, code is 65500+500 = 66000
+	@Break, updated backend(-300), so Database value is 65200
+	F5, Database value is = (65500+500) 66000
+	
+	CurrentValue  - 66000
+	OriginalValue - 65500
+	DatabaseValue - 65200
+
+	RefreshMode.KeepChanges //Now change the following line db.ChangeConflicts.ResolveAll(RefreshMode.OverwriteCurrentValues);
+	-----------------------
+	Run, execute query, updated 2 columns 
+	Update Accounts set AccountBalance = AccountBalance - 300, AccountName = 'John-Mary' Where AccountNumber = 1
+
+	F5, "ChangeConflictException" is thrown and handled. The balance gets overwritten with the current value, 
+	but the AccountName is not. This is because RefreshMode.KeepChanges option will keep and update only the values 
+	that have been changed by the current user since the data is loaded into the DataContext. 
+	This means SubmitChanges() will save only changes made by the current user and will preserve any changes made by other users. 
+	
+	Before break => Database value is 66000 (code is 66000+500 = 66500), "Ben"
+	@Break, updated backend(-300), so Database value is 65700, "John-Mary"
+	F5, Database value is = 66500 (66000+500), "John-Mary"
+		
+	CurrentValue  - 66500, "John-Mary"
+	OriginalValue - 66000,	"Ben"
+	DatabaseValue - 65700, "John-Mary"
+	after SubmitChanges => DatabaseValue - 66500, "John-Mary"
+
+	RefreshMode.OverwriteCurrentValues
+	------------------------
+	Run, execute query, updated 2 columns 
+	Update Accounts set AccountBalance = AccountBalance - 300, AccountName = 'Mary John' Where AccountNumber = 1
+
+	F5, Notice that the changes made by the other user are preserved. So, RefreshMode.OverwriteCurrentValues will update the 
+	DataContext with the current database values, which means that all changes made by the current user will be discarded. 	
+	
+	Before break => Database value is 66500 (code is 66500+500 = 67000), "Ben"
+	@Break, updated backend(-300), so Database value is 66200, "John-Mary"
+	F5, Database value is = 66500 (66000+500), "John-Mary"
+
+	CurrentValue  - 66200, "Mary John"
+	OriginalValue - 66500,	"John-Mary"
+	DatabaseValue - 66200, "Mary John"
+	after SubmitChanges => DatabaseValue - 66200, "Mary John"
+
+Part 19 - UpdateCheck property of ColumnAttribute class is used to determine how LINQ to SQL detects concurrency conflicts. 
+===============================
+	 
+	To set this property -> Open Sample.dbml-> AccountBalance property -> UpdateCheck property -> Always|Never|WhenChanged
+		
+	UpdateCheck 3 enum values
+		Always	Always use this column for conflict detection. it's default, all the columns will be used to detect concurrency conflicts.
+		Never	Never use this column for conflict detection
+		WhenChanged	Use this column only when the member has been changed by the application
+
+	Always		
+	exec sp_executesql N'UPDATE [dbo].[Employees] SET [Salary] = @p6
+	WHERE ([ID] = @p0) AND ([FirstName] = @p1) AND ([LastName] = @p2) AND ([Gender] = @p3) AND ([Salary] = @p4) AND 
+	([DepartmentId] = @p5)',N'@p0 int,@p1 nvarchar(4000),@p2 nvarchar(4000),@p3 nvarchar(4000),@p4 int,@p5 int,
+	@p6 int',@p0=1,@p1=N'updated test1',@p2=N'Hastings',@p3=N'Male',@p4=2000,@p5=1,@p6=5000	
+	
+	Never => set Gender (Gender not in where condition)
+	exec sp_executesql N'UPDATE [dbo].[Employees] SET [Salary] = @p5
+	WHERE ([ID] = @p0) AND ([FirstName] = @p1) AND ([LastName] = @p2) AND ([Salary] = @p3) AND 
+	([DepartmentId] = @p4)',N'@p0 int,@p1 nvarchar(4000),@p2 nvarchar(4000),@p3 int,@p4 int,@p5 int',
+	@p0=1,@p1=N'updated test1',@p2=N'Hastings',@p3=5000,@p4=1,@p5=7000
+	
+	WhenChanged => set Gender (if change it will be in where condition otherwise no)
+
+	you can see in designer.cs file
+	[global::System.Data.Linq.Mapping.ColumnAttribute
+	    (Storage="_AccountBalance", DbType="Int", UpdateCheck=UpdateCheck.Never)]
+	public System.Nullable<int> AccountBalance
+	{	...}
+
+Part 20 - Using ROWVERSION or TIMESTAMP to detect concurrency conflicts (no other fields in where condition except timestamp)
+========================================================================
+	By default LINQ to SQL uses all the columns of the table in the WHERE clause to detect concurrency conflicts. 
+	The query would look as shown below.
+	exec sp_executesql N'UPDATE [dbo].[Accounts] SET [AccountBalance] = @p3
+	WHERE ([AccountNumber] = @p0) AND ([AccountName] = @p1) AND ([AccountBalance] = @p2)',
+	N'@p0 int,@p1 nvarchar(4000),@p2 int,@p3 int',@p0=1, @p1=N'John Mary',@p2=1000,@p3=1500
+
+	This is OK if we have a few columns in the table. In real time applications we may have tables with large number of columns. 
+	For example, what if the table has 30 columns. The WHERE clause would be huge and it can impact the performance of the application.
+
+	In situations like this we can use ROWVERSION or TIMESTAMP columns. Here are the steps
+
+	1. Add a Version column to the Accounts table. The datatype of the column must be either ROWVERSION or TIMESTAMP. 
+	The value for this column is automatically generated by the database if the row gets changed. 
+	So this column can alone be used to detect concurrency conflicts.
+		ALTER TABLE Accounts ADD [Version] ROWVERSION (timestamp)
+
+	2. VS, delete the Account Entity from the Sample.dbml file -> Refresh -> Add
+	
+	3. Notice that a Version Property is automatically added. 
+	See the Sample.Designer.cs file, Notice that IsVersion & IsDbGenerated properties are set to true.
+	[global::System.Data.Linq.Mapping.ColumnAttribute(Storage = "_Version",
+	AutoSync = AutoSync.Always, DbType = "rowversion NOT NULL", CanBeNull = false,
+	IsDbGenerated = true, IsVersion = true, UpdateCheck = UpdateCheck.Never)]
+	public System.Data.Linq.Binary Version
+	{ ... }
+
+	Testing for concurrency conflicts, simulate the scenario of 2 users updating the same record at the same time. 
+
+	Break point SubmitChanges() -> execute Query Select * from Accounts where AccountNumber = 1
+   		1 Notice the Value of Version column
+		2 Execute UPDATE query Update Accounts set AccountBalance = AccountBalance - 300 Where AccountNumber = 1
+		3 Now notice that the Value of Version column is automatically changed to a new value
+
+	F5, Notice that "ChangeConflictException" is thrown as expected, sql profiler, notice that 
+	the UPDATE query that is generated has used Version column in the WHERE clause to detect concurrency conflicts.
+	
+	exec sp_executesql N'UPDATE [dbo].[Accounts] SET [AccountBalance] = @p2
+	WHERE ([AccountNumber] = @p0) AND ([Version] = @p1)
+
+	SELECT [t1].[Version] FROM [dbo].[Accounts] AS [t1] WHERE ((@@ROWCOUNT) > 0) AND ([t1].[AccountNumber] = @p3)',
+	N'@p0 int,@p1 timestamp,@p2 int,@p3 int', @p0=1,@p1=0x0000000000002715,@p2=1500,@p3=11,@p1=0x00000000000007DC,@p2=7005,@p3=1
