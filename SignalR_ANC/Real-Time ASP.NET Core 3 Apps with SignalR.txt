@@ -1,0 +1,376 @@
+Real-Time ASP.NET Core 3 Apps with SignalR
+What is SignalR? 
+	- The ANC SignalR library is open source and allows developers to simplify adding real-time web functionality to applications. 
+	- This means that the server-side code can instantly push content to connected clients. 
+	- Examples of applications that would be a good fit for SignalR include: 
+		- Chat applications such as Facebook Messenger. 
+		- Social network applications, such as Facebook, that display new notifications as they happen. 
+		- Live dashboards, such as KPI dashboards, that instantly display updated sales information. 
+		- Collaboration software that allows teams to meet and share ideas. 
+	- The SignalR API allows server-side code to call JavaScript functions on connected clients via remote procedure calls (RPCs). 
+	- SignalR for ANC automatically takes care of connection management. 
+	- If you think of a chat room example, SignalR can send messages to all connected clients at the same time. 
+	- It can also send messages to a specific client or group of clients. 
+	- SignalR for ANC can automatically scale to allow it to handle increasing traffic.  
+	- the SignalR repository on GitHub. https://github.com/dotnet/AspNetCore/tree/master/src/SignalR
+	- To handle real-time communication, SignalR supports: • WebSockets • Server-Sent Events • Long Polling 
+	- These are called transports. As shown in Figure 1, SignalR lies on top of the lower-level transports. 
+		[SingalR]
+		[Transport]
+	- Transports allow developers to focus on the business process instead of how the messages are sent (or deciding what transport to use). 
+	- SignalR can dynamically evaluate the supported transports. 
+	- In other words, SignalR will automatically choose which transport method is best suited, based on the capabilities of the client and server. 
+ 	-	^ ^	
+ 		|ers|
+ 		[serv]
+ 		|web|      WebSockets 	
+ 		|and| 	   Server Sent Events
+ 		|browsers| Long Polling
+ 		[latest]
+	- Fig illustrated. If WebSockets (the most efficient of the transports) are not supported by the server or browser, SignalR will fall back on Server-Sent Events. 
+	- If Server-Sent Events are not supported, SignalR will fall back on Long Polling. 
+ 	- Note: According to the Internet Engineering Task Force (IETF) Internet Standards track document, the WebSocket protocol enables two-way, 
+ 	  real-time communication between clients and servers in web-based applications. 
+	- When SignalR establishes a connection, it will start sending keep-alive messages to verify that the connection is still alive. 
+	- If the connection is not alive, SignalR will throw an exception. 
+Hubs 
+	- Hubs are used by SignalR to communicate between servers and clients. The hub allows a client and server to call methods on each other. 
+
+	- The methods of this Hub class, call a method on all the connected clients
+		|ASP.NET Core App|  /----->[Client1]
+		|	[Hub-]---|-/------>[Client2]
+				   \------>[Client3]
+
+	- call a method on a specific client
+		|ASP.NET Core App|  /	   [Client1]
+		|	[Hub-]---|-/------>[Client2]
+				   \	   [Client3]
+
+	- call a method on a group of clients
+		|ASP.NET Core App|  /----->[Client1]
+		|	[Hub-]---|-/------>[Client2]
+				   \	   [Client3]	
+
+	- the client can call a method on the hub		   
+		|ASP.NET Core App|  /----->[Client1]
+		|	[Hub-]---|-/------>[Client2]
+				   \<------[Client3]		   
+	- Configure the SignalR middleware by registering the following service in the ConfigureServices method of the Startup class. services.AddSignalR(); 
+	- Set up the SignalR routes by calling endpoints.MapHub in the Configure method of the Startup class. 
+		app.UseEndpoints(endpoints => {     
+			...   
+			endpoints.MapHub<ChatHub>("/chatHub"); 
+		}); 
+	- The Hub class (HubCallerContext_) also has a Context property, which provide information about the connection: 
+		- ConnectionAborted 
+		- ConnectionId 
+		- Features 
+		- Items 
+		- User 
+		- UserIdentifier 
+	- The Context also contains an Abort method and GetHttpContext extension method. 
+	- The hubs are impermanent (last for a short time). Because hubs are transient, you should not store state in a property on the hub class. 
+	  This is because every hub method call is executed on a new instance of the hub. 
+ 
+SignalR Project Setup
+	- Create a new ASP.NET Core (3.1 or later ) Web Application (whatsupchat) with HTTPS
+	- Add the JavaScript SignalR Client Library 
+		- wwwroot -> js -> Right-click and select Add > Client-Side Library
+		- Set the Provider to unpkg. 
+		- Enter @microsoft/signalr@latest in the Library field. 
+		- Select the Choose specific files radio button, 
+			- Select dist/browser/signalr.js and signalr.min.js
+		- Click Install
+	- The signalr.min.js is a minified file, takes out all the whitespace and carriage returns, creates a smaller file size, resulting in 
+	  faster response times and lower bandwidth usage. 
+	- Creating the Hub and Configuring SignalR 
+		- The hub will handle client-server communication. Create a whatsupchat\Hubs\WhatsupChatHub.cs class 
+			using System.Threading.Tasks;
+			using Microsoft.AspNetCore.SignalR; 
+
+			namespace whatsupchat.Hubs 
+			{ 
+			    public class WhatsupChatHub : Hub 
+			    { 
+				public async Task MessageSender(string user, string message) 
+				{ 
+				    await Clients.All.SendAsync("MessageReceiver", user, message); 
+				} 
+			    } 
+			}
+			- "Clients.All" property that invokes a method on all the clients connected to this hub.
+ 			- The MessageSender method is called by a connected client and will send a message to all the clients. 
+ 	- The Clients object implements the IHubCallerClients interface (public IHubCallerClients Clients { get; set; }). This interface has the following properties: 
+		- All	 — All clients connected to the hub. 
+		- Caller — Gets a caller to the connection that triggered the current invocation. 
+		- Others — Gets a caller to all connections except the one that triggered the current invocation. 
+	- It also includes methods such as: 
+		- AllExcept	— All clients connected to the hub, but excludes the specified connections passed as a read-only list of strings. 
+		- Client	— A specific client connection. 
+		- Clients	— The specified read-only list of client connections. 
+		- Group		— All connections in the specified group. 
+		- GroupExcept	— All connections in the specified group, but excludes the specified connections passed as a read-only list of strings. 
+		- Groups	— All connections in the specified read-only list of groups.
+		- OthersInGroup	— Gets a caller to all connections in the specified group, except the one which triggered the current invocation.  
+		- User		— All connections associated with the specified user. 
+		- Users		— All connections associated with the users specified in the read-only list of strings. 
+	- The WhatsupChatHub class inherits from the SignalR Hub class. This Hub base class is responsible for managing connections, groups, and messaging. The following properties: 
+		- Clients — Gets or sets an object that is used to invoke methods on the clients that are connected to this hub.
+		- Context — Allows you to get or set the hub caller context.
+		- Groups — Allows you to get or set the group manager. 
+	- The Hub class also has the following properties: 
+		- OnConnectedAsync — This is called when a new connection is established with the hub and returns a task representing the asynchronous connect. 
+		- OnDisconnectedAsync — This is called when the connection to the hub is terminated and returns a task representing the asynchronous disconnect. 
+		- Dispose — The Hub class implements IDisposable and, therefore, will be able to dispose of all the resources currently in use by this hub instance.
+	
+	- Configuring SignalR 
+		- the Startup class of the project.  
+			public void ConfigureServices(IServiceCollection services) {     
+				..
+				services.AddSignalR(); 
+			} 
+			public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
+				...
+				app.UseEndpoints(endpoints => {      
+					endpoints.MapRazorPages();      
+					endpoints.MapHub<Hubs.WhatsupChatHub>("/WhatsupChatHub"); }
+			); 
+		- The Main method is the entry point (where execution will start) when the application starts running. 
+		- The Main method is used to create a host builder, specifically a default builder. 
+		- A builder, knows how to create a web host. 
+		- The default builder also sets up some of the default services behind the scenes, to configure application using the Startup class (webBuilder.UseStartup<Startup>()). 
+		- Build() the builder, gives us a web host instance that knows how to listen for connections and process/receive HTTP messages. Finally, the web host to Run(). 
+		- Once we call Run(), everything that happens in the application is determined by the code that is contained in the Startup class. 
+		- ASP.NET Core now knows that it’s going to instantiate the Startup class and invoke two methods. 
+			- 1st method is ConfigureServices, will allow us to add our own custom services in ASP.NET Core. 
+			  This will then inject those services into pages, controllers, and wherever else we might need them. 
+			- 2nd mehtod is Configure, will determine what middleware it will execute for every incoming HTTP message.  
+		- The request pipeline comprises of a series of middleware components. Each middleware component performs some operation on the HttpContext, 
+		  and then invokes the next middleware in the pipeline or terminates the request. 
+		- Can create custom middleware components. 
+	- Creating the Client Application 
+		- The Index.cshtml File 
+			@page  
+			<form>     
+			    <div class="form-group">         
+				<label for="userInput">User</label>         
+				<input class="form-control" placeholder="Enter your name" type="text" id="userInput" />     
+			    </div>     
+			    <div class="form-group">         
+				<label for="messageInput">Message</label>         
+				<input class="form-control" placeholder="Type your message" type="text" id="messageInput" />     
+			    </div>     
+			    <div class="form-group">         
+				<input class="btn btn-primary" type="button" id="sendButton" value="Send Message" />    
+			    </div> 
+			</form>
+
+			<div class="row">     
+			    <div class="col-12">         <hr />     </div> 
+			</div> 
+			<div class="row">     
+			    <div class="col-6">         
+				<ul class="list-group" id="messagesList"></ul>     
+			    </div> 
+			</div>
+
+			<script src="~/js/microsoft/signalr/dist/browser/signalr.js"></script>
+			<script src="~/js/chat.js"></script>
+			
+			- messagesList that will display all the messages received from the SignalR hub. 
+ 		- chat.js
+			"use strict";
+
+			var connection = new signalR.HubConnectionBuilder().withUrl("/WhatsupChatHub").build();
+
+			//Disable send button until connection is established. document.getElementById("sendButton").disabled = true; 
+
+			connection.on("MessageReceiver", function (user, message) {
+			    var msg = message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+			    var encodedMsg = user + ": " + msg;
+			    var li = document.createElement("li");
+
+			    var currentUser = document.getElementById("userInput").value;
+			    if (currentUser === user) {
+				li.className = "list-group-item list-group-item-primary";
+			    }
+			    else {
+				li.className = "list-group-item list-group-item-success";
+			    }
+			    li.textContent = encodedMsg;
+			    document.getElementById("messagesList").appendChild(li);
+			});
+
+			connection.start().then(function () {
+			    document.getElementById("sendButton").disabled = false;
+			}).catch(function (err) {
+			    return console.error(err.toString());
+			});
+
+			document.getElementById("sendButton").addEventListener("click", function (event) {
+			    var user = document.getElementById("userInput").value;
+			    var message = document.getElementById("messageInput").value;
+			    connection.invoke("MessageSender", user, message).catch(function (err) {
+				return console.error(err.toString());
+			    });
+			    event.preventDefault();
+			});
+		- This JavaScript does three things: 
+			- It creates and starts a connection. 
+			- It creates an event handler for the Submit button that sends messages to the hub. 
+			- It adds an event handler to the connection object that receives messages from the hub and adds those received messages to the message list. 
+	- Running the Application 
+		- Open 2 browser, send message from both browser. The message is immediately displayed in the list at the bottom of the browser page on browser 1/2
+	- The Problem with SendAsync 
+		- await Clients.All.SendAsync("MessageReciever", user, message); 
+		  Compare this to Code Listing 16. 
+		  await Clients.All.SendAsync("MessageReceiver", user, message);  "MessageReciever" spell mistake
+		- The SendAsync method relies on a string to specify the client method name to be called. 
+		- Compounding this issue (spell mistake), open to runtime errors, which aren’t caught at compile time. 
+		- The solution to this is to use strongly typed hubs(Hub<T>). 
+		- To accomplish this, to extract the ChatHub client method to an interface (IChatClient). 
+			using System.Threading.Tasks;
+
+			namespace whatsupchat.Hubs
+			{
+			    public interface IWhatsupChatClient
+			    {
+				Task MessageReceiver(string user, string message); 
+			    }
+			}
+		- changes in WhatsupChatHub.cs
+		    public class WhatsupChatHub : Hub<IWhatsupChatClient> 
+		    { 
+		        public async Task MessageSender(string user, string message) 
+		        { 
+		            await Clients.All.MessageReceiver(user, message); 
+		        } 
+    		   } 
+		
+Creating Real-Time Charts (chartist.js)
+	- https://gionkunz.github.io/chartist-js/
+	- Example, real-time KPI (key performance indicator) dashboard of sales figures, a stock market price ticker, a shared calendar scheduler, 
+	 or even a doctor in/out notification dashboard for a hospital ward. 
+	- IChartHubClient.cs 
+		 using System.Threading.Tasks;
+
+		 namespace RealTimeChart
+		 {
+		     public interface IChartHubClient
+		     {
+			 Task ValueReceiver(double chartValue);
+		     }
+		 }
+	- RealTimeChart.cs
+		using Microsoft.AspNetCore.SignalR;
+		using System.Threading.Tasks;
+
+		namespace RealTimeChart
+		{
+		    public class ChartHub : Hub<IChartHubClient>
+		    {
+			public async Task ValueSender(double chartValue) 
+			{ 
+			    await Clients.All.ValueReceiver(chartValue); 
+			}
+		    }
+		}
+	- index.cshtml
+		@page  
+		<form>         
+		    <div class="form-group">         
+			<label for="messageInput">Value</label>         
+			<input class="form-control" placeholder="Enter a value" type="text" id="valueInput" />     
+		    </div>     
+		    <div class="form-group">         
+			<input class="btn btn-primary" type="button" id="sendButton" value="Enter Value" />     
+		    </div> 
+		</form>
+
+		<div class="row">     
+		    <div class="col-12">         
+			<hr />     
+		    </div> 
+		</div>
+
+		<div id="chartArea"> </div>
+
+
+		@section Scripts {
+		    <script src="~/js/microsoft/signalr/dist/browser/signalr.js"></script>
+		    <script src="~/js/chart.js"></script> } 	
+		- chartArea will display all the chart values received from the SignalR hub and plot them on the chart. 
+	- Startup.cs
+        	- ConfigureServices(IServiceCollection services)
+            		services.AddSignalR();
+		- Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        		endpoints.MapHub<ChartHub>("/chartHub");
+       - Shared/_Layout.cshtml 
+		<!DOCTYPE html>
+		<html lang="en">
+		<head>
+		    <meta charset="utf-8" />
+		    ...
+		    <link rel="stylesheet" href="//cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
+		</head>
+		<body>
+		     ...
+		    </footer>
+		    <script src="//cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
+	            ....
+		</body>
+		</html>
+ 		- Added a reference to the chartist.min.css / chartist.min.js file from the CDNJS (content delivery network – JavaScript) on GitHub
+ 	- chart.js
+		 "use strict";
+
+		//created new line chart object using Chartist
+		var lineChart = new Chartist.Line('#chartArea',
+		    { labels: [], series: [[]] },
+		    { low: 0, showArea: true });
+
+		// Added in the Startup.cs file to map the incoming requests with the specified path to the specified SignalR Hub. 
+		var connection = new signalR.HubConnectionBuilder().withUrl("/chartHub").build();
+
+		//Disable send button until connection is established. document.getElementById("sendButton").disabled = true; 
+
+		//The ChartHub has been invoked, it in turn calls the ValueReceiver method on all connected clients. 
+		connection.on("ValueReceiver", function (chartValue) {
+		    //It checks to see if the chart value passed to it is a number and has a value. 
+		    if (chartValue && !isNaN(chartValue)) {
+			//It then pushes this value onto the lineChart object and updates the chart. 
+			lineChart.data.series[0].push(chartValue); lineChart.update();
+		
+			//Then it clears and focus to that text box, ready to receive the next value. 
+			document.getElementById("valueInput").value = ""; 
+			document.getElementById("valueInput").focus();
+		    }
+		});
+
+		connection.start().then(function () {
+		    document.getElementById("sendButton").disabled = false;
+		}).catch(function (err) { return console.error(err.toString()); });
+
+		//Added an event listener on the sendButton click, will run for every click to add a value. 
+		document.getElementById("sendButton").addEventListener("click", function (event) {
+		    //Gets the text value and ensures it is parsed to a float.  
+		    var strValue = document.getElementById("valueInput").value;
+	    	
+		    var chartValue = parseFloat(strValue);
+			
+		    //Invokes the method on the server called ValueSender (ChartHub class). 			
+		    connection.invoke("ValueSender", chartValue).catch(function (err) { return console.error(err.toString()); }); event.preventDefault();
+		});
+
+		//Added an event listener on the enger key, called above sendbutton event
+		$('#valueInput').keypress(function (e) {
+		    var key = e.which; if (key === 13)  // the enter key code.     
+		    { $('#sendButton').click(); return false; }
+		});  
+Exchange Rates
+	- https://www.alphavantage.co/
+	- Get API Key https://www.alphavantage.co/support/#api-key (api key O00VL6C10BGM7HQI).
+	- https://www.alphavantage.co/documentation/
+	- https://www.alphavantage.co/documentation/#currency-exchange
+	- https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=USD&to_currency=INR&apikey=UKHCKPYSU94IQMAQ
+	- Every 15 seconds (15,000 milliseconds) calling a fireApi funcation window.setInterval(fireApi, 15000); 
