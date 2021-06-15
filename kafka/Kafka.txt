@@ -1,0 +1,232 @@
+What is Apache Kafka - Apache Kafka is a distributed streaming platform.
+	- it provides following three key capabilities:
+		- Publish and subscribe to streams of records
+		- Store streams of record in a fault tolerant way
+		- process streams of records as they occur
+	- Kafka runs as a cluster on one or more servers. And in Kafka, records are stored in categories called topics, where each record has a key,value and timestamp.
+	- Kafak is used for two categories of applications. - building real-time fault tolerant streaming applications/data pipeline.
+	- Kafka has four core API’s 
+		- Producer (publish), Consumer (subscribe), 
+		- Streams -  consuming/producing an input/output stream from one or more topics
+		- Connector - allows building and running reusable producers or consumers that connect Kafka topics to existing applications or data systems
+			- For example, a connector to a relational database might capture every change to a table.
+Installing Kafka and its dependencies
+	- Kafka has dependency on Java Runtime and Zookeeper. 
+	- JRE 8 Installation - Windows x64 Offline version http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html
+	- Zookeeper Installation - download & extracted latest version - http://zookeeper.apache.org/releases.html
+		- rename the file “config\zoo_sample.cfg” to “zoo.cfg”.
+		- use the same default configuration,except in the “zoo.cfg” file, change the location of the “dataDir” to “/data”.
+		- Add system environment variable “ZOOKEEPER_HOME” with the path “C:\zookeeper-xxx”, updated the Path system environment.
+	- Installing Kafka - http://kafka.apache.org/downloads.html , download “Scala 2.11  – kafka_2.11-1.0.0.tgz (asc, sha512)” and extracted.
+		- Edit the “server.properties” file and updated “log.dir” to use “/kafka_logs” instead of the default folder.
+	- Running Kafka [not working]
+		- First, Run the Zookeeper server. Goto  “\zookeeper-xxx\bin”, type command “zkserver” and hit enter. the Zookeeper server will be started.
+		- Open another command prompt window, navigate to “\kafka_xxx\”, type command “.\bin\windows\kafka-server-start.bat ./config/server.properties”. Kafka will be started.
+	- Above steps not working, try the below, Run these commands from your Kafka root folder 	C:\kafka_2.11-2.3.0\bin\windows :
+		- single broker, start the server
+			- Zookeper server: - ./zookeeper-server-start.bat ../../config/zookeeper.properties
+			- Kafka server - ./kafka-server-start.bat ../../config/server.properties
+		- Create a topic, topic use for publishing data. Also my consumer will be subscribing to this topic.
+			- kafka-topics.bat --create --bootstrap-server localhost:2181(9092) --replication-factor 1 --partitions 1 --topic test
+			- The property “replication-factor”, which determines how many nodes the topic will be replicated. Only one instance Kafka installed on my PC
+		- List topics - ./kafka-topics.bat --list --bootstrap-server localhost:2181(9092)
+		- Testing Kafka using inbuilt Producer/Consumer - send some messages
+			- Run the Producer, “./kafka-console-producer.bat -–broker-list localhost:9092 -–topic test”, a new instance of producer will be started.
+				-> type message This is a message
+						This is another message
+			- run the consumer,a new instance of consumer will be started, “kafka-console-consumer.bat –-bootstrap-server localhost:2181(9092) –topic test --from-beginning”
+			- type a message “Hi” in the producer, and see in the consumer window.
+		- stop kafka server .\kafka-server-stop.bat
+		- PS C:\kafka_2.11-2.3.0\bin\windows> ./kafka-topics.bat --describe --bootstrap-server localhost:9092 --topic test
+			> Topic:test      PartitionCount:1        ReplicationFactor:1     Configs:segment.bytes=1073741824
+        			Topic: test     Partition: 0    Leader: 0       Replicas: 0     Isr: 0
+        		- no replicas and is on server 0, the only server in our cluster when we created it.
+	- setting up a multi-broker cluster
+		- copy config/server.properties server-1.properties
+		- copy config/server.properties server-2.properties
+		- Now edit these new files and set the following properties:
+			- server-1.properties:
+			    broker.id=1
+			    listeners=PLAINTEXT://:9093
+			    log.dirs=/tmp/kafka-logs-1
+			- server-2.properties:
+			    broker.id=2
+			    listeners=PLAINTEXT://:9094
+			    log.dirs=/tmp/kafka-logs-2
+			- The broker.id property is the unique and permanent name of each node in the cluster. 
+			- Override the port and log directory only because we are running these all on the same machine and we want to keep the brokers from all trying to register on the same port or overwrite each other's data.
+		- Already have Zookeeper and our single node started, so start the two new nodes:
+			- ./kafka-server-start.bat ../../config/server-1.properties
+			- ./kafka-server-start.bat ../../config/server-2.properties
+		- Now create a new topic with a replication factor of three:
+			- ./kafka-topics.bat --create --bootstrap-server localhost:2181(9092) --replication-factor 3 --partitions 1 --topic my-replicated-topic
+		- how can we know which broker is doing what? To see that run the "describe topics" command:
+			- ./kafka-topics.bat --describe --bootstrap-server localhost:9092 --topic my-replicated-topic
+			> Topic:my-replicated-topic       PartitionCount:1        ReplicationFactor:3     Configs:segment.bytes=1073741824
+        			Topic: my-replicated-topic      Partition: 0    Leader: 0       Replicas: 0,2,1 Isr: 0,2,1
+        			
+        		- The first line gives a summary of all the partitions, each additional line gives information about one partition. Since we have only one partition for this topic there is only one line.
+				- "leader" is the node responsible for all reads and writes for the given partition. Each node will be the leader for a randomly selected portion of the partitions.
+				- "replicas" is the list of nodes that replicate the log for this partition regardless of whether they are the leader or even if they are currently alive.
+				- "isr" is the set of "in-sync" replicas. This is the subset of the replicas list that is currently alive and caught-up to the leader.	
+        			- Note that in my example node 0 is the leader for the only partition of the topic.	
+        	- publish ./kafka-console-producer.bat --broker-list localhost:9092 --topic my-replicated-topic
+        	- consume ./kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic my-replicated-topic --from-beginning
+        	- Test fault-tolerance. Broker 1 was acting as the leader so let's kill it:
+			- wmic process where "caption = 'java.exe' and commandline like '%server-1.properties%'" get processid
+				>ProcessId
+				 6016
+			- taskkill /pid 6016 /f
+		- Leadership has switched to one of the followers and node 0 is no longer in the in-sync replica set:
+			- ./kafka-topics.bat --describe --bootstrap-server localhost:9092 --topic my-replicated-topic
+				Topic:my-replicated-topic   PartitionCount:1    ReplicationFactor:3 Configs:
+				    Topic: my-replicated-topic  Partition: 0    Leader: 2   Replicas: 1,2,0 Isr: 2,0
+			- But the messages are still available for consumption even though the leader that took the writes originally is down:
+				- ./kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic my-replicated-topic --from-beginning
+	- Use Kafka Connect to import/export data	
+		- Kafka Connect is a tool included with Kafka that imports and exports data to Kafka. It is an extensible tool that runs connectors, which implement the custom logic for interacting with an external system. 
+		- Run Kafka Connect with simple connectors that import data from a file to a Kafka topic and export data from a Kafka topic to a file.
+
+First, we'll start by creating some seed data to test with:
+
+1
+> echo -e "foo\nbar" > test.txt
+Or on Windows:
+1
+2
+> echo foo> test.txt
+> echo bar>> test.txt
+Next, we'll start two connectors running in standalone mode, which means they run in a single, local, dedicated process. We provide three configuration files as parameters. The first is always the configuration for the Kafka Connect process, containing common configuration such as the Kafka brokers to connect to and the serialization format for data. The remaining configuration files each specify a connector to create. These files include a unique connector name, the connector class to instantiate, and any other configuration required by the connector.
+
+1
+> bin/connect-standalone.sh config/connect-standalone.properties config/connect-file-source.properties config/connect-file-sink.properties
+These sample configuration files, included with Kafka, use the default local cluster configuration you started earlier and create two connectors: the first is a source connector that reads lines from an input file and produces each to a Kafka topic and the second is a sink connector that reads messages from a Kafka topic and produces each as a line in an output file.
+
+During startup you'll see a number of log messages, including some indicating that the connectors are being instantiated. Once the Kafka Connect process has started, the source connector should start reading lines from test.txt and producing them to the topic connect-test, and the sink connector should start reading messages from the topic connect-test and write them to the file test.sink.txt. We can verify the data has been delivered through the entire pipeline by examining the contents of the output file:
+
+1
+2
+3
+> more test.sink.txt
+foo
+bar
+Note that the data is being stored in the Kafka topic connect-test, so we can also run a console consumer to see the data in the topic (or use custom consumer code to process it):
+
+1
+2
+3
+4
+> bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic connect-test --from-beginning
+{"schema":{"type":"string","optional":false},"payload":"foo"}
+{"schema":{"type":"string","optional":false},"payload":"bar"}
+...
+The connectors continue to process data, so we can add data to the file and see it move through the pipeline:
+
+1
+> echo Another line>> test.txt
+You should see the line appear in the console consumer output and in the sink file.
+
+Step 8: Use Kafka Streams to process data
+Kafka Streams is a client library for building mission-critical real-time applications and microservices, where the input and/or output data is stored in Kafka clusters. Kafka Streams combines the simplicity of writing and deploying standard Java and Scala applications on the client side with the benefits of Kafka's server-side cluster technology to make these applications highly scalable, elastic, fault-tolerant, distributed, and much more. This quickstart example will demonstrate how to run a streaming application coded in this library.
+
+        	
+Creating .Net Core Consumer
+	- Create New console .NET core App project (DealManagement.Consumer)
+	- Install 'Confluent.Kafka' nuget package for Kafka . 
+	- Create a new interface ITransactionConsumer, which will have the contract for listening to the Kafka stream. 
+	  	public interface ITransactionConsumer
+		{
+		    void Listen(Action<string> message);
+		}
+	- Create the implementation class TransactionConsumer, will be connecting and listening to Kafka stream.
+		- Import the Confluent.Kafka and Confluent.Kafka.Serialization namespaces for accessing Kafka API.
+		- Create a configuration dictionary object, will be passed to the constructor of the Consumer class of the Confluent.Kafka assembly.
+		- Subscribe to the “deal_management_transaction” topic. 
+		- Attach a callback to the OnMessage event.when the event occurs, it will callback the caller of the function passing the value from the Kafka stream. 
+		- In the loop, poll the Kafka every 10 millisecond.
+
+			public class TransactionConsumer : ITransactionConsumer
+			{
+			    public void Listen(Action<string> message)
+			    {
+				var config = new Dictionary<string, object>
+				{
+				    {"group.id","transaction_consumer" },
+				    {"bootstrap.servers", "localhost:9092" }
+				    { "enable.auto.commit", "false" }
+				};
+
+				using(var consumer = new Consumer<Null, string>(config, null, new StringDeserializer(Encoding.UTF8)))
+				{
+				    consumer.Subscribe("deal_management_transaction");
+				    consumer.OnMessage += (_, msg) => {
+					message(msg.Value);
+				};
+
+				while (true)
+				{
+				    consumer.Poll(100);
+				}
+			    }
+			}
+		-  Create a new instance of TransactionConsumer, call the Listen method
+			class Program
+			{
+			    static void Main(string[] args)
+			    {
+				var bookingConsumer = new BookingConsumer();
+				bookingConsumer.Listen(Console.WriteLine);
+			    }
+			}	
+			
+			
+Creating .Net Core Producer
+	- Create New console .NET core App project (DealManagement.Producer)
+	- Install 'Confluent.Kafka' nuget package for Kafka . 
+	- Create a new interface ITransactionProducer, which will have the contract for producing transaction related messages to the Kafka stream. 
+		public interface ITransactionProducer
+		{
+		    void Produce(string message);
+		}
+	- Create the implementation class TransactionProducer, which will host the code for connecting and producing message to Kafka stream.
+	- Import the Confluent.Kafka and Confluent.Kafka.Serialization namespaces for accessing Kafka API.
+	- Create a configuration dictionary object, will be passed to the constructor of the Producer class of the Confluent.Kafka assembly.
+	- Publish message to the “deal_management_transaction” topic. 
+	- Flush the message into the Kafka stream and it will wait until all outstanding produce request and delivery callback are complete.
+		public class TransactionProducer: ITransactionProducer
+		{
+		    public void Produce(string message)
+		    {
+			var config = new Dictionary<string, object>
+			{
+			    {"bootstrap.servers", "localhost:9092" }
+			};
+
+			using (var producer = new Producer<Null, string>(config, null, new StringSerializer(Encoding.UTF8)))
+			{
+			    producer.ProduceAsync("deal_management_transaction", null, message).GetAwaiter().GetResult();
+			    producer.Flush(100);
+        		};
+
+			while (true)
+			{
+			    consumer.Poll(100);
+			}
+		    }
+		}
+	-  Create a new instance of TransactionProducer, call the Produce method
+		class Program
+		{
+		    static void Main(string[] args)
+		    {
+			Console.WriteLine("Enter your message. Enter ~ for quitting");
+			var message = default(string);
+			while((message = Console.ReadLine()) != "~")
+			{
+			    var producer = new BookingProducer();
+			    producer.Produce(message);
+			}
+		    }
+		}
+	- Testing .Net Core Kafka Consumer/ Producer
+		- Run both project, In the Producer console, type some message. See the message appearing in the Consumer console.
