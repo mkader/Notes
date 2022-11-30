@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:tns="http://schemas.datacontract.org/2004/07/Part6Employee" elementFormDefault="qualified" targetNamespace="http://schemas.datacontract.org/2004/07/Part6Employee" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:import schemaLocation="http://localhost:8080/?xsd=xsd2" namespace="http://daynightsoft.com/Employee" />
+  <xs:simpleType name="EmployeeType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="FullTime" />
+      <xs:enumeration value="PartTime" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="EmployeeType" nillable="true" type="tns:EmployeeType" />
+  <xs:complexType name="FullTimeEmployee">
+    <xs:complexContent mixed="false">
+      <xs:extension xmlns:q1="http://daynightsoft.com/Employee" base="q1:Employee">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="AnnualSalary" type="xs:double" />
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="FullTimeEmployee" nillable="true" type="tns:FullTimeEmployee" />
+  <xs:complexType name="PartTimeEmployee">
+    <xs:complexContent mixed="false">
+      <xs:extension xmlns:q2="http://daynightsoft.com/Employee" base="q2:Employee">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="HourlyRate" type="xs:double" />
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="PartTimeEmployee" nillable="true" type="tns:PartTimeEmployee" />
+</xs:schema>
