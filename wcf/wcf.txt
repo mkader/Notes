@@ -1,0 +1,3149 @@
+https://www.c-sharpcorner.com/article/accessing-microsoft-dynamics-crm-web-apis-using-self-hosted-wcf-services/
+https://docs.microsoft.com/en-us/dotnet/framework/wcf/
+Part 1 - Introduction to WCF (Windows Communication Foundation 4.5)
+===============================================================
+	Why Should we use WCF Service?
+
+	What is WCF? - WCF is part of .NET 3.0. WCF is Microsoft platform for building distributed and interoperable applications.
+
+	What is a distributed application? - It is an application where parts of it run on 2 or more computers. 
+	Distributed applications are also called as connected systems.
+		Example: 
+		A web application running on one machine and a web service is running on another machine. 
+		[Web Application Server] <-------------> [Web Service Server]		 	 
+		 	 
+		An enterprise web application may have the following tiers, and each tier may be running on a different machine
+			1. Presentation tier,  2. Business tier, 3. Data Access tier 
+		[Server with Presentation Tier] <-----> [Server with Business Tier] <-----> [Server with Data Access Tier]
+		
+	why would break down/deploy an application into different tiers/machines? - To improve the scalability of the application
+	
+	What is	scalability - it means as the number of users increase you don't want the performance of the application to degrade
+		- Single machine can handle the request from few users 
+		- To handle the requests from thousands of users, you need more Hardware & more processing capability. 
+		  so deploy tires on different machines and these machines has got their own processors and memory.
+		  so it will be able to handle more requests because all tires running on their machine without 
+		  degrading the performance so your application will be better scalable. 
+
+	Why build distributed applications? There are several reasons for this
+		1. An enterprise application may need to use the services provided by other enterprises. 
+		   For example an ecommerce application may be using Paypal service for payments.
+		2. For better scalability.
+
+	What is an interoperable application? 
+		An application that can communicate with any other application that is built on any platform 
+		and using any programming language is called as an interoperable application. 
+		
+		Web services are interoperable, because they use open (HTTP) protocols and message (MXL) formats.
+		Web services can communicate with any application built on any platform
+		
+		.NET remoting services are not. It can be consumed only by a .net application.
+
+	What technology choices did we have before WCF to build distributed applications?
+		Enterprise Services, Dot Net Remoting, Web Services, MSM Q
+
+	Why should we use WCF? Let's take this scenario 
+		We have 2 clients and we need to implement a service a for them. 
+		1. The first client is using a Java application to interact with our service,
+		   so for interoperability this client wants messages to be in XML format and the protocol to be HTTP.
+		   
+		Without WCF(Part2 Example) - To satisfy the first client requirement we end up implementing an ASMX web service
+		[ Java	     | [Client built on any platform can consume a web service]	[ Dont Net|	
+		|	     |							  	| 	  |
+		|	     |	HTTP Protocol						| 	  |
+		| Web	     |<-------------------------------------------------------> | Web	  |
+		|	     |	XML Message Format					| 	  |
+		|	     |							  	| 	  |
+		| Application]	[XML over HTTP offers interoperablity]			| Service ]	
+		
+		2. The second client uses .NET, so for better performance this client wants messages formatted in binary 
+		   over TCP protocol. To satisfy the second client requirement we end up implementing a remoting service 
+		[ Client     | [With Remoting boht Client & Server must be .NET]	[ Dont Net|	
+		|	     |							  	| 	  |
+		|	     |	TCP Protocol						| 	  |
+		| Windows    |<-------------------------------------------------------> | Web	  |
+		|	     |	Binary Message Format					| 	  |
+		|	     |							  	| 	  |
+		| Application]	[Binary over TCP offers better performance]		| Service ]	
+
+		These are 2 different technologies, and have complete different programming models. 
+		So the developers have to learn different technologies. 
+
+		So to unify and bring all these technologies under one roof Microsoft has come up with a 
+		single programming model that is called as WCF - Windows Communication Foundation.
+
+		With WCF(Part3 Example)- You implement one service and can configure as many end points to support all the client needs. 
+		To support the above 2 client requirements, we would configure 2 end points. 
+		In the endpoint configuration we can specify the protocols and message formats that we want to use. 
+		[ Java        | HTTP Protocol				     [		|
+		| Web	      |<-------------------------------------->|End Point ONE]	|
+		| Application ]	XML Message Format			     |		|
+									     |	WCF 	|
+		[ Client      | TCP Protocol				     |  Service	|
+		| Windows     |<-------------------------------------->|End Point TWO]	|
+		| Application ]	Binary Message Format		             |		]
+
+		A single (WCF) service able to satisfy the requirements of different clients with 
+		configuring different end points (web service or dotnet remoting service).
+
+Part 2 - Creating a remoting service and a web service
+======================================================
+	Create a Web services use HTTP protocol and XML message format. It can be consumed by any client built on any platform.
+
+	To create the web service, Create Empty Asp.net Web Application(Part2WebServicesDemo) -> Add a web service (HelloWebService).
+		using System.Web.Services;
+		namespace Part2WebServicesDemo
+		{
+		    [WebService(Namespace = "http://tempuri.org/")]
+		    [WebServiceBinding(ConformsTo = WsiProfiles.BasicProfile1_1)]
+		    [System.ComponentModel.ToolboxItem(false)]
+		    // To allow this Web Service to be called from script, using ASP.NET AJAX, uncomment the following line. 
+		    // [System.Web.Script.Services.ScriptService]
+		    public class HelloWorldWebService : System.Web.Services.WebService {
+		        [WebMethod]
+		        public string GetMessage(string name) { return "Hello " + name;}
+		    }
+		}
+		2. View in browser, enter value
+		
+	To Creating a client Java Web Application(instead of .net web) for the Web Service.
+		1. Create a new asp.net empty web application project (Part2HelloWebApplication).
+		2. Add Service Reference->Generate a proxy class to invoke the HelloWebService (Refereence name).
+		3. WebForm1.aspx
+			protected void Button1_Click(object sender, EventArgs e){
+			    HelloWebService.HelloWebServiceSoapClient client = new HelloWebService.HelloWebServiceSoapClient();
+			    Label1.Text = client.GetMessage(TextBox1.Text);
+			}
+
+	To satisfy the requirement of the second client let's create a .NET remoting service.
+		1. Create a new Class Library project(Part2IHelloRemotingService) -> IHelloRemotingService.cs file.
+			namespace IHelloRemotingService { public interface IHelloRemtingService { string GetMessage(string name); }}
+			
+		2. Class library project (Part2HelloRemotingService), Add IHelloRemotingService & HelloRemotingService.cs file.
+		   	HelloRemotingService - this method want to be remotable, 
+		   		remotable meaning another application should be able to call this object 		   
+		   		To make an object remotable, there are 2 ways
+		   			1 you can decorate this class with serializable attribute  or 2. MarshalByRefObject
+			using System;
+			namespace HelloRemotingService { 
+				public class HelloRemotingService : MarshalByRefObject,IHelloRemotingService.IHelloRemtingService {
+					public string GetMessage(string name) { return "Hello " + name; } 
+				} }
+
+				
+		3. Now we need to host the remoting service. Server Choices host it
+			console application, windows forms application, Windows service or remoting service can also be hosted in IIS
+		   Create Console project(Part2RemotingServiceHost), add reference->(I)HelloRemotingService, ..Remoting assembly.
+		 
+			using System;
+			using System.Runtime.Remoting;
+			using System.Runtime.Remoting.Channels;
+			using System.Runtime.Remoting.Channels.Tcp; //use TCP protocol to communicate
+			using Part2HelloRemotingService	
+			namespace RemotingServiceHost {
+		    	static void Main() {
+			    HelloRemotingService.HelloRemotingService remotingService = new HelloRemotingService.HelloRemotingService();
+			    //create the tcp channel for communication, service available at port 8080
+			    TcpChannel channel = new TcpChannel(8080); 
+			    ChannelServices.RegisterChannel(channel); //to register this channel
+			    //to register the service itself, by method RegisterWellKnownClient(Service)Type
+			    //pass the type of the class, to specify the URI "GetMessage", well-known object mode enumeration 
+			    //(Single or Singleton) single call means an object of type single call can service one and only one client meaning
+			    //it cannot store a state information but if your requirement is to store state
+			    //information between client invocations then you need to use singleton as a tool
+			    RemotingConfiguration.RegisterWellKnownServiceType(
+			       typeof(HelloRemotingService.HelloRemotingService), "GetMessage",
+			       WellKnownObjectMode.Singleton);
+			    Console.WriteLine("Host started @ " + DateTime.Now.ToString());
+			    Console.ReadLine();
+			}}
+			
+		4. Create the client for our remoting service. Create windows application as the client. 
+		   Add reference IHelloRemotingService, System.Runtime.Remoting, textbox, button and a label control on Form1
+			using System;
+			using System.Runtime.Remoting.Channels;
+			using System.Runtime.Remoting.Channels.Tcp;
+			using System.Windows.Forms;
+
+			namespace HelloRemotingServiceClient {
+			    public partial class Form1 : Form {
+				IHelloRemotingService.IHelloRemtingService client;
+				public Form1() {
+				    InitializeComponent();
+				    
+				    //when the form is created, we need to open up a TCP channel and then communicate with the service
+				    TcpChannel channel = new TcpChannel(); //no need to specify the port number
+				    ChannelServices.RegisterChannel(channel); //to register the channel 
+				    //to use a class called activator, method GetObject(type of service, the URL)
+				    client = (IHelloRemotingService.IHelloRemtingService)Activator.GetObject(
+				      typeof(IHelloRemotingService.IHelloRemtingService), 
+				      "tcp://localhost:8080/GetMessage");
+				}
+
+				private void button1_Click(object sender, EventArgs e){
+				    label1.Text = client.GetMessage(textBox1.Text);
+				}}}
+		5. Run Part2RemotingServiceHost & Part2HelloRemotingServiceClient exes
+ 		   A very simple service but look at the amount of code that we have to write
+
+	Now you realized how different web service and remoting programming models are.
+	Can we use .NET Remoting to build a Web service?  Yes.
+	If the client is not built using .NET platform, will they be able to consume a .NET Remoting web service? 
+		Yes, implementing interoperable services, but very careful in choosing the data types in the service, 
+		and client-activated objects and events should be avoided.
+		But keep in mind .NET Remoting is not meant for implementing interoperable services. 
+
+	If your goal is to build interoperable services use ASP.NET Web Services. 
+		But with introduction of WCF, both .NET Remoting and ASP.NET Web Services are legacy technologies, 
+		whether we want to exchange messages in binary format for performance reasons.
+
+
+part 3 - Creating a wcf service - ServiceContract , endpoints
+===============================
+	We have 2 clients and we need to implement a service a for them. 
+	1. The first client is using a Java application to interact with our service, 
+	   so for interoperability this client wants meesages to be in XML format and the protocl to be HTTP.
+	2. The second client uses .NET, so for better performance this client wants messages formmated in binary over TCP protocol.
+
+	In Part 2, - To meet the requirement, we implemented a web service(1st client) and a remoting service (2nd client).
+
+	we will create a single WCF service, and configure 2 endpoints to meet the requirements of both the clients.
+
+	Creating the single WCF Service:
+		1. Create a new Class Library Project (Part3HelloService), add wcf file(HelloService.cs) .
+			It automatically generate 2 files (HelloService.cs & IHelloService.cs) & added System.ServiceModel assembly.
+			system.servicemodel assembly is the core to wcf all the attributes and classes 
+			
+			Part 4, WCF service to implement multiple service contracts? yes [IMyCompanyPublicService, IMyCompanyConfidentialService]
+			
+			using System.ServiceModel;
+			namespace Part3HelloService {
+			    [ServiceContract] //the service contract attribute, we are turning this interface into a WCF service
+			    public interface IHelloService {
+				[OperationContract] //this attribute, making this method available as part of this service to the client
+				string GetMessage(string name);
+			    }
+			    
+			    Part 5 - How to make changes to wcf service without breaking clients
+			    ====================================================================
+			    /*
+			    //Changed interface name IHelloService => IHelloServiceChanged, try to access, 
+			    //Changed to public class HelloService : IHelloServiceChanged {
+			    //Changed to host app.config => <endpoint address="HelloService" binding="basicHttpBinding" contract="HelloService.IHelloServiceChanged"/>
+			    //Or changed to string GetMessage(string name) => string GetMessageChanged(string name);
+	   	    	    [ServiceContract]
+			    public interface IHelloServiceChanged {
+				[OperationContract] 
+				string GetMessage(string name);
+			    }
+			    //Run host, Part3HelloWebClient=> press "GetMessage" => error message 
+			    //	"The message with Action 'http://tempuri.org/IHelloService/GetMessage' cannot be processed at 
+			    //  the receiver, due to a ContractFilter mismatch at the EndpointDispatcher. This...."
+			    //in wsdl, portype
+				<wsdl:portType name="IHelloServiceChanged">
+				  <wsdl:operation name="GetMessage">
+				    <wsdl:input wsaw:Action="http://.../IHelloServiceChanged/GetMessage" message="tns:IHelloServiceChanged_GetMessage_InputMessage"/>
+				    <wsdl:output wsaw:Action="http://.../IHelloServiceChanged/GetMessageResponse" message="tns:IHelloServiceChanged_GetMessage_OutputMessage"/>
+				  </wsdl:operation>
+				</wsdl:portType>	
+			    
+			    // Because the change is not compatible, it's a breaking clients,  to prevent that give 
+			    // it an explicit name when you change the service contract interface name
+	    	   	    	    [ServiceContract[name ="IHelloService"]]
+				    public interface IHelloServiceChanged { }
+			    */
+			    
+			    //Part 4
+			    [ServiceContract]
+			    public interface IMyCompanyConfidentialService   {
+				[OperationContract]
+				string GetCofidentialInformation();
+			    }}
+
+			namespace Part3HelloService {
+			    public class HelloService : IHelloService,IMyCompanyConfidentialService {
+				public string GetMessage(string name) {
+				    return "Hello " + name; //return "Public info and available over HTTP to all public outside the FireWall";
+				}
+				public string GetCofidentialInformation() {
+			    		return "This is confidential information and only available over TCP behind the company FireWall";
+				}}}
+
+	Hosting the WCF service using a console application. A WCF service can also be hosted in a Windows application or Service or IIS.
+		1. Create Console Application project (Part3HelloServiceHost), add System.ServiceModel assembly
+		2. App.config file to the project. we have specified 2 endpoints in the configuration. 
+			One endpoint uses basicHttpBinding, which communicates over HTTP protocol using XML messages. This endpoint 
+			will satisfy the requirement of the first client. 
+			The other endpoint uses netTcpBinding, which communicates over TCP protocol using binary messages. This endpoint 
+			will satisfy the requirement of the second client. 
+		<?xml version="1.0" encoding="utf-8" ?>
+		<configuration>
+		 <!-- 1. add system.serviceModel element, within that we are going to have services -->
+		  <system.serviceModel>
+		    <!-- 2. services -->
+		    <services>
+		      <!-- 
+		      	3. service, specify the name of the service with name space "HelloService.HelloService" 
+		      	our WCF service is going to have two endpoints
+		      --> 	 
+		      <!-- 17. use behavior configuration  element --> 
+		      <service name="Part3HelloService.HelloService" behaviorConfiguration="mexBehaviour">
+		      	<!-- 
+		      	  4. specify the endpoints, an endpoint needs 3 things-> the address, binding and the contract 
+		      	                --------------------------------------------------------------------------------
+		      	     This address specifies to the client where your service is available, we are going to make use of relative addresses 
+		      	     To specify the binding and this is the most important thing in WCF, there are several bindings
+		      	     
+		      	     If you want to look all the bindings that are available with WCF,  
+		      	     	<system.serviceModel>
+		      	     		<bindings>
+		      	     		type < => list all bindings
+		      	     		</bindings>
+			     
+			     1st end point, HTTP protocol and the messages in XML format & specify the contract itself, i.e the service contract.
+			     That's how the client will come to know what are all the operations that are available within the 
+			     contract and our contract is nothing but the interface
+		      	 -->
+			<endpoint address="HelloService" binding="basicHttpBinding" contract="HelloService.IHelloService"/>
+			
+			<!-- 5. 2nd end point, TCP protocol & the message in binary format 
+			     because we want this service to be available only using TCP protocol that's behind the firewall
+			-->
+			<endpoint address="HelloService" binding="netTcpBinding" contract="HelloService.IHelloService"/>
+			
+			<!-- Part4 WCF service implementing multiple service contracts 
+			<endpoint address="CompanyService" binding="basicHttpBinding" contract="CompanyService.IMyCompanyPublicService"/>
+        		<endpoint address="CompanyService" binding="netTcpBinding" contract="CompanyService.IMyCompanyConfidentialService"/>
+        		-->
+			<!-- 6. Expose another end point, is basically for exchanging metadata.
+				Now to consume a web service, clients will invoke the URL with an address reference, 
+				they specify the URL of the wsdl document, 
+				WCF, we use wsdl (web service description language) files to exchange metadata regarding the WCF service.
+			-->				
+			<!-- 7. all these addresses are relative, IMetadataExchange that's the name of the contract to exchange metadata  -->
+			<!-- 8. how the clients are going to use this endpoint to get the wedl document using 
+			        which the client will generate the proxy classes, http://localhost:8080/?wsdl
+			        if no mex end point, type "http://localhost:8080" you will get "Metadata publishing for this service is currently disabled."
+			-->
+			<endpoint address="mex" binding="mexHttpBinding" contract="IMetadataExchange" />
+			<!-- 9. to specify the base address, this address is a relative address, use host element -->
+			<host>
+			<!-- 10 use baseAddresses element -->
+			  <baseAddresses>
+			    <!-- 11. add 2 base addresses -->
+			    <add baseAddress="http://localhost:8080/" />
+			    <add baseAddress="net.tcp://localhost:8090"/>
+			  </baseAddresses>
+			</host>
+		      </service>
+		    </services>
+		    <!-- 12. need to specify service behaviors, use behaviors element -->
+		     <behaviors>
+		     <!-- 13. use service behaviors -->
+		      <serviceBehaviors>
+		       <!-- 14. use behavior element, add name, this behavior is to allow the service to exchange metadata -->
+		      <behavior name="mexBehaviour">
+		          <!-- 15. to specify serviceMetadata element, to allow HTTP get, somebody request the metadata of this service using HTTP GET  -->
+			  <serviceMetadata httpGetEnabled="true" />
+			</behavior>
+			<!-- 16.  associate this service behavior with our service itself -->
+		      </serviceBehaviors>
+		    </behaviors>
+		  </system.serviceModel>
+		</configuration>
+
+		3. Program.cs file
+		using System;
+		namespace HelloServiceHost {
+		    class Program {
+			static void Main(){
+			    using(System.ServiceModel.ServiceHost host = new 
+				System.ServiceModel.ServiceHost(typeof(HelloService.HelloService))){
+				host.Open(); //use hosts open, so it should open the service for communication
+				Console.WriteLine("Host started @ " + DateTime.Now.ToString());
+				Console.ReadLine();
+			    }}}}
+
+	Web application that is going to consume the WCF service using the endpoint with basicHttpBinding. 
+	basicHttpBinding communicates over HTTP protocol using XML messages.
+		1. Asp.net empty web application (Part3HelloWebClient), add service referencese( http://localhost:8080/), 
+		   web.config generated bindings & System.ServiceModel added
+		   It should generate a proxy class to communicate with the service.
+		   WebForm1.aspx
+		protected void Button1_Click(object sender, EventArgs e)		{
+		    //throw exception An endpoint configuration section for contract 'Part3HelloService.IHelloService' could not 
+		    // be loaded because more than one endpoint configuration for that contract was found.Please indicate the 
+		    // preferred endpoint configuration section by name.
+            	    //Part3HelloService.HelloServiceClient client = new Part3HelloService.HelloServiceClient();
+            	    
+            	    //avoid the above exception specify which endpoints "BasicHttpBinding_IHelloService", IHelloService could not 
+            	    //be loaded because more than one endpoint configuration
+		    HelloService.HelloServiceClient client = new HelloService.HelloServiceClient("BasicHttpBinding_IHelloService");
+		    Label1.Text = client.GetMessage(TextBox1.Text);
+		}
+
+	Windows application that is going to consume the WCF service using the endpoint with netTcpBinding. 
+	netTcpBinding communicated over TCP protocol using binary messages.
+		Windows Forms application (Part3HelloWindowsClient), add Service Reference (http://localhost:8080/)
+		private void button1_Click(object sender, EventArgs e)		{
+		    Part3HelloService.HelloServiceClient client = new Part3HelloService.HelloServiceClient("NetTcpBinding_IHelloService");
+		    label1.Text = client.GetMessage(textBox1.Text);
+		} 
+
+	web or app.config
+	<configuration>
+	    <system.serviceModel>
+		<bindings>
+		    <basicHttpBinding>
+			<binding name="BasicHttpBinding_IHelloService" />
+		    </basicHttpBinding>
+		    <netTcpBinding>
+			<binding name="NetTcpBinding_IHelloService" />
+		    </netTcpBinding>
+		</bindings>
+		<client>
+		    <endpoint address="http://localhost:8080/HelloService" binding="basicHttpBinding"
+			bindingConfiguration="BasicHttpBinding_IHelloService" contract="Part3HelloService.IHelloService"
+			name="BasicHttpBinding_IHelloService" />
+		    <endpoint address="net.tcp://localhost:8090/HelloService" binding="netTcpBinding"
+			bindingConfiguration="NetTcpBinding_IHelloService" contract="Part3HelloService.IHelloService"
+			name="NetTcpBinding_IHelloService">
+			<identity>
+			    <userPrincipalName value="kadermx@act.wi.us" />
+			</identity>
+		    </endpoint>
+		</client>
+	    </system.serviceModel>
+	</configuration>
+
+Part 4 - WCF service implementing multiple service contracts
+============================================================
+	Is it possible for a WCF service to implement multiple service contracts?
+		Yes, we make the service class implement multiple service interfaces, and then expose each service using a different endpoint.
+
+Part 5 - How to make changes to wcf service without breaking clients
+====================================================================
+	Use Name property of ServiceContractAttribute and give it an explicit name to prevent the clients from breaking 
+	when you change the service contract interface name.
+	[ServiceContract(Name = "IHelloService")]
+	public interface IHelloServiceChanged {
+	    [OperationContract]
+	    string GetMessage(string name);
+	}
+
+	In WSDL document, portType as the interface the client uses to communicate with the wcf service. 
+		Not set the Name property on a service contract attribute, by default it will be the name of the service contract interface. 
+		If you set an explicit Name for the service contract using Name property then that Name will be used for the portType.
+		
+	<wsdl:portType name="IHelloService">
+	  <wsdl:operation name="GetMessage">
+	    <wsdl:input wsaw:Action="http:/.../IHelloService/GetMessage" message="tns:IHelloService_GetMessage_InputMessage"/>
+	    <wsdl:output wsaw:Action="http:/.../IHelloService/GetMessageResponse" message="tns:IHelloService_GetMessage_OutputMessage"/>
+	  </wsdl:operation>
+	</wsdl:portType>	
+	
+	You can set Name property for an OperationContract as shown below.
+	[ServiceContract(Name = "IHelloService")]
+	public interface IHelloServiceChanged {
+	    [OperationContract(Name = "GetMessage")]
+	    string GetMessageChanged(string name);
+	} 
+	<wsdl:portType name="IHelloService">
+	  <wsdl:operation name="GetMessageChanged">
+	    <wsdl:input wsaw:Action="http:/.../IHelloService/GetMessageChanged" message="tns:IHelloService_GetMessageChanged_InputMessage"/>
+	    <wsdl:output wsaw:Action="http:/.../IHelloService/GetMessageChangedResponse" message="tns:IHelloService_GetMessageChanged_OutputMessage"/>
+	  </wsdl:operation>
+	</wsdl:portType>	
+
+Part 6 - WCF DataContract, DataMember & Serialization
+=====================================================
+	Serialization is the process of converting an object into an XML representation. 
+	Deserialization is the reverse process, that is reconstructing the same object from the XML. 
+
+	By default, WCF uses DataContractSerializer. For a complex type like Employee to be serialized, 
+	the complex type can either be decorated with 1. SerializableAttribute or 2. DataContractAttribute
+
+	With .NET 3.5 SP1 and above, we don't have to explicitly use DataContract or DataMember attributes. 
+	The Data Contract Serializer will serialize all public properties of your complex type in an alphabetical order. 
+	By default private field and properties are not serialized.
+	
+	// not decorated, automatically serialized
+	namespace EmployeeService {
+	    public class Employee {
+		private int _id;
+		private string _name;
+		private string _gender;
+		private DateTime _dateOfBirth;
+
+		public int Id { get { return _id; } set { _id = value; } }
+		public string Name { get { return _name; } set { _name = value; } }
+		public string Gender { get { return _gender; } set { _gender = _gender; } }
+		public DateTime DateOfBirth { get { return _dateOfBirth; } set { _dateOfBirth = value; } }
+	    }}	
+	go to http://localhost:8080/?wsdl
+	<wsdl:types>
+	  <xsd:schema targetNamespace="http://tempuri.org/Imports">
+		<xsd:import schemaLocation="http:/.../localhost:8080/?xsd=xsd0" namespace="http://tempuri.org/"/>
+		<xsd:import schemaLocation="http://../?xsd=xsd1" namespace="http://schemas.microsoft.com/2003/10/Serialization/"/>
+		<xsd:import schemaLocation="http://.../?xsd=xsd2" namespace="http://schemas.datacontract.org/2004/07/Part6Employee"/>
+	  </xsd:schema>
+	</wsdl:types>
+	go to http://localhost:8080/?xsd=xsd0 (mostly for methods)
+
+	<xs:schema ...>
+		<xs:import schemaLocation="http://localhost:8080/?xsd=xsd2" namespace="http:/.../2004/07/Part6Employee"/>
+		<xs:element name="SaveEmployee"> <xs:complexType><xs:sequence>
+			<xs:element xmlns:q1="http:/.../Part6Employee" minOccurs="0" name="employee" nillable="true" type="q1:Employee"/>
+		</xs:sequence> </xs:complexType> </xs:element>
+		<xs:element name="SaveEmployeeResponse"> <xs:complexType> <xs:sequence/> </xs:complexType> </xs:element>
+		<xs:element name="GetEmployee">
+			<xs:complexType> <xs:sequence> <xs:element minOccurs="0" name="id" type="xs:int"/> </xs:sequence> </xs:complexType>
+		</xs:element>
+		<xs:element name="GetEmployeeResponse"> <xs:complexType> <xs:sequence>
+			<xs:element xmlns:q2="http:/.../Part6Employee" minOccurs="0" name="GetEmployeeResult" nillable="true" type="q2:Employee"/>
+		</xs:sequence> </xs:complexType> </xs:element>
+	</xs:schema>	
+
+	go to http://localhost:8080/?xsd=xsd2 (mostly for properties)
+	<xs:schema ...>
+		<xs:complexType name="Employee"> <xs:sequence>
+			<xs:element minOccurs="0" name="DateOfBirth" type="xs:dateTime"/>
+			<xs:element minOccurs="0" name="Gender" nillable="true" type="xs:string"/>
+			<xs:element minOccurs="0" name="ID" type="xs:int"/>
+			<xs:element minOccurs="0" name="Name" nillable="true" type="xs:string"/>
+		</xs:sequence> </xs:complexType>
+		<xs:element name="Employee" nillable="true" type="tns:Employee"/>
+	</xs:schema>	
+	
+
+	To serialize a complex type, there are two ways decorate it with 1.[serializable] attribute or [datacontract] attribute
+	
+	with [Serializable] attribute the DataContractSerializer serializes all fields, we don't have explicit 
+	control on what fields to include and exclude in serialized data.
+	
+	[Serializable]
+	public class Employee {...}
+	
+	<xs:schema ...> ...
+			<xs:element name="_dateOfBirth" type="xs:dateTime"/>
+			<xs:element name="_gender" nillable="true" type="xs:string"/>
+			<xs:element name="_id" type="xs:int"/>
+			<xs:element name="_name" nillable="true" type="xs:string"/>
+			
+			<!-- used public int Id { get; set; }, generated
+				<xs:element name="_x003C_DateOfBirth_x003E_k__BackingField" type="xs:dateTime"/>
+				<xs:element name="_x003C_Gender_x003E_k__BackingField" nillable="true" type="xs:string"/>
+				<xs:element name="_x003C_ID_x003E_k__BackingField" type="xs:int"/>
+				<xs:element name="_x003C_Name_x003E_k__BackingField" nillable="true" type="xs:string"/>
+			-->				
+	</xs:schema>
+
+	If we decorate a complex type with [Datacontract] attribute from System.Runtime.Serialization, it serializes 
+		the fields marked with the [DataMember] attribute. 
+		the fields that are not marked with [DataMember] attribute are excluded from serialization. 
+	The [DataMember] attribute can be applied either on the private fields or public properties.
+
+	In WCF, the most common way of serialization is to mark the type with the DataContract attribute 
+	and mark each member that needs to be serialized with the DataMember attribute. 
+
+	If you want to have explicit control on what fields and properties get serialized then use DataContract and DataMember attributes. 
+	1. Using DataContractAttribute, you can define an XML namespace for your data
+	2. Using DataMemberAttribute, you can
+	    a) Define Name, Order, and whether if a property or field IsRequired
+	    b) Also, serialize private fields and properties
+
+	using System.Runtime.Serialization;
+	    [DataContract(Namespace="http://daynightsoft.com/Employee")]
+	    public class Employee {
+	    	[DataMember]
+		private int _id;
+		[DataMember(Order = 3)]
+		private string _name;
+		[DataMember(Order = 4)]
+		private string _gender;
+		private DateTime _dateOfBirth;
+
+		[DataMember(name="IDs", Order=1)]
+		public int Id { get { return _id; } set { _id = value; }}
+		[DataMember(Order = 2)]
+		public string Name { get { return _name; } set { _name = value; }}
+		public string Gender { get { return _gender; } set { _gender = value; }}
+	    }
+	
+	<xs:schema xmlns:tns="http://daynightsoft.com/Employee">
+		<xs:complexType name="Employee">
+			<xs:sequence>
+				<xs:element minOccurs="0" name="IDs" type="xs:int"/>
+				<xs:element minOccurs="0" name="Name" nillable="true" type="xs:string"/>
+				<xs:element minOccurs="0" name="_name" nillable="true" type="xs:string"/>
+				<xs:element minOccurs="0" name="_gender" nillable="true" type="xs:string"/>
+			</xs:sequence>
+		</xs:complexType>
+		<xs:element name="Employee" nillable="true" type="tns:Employee"/>
+	</xs:schema>
+	
+	
+	[DataMember(EmitDefaultValue = false, Name = "Title")]  
+	private string TitleTransfer { get; set; }  
+	var p2 = new Person() { Title = "Mr.", LastName = "Test"}= > <Person><Title>Mr.</Title><LastName>Test</LastName></Person> 
+	var p2 = new Person() { Title = string.Empty, LastName = "Test"}= > <Person><LastName>Test</LastName> </Person>
+
+Part 7 - KnownType attribute in WCF - Associate these derived types as known types, 
+==================================
+	There are several ways, 1. programmatically in code using known type attribute & 2. declaratively in the configuration file
+	
+	If we have classes related by inheritance, the wcf service generally accepts and returns the base type. 
+	If you expect the service to accept and return inherited types, then use KnownType attribute.
+
+	FullTimeEmployee.cs =>  public class FullTimeEmployee : Employee { public int AnnualSalary { get; set; } }
+
+	PartTimeEmployee.cs =>  public class PartTimeEmployee : Employee{public int HourlyPay { get; set; } }
+
+	Employee.cs
+	    [KnownType(typeof(FullTimeEmployee))]
+	    [KnownType(typeof(PartTimeEmployee))]
+	    [DataContract(Namespace = "http://pragimtech.com/Employee")]
+	    public class Employee{
+		...
+		[DataMember]
+		public EmployeeType Type { get; set; }
+	    }
+
+	    public enum EmployeeType    {
+		FullTime = 1,
+		PartTime = 2
+	    }
+
+	EmployeeService.cs
+	public Employee GetEmployee(int id) {
+	    Employee employee = null;
+	    EmployeeType et = (EmployeeType)reader["EmployeeType"];
+	    if (et == EmployeeType.FullTime) {
+		employee = new FullTimeEmployee() {
+		    ID = id,
+		    ...
+		    AnnualSalary = 123.123,
+		    Type = EmployeeType.FullTime,
+		};
+	    } else {
+		employee = new PartTimeEmployee() {
+		    ID = id,
+		    ..
+		    HourlyRate = 123.123,
+		    Type = EmployeeType.PartTime,
+		};
+	    }
+	    return employee;
+	}
+
+	http://localhost:8080/?xsd=xsd3 - display fulltime and part time property
+	<xs:schema ...>
+	  <xs:import .../>
+	  <xs:simpleType name="EmployeeType"> <xs:restriction base="xs:string"> (it display if [DataMember] added for EmployeeType Type...
+		<xs:enumeration value="FullTime"/> <xs:enumeration value="PartTime"/>
+	  </xs:restriction> </xs:simpleType>
+	  <xs:element name="EmployeeType" nillable="true" type="tns:EmployeeType"/>
+	  <xs:complexType name="FullTimeEmployee"> <xs:complexContent mixed="false"> <xs:extension ...> <xs:sequence>
+		<xs:element minOccurs="0" name="AnnualSalary" type="xs:double"/>
+	  </xs:sequence> </xs:extension> </xs:complexContent> </xs:complexType>
+	  <xs:element name="FullTimeEmployee" nillable="true" type="tns:FullTimeEmployee"/>
+	  <xs:complexType name="PartTimeEmployee"> <xs:complexContent mixed="false"> <xs:extension ...> <xs:sequence>
+		<xs:element minOccurs="0" name="HourlyRate" type="xs:double"/>
+	  </xs:sequence> </xs:extension> </xs:complexContent>	</xs:complexType>
+	  <xs:element name="PartTimeEmployee" nillable="true" type="tns:PartTimeEmployee"/>
+	</xs:schema>
+
+Part 8 - Different ways of associating known types in wcf - There are 4 different ways to associate KnownTypes
+=========================================================
+	1. Use KnownType attribute on the base type. This option is global, all service contracts and 
+	   all operation contracts will respect the known types. (Part 7 - KnownType attribute in WCF)
+
+	2. Apply ServiceKnownType attribute on the service contract. With this option the known types are 
+	   respected by all operation contracts with in this service contract only.
+	[ServiceKnownType(typeof(PartTimeEmployee))]
+	[ServiceKnownType(typeof(FullTimeEmployee))]
+	[ServiceContract]
+	public interface IEmployeeService
+	{
+	    [OperationContract]
+	    Employee GetEmployee(int Id);
+
+	    [OperationContract]
+	    void SaveEmployee(Employee Employee);
+	}
+
+	3. If you want even more granular control, then apply ServiceKnownType attribute on specific operation contracts. 
+	With this option, only the operation contracts that are decorated with ServiceKnownType attribute respect known types.
+	[ServiceContract]
+	public interface IEmployeeService
+	{
+	    [ServiceKnownType(typeof(PartTimeEmployee))]
+	    [ServiceKnownType(typeof(FullTimeEmployee))]
+	    [OperationContract]
+	    Employee GetEmployee(int Id);
+
+	    [OperationContract]
+	    void SaveEmployee(Employee Employee);
+	}
+	
+	Try to save record passing Part6EmployeeService.FullTimeEmployee f = new Part6EmployeeService.FullTimeEmployee();, throws error
+		The formatter threw an exception while trying to deserialize the message:... 'FullTimeEmployee' to the list of known types... 
+	
+	4. You can also specify known types in the configuration file. This is equivalent to applying KnownType attribute on the base type, 
+	in the sense that it is applicable globally. All service contracts and operation contracts respect the known types.
+	<system.runtime.serialization>
+	    <dataContractSerializer>
+	      <declaredTypes>
+	      	<!-- Part6Employee.Employee class name, Part6Employee dll name, dll Version-->
+		<add type="Part6Employee.Employee, Part6Employee, Version=1.0.0.0, Culture=Neutral, PublicKeyToken=null">
+		  <knownType type="Part6Employee.FullTimeEmployee, Part6Employee, Version=1.0.0.0, Culture=Neutral, PublicKeyToken=null"/>
+		  <knownType type="Part6Employee.PartTimeEmployee, Part6Employee, Version=1.0.0.0, Culture=Neutral, PublicKeyToken=null"/>
+		</add>
+	      </declaredTypes>
+	    </dataContractSerializer>
+	  </system.runtime.serialization>	
+
+Part 9 - How to enable tracing and message logging in wcf Client Side (same as server side also)
+==========================================================  
+	Use Microsoft Service Configuration Editor to enable tracing and message logging in WCF. This can be done either on the 
+	client or the wcf service. 
+
+	Enable Tracing and Message Logging in WCF Client Side
+		1. Right click on the config file ->"Edit WCF Configuration" Or Tools->WCF Configuration Editor->File->Open the config file. 
+		2. Select Diagnostics folder -> Enable Log Auto Flush link 
+			and Enable Message Logging. (file added on project folder ((app)web_message.svclog), to which messages will be logged.)
+			and Enable Tracing ((file added on project folder (web_tracelog.svclog), to which traces will be logged.)
+		3. Expand Diagnostics folder -> Select Message Logging -> set LogEntireMessage option to true.
+		4. Close Microsoft Service Configuration Editor tool -> This will ask you to Save Changes. Click Yes.
+		
+		The config file updated with the settings what i have made using the tool.
+				
+		<system.diagnostics>
+			<sources>
+			    <source name="System.ServiceModel.MessageLogging" switchValue="Warning,ActivityTracing"> 	<listeners>
+				    <add type="System.Diagnostics.DefaultTraceListener" name="Default">  <filter type="" />	    </add>
+				    <add name="ServiceModelMessageLoggingListener"> <filter type="" />    </add>
+				</listeners>    </source>
+			    <source propagateActivity="true" name="System.ServiceModel" switchValue="Warning,ActivityTracing">	<listeners>
+				    <add type="System.Diagnostics.DefaultTraceListener" name="Default">	<filter type="" />    </add>
+				    <add name="ServiceModelTraceListener"><filter type="" />   </add>
+				</listeners>   </source>
+			</sources>
+			<sharedListeners>
+			    <add initializeData="c:\mk\inte\view\dot_net\net\wcf\wcfexample\part6employeewinclient\app_messages.svclog"
+				type="System.Diagnostics.XmlWriterTraceListener..." name="ServiceModelMessageLoggingListener" traceOutputOptions="Timestamp">
+				<filter type="" />
+			    </add>
+			    <add initializeData="c:\mk\inte\view\dot_net\net\wcf\wcfexample\part6employeewinclient\app_tracelog.svclog"
+				type="..." name="ServiceModelTraceListener" traceOutputOptions="Timestamp">
+				<filter type="" />
+			    </add>
+			</sharedListeners>
+			<trace autoflush="true" />
+		    </system.diagnostics>		
+		
+
+		Run the wcf service and the client. Make a request from the client. Look for the log files.
+
+		To open the log files use Service Trace Viewer utility that ships with .NET. To open Service Trace Viewer utility, 
+		there are 3 options
+		1. double click the log file, it will open tool
+		2. Click on Start -> Click All Programs -> Open Microsoft Visual Studio [2010] folder -> Open Windows SDK Tools folder 
+		   -> then select Service Trace Viewer tool
+		3. Open visual studio command prompt - > Type SVCTRACEVIEWER and press enter
+
+		Point the Service Trace Viewer utility to the log file and you should see the messages exchanged between the 
+		service and the client. 
+
+		(app)web_message.svclog -> contains 2 Message Log Trace (request & response), see below request and response 
+		
+
+Part 10 - Message Contract in WCF  -- MessageContract, MessageBodyMember, MessageHeader, DataContract
+==================================
+	With Data Contracts we have very limited control over the SOAP XML request and response messages that are generated. 
+	Use Message Contracts, if you want to have full control over the generated XML SOAP messages.  
+
+	Few examples of when Message Contracts can be handy
+	1. Include some custom data in the SOAP header. In general SOAP headers are used to pass user credentials, license keys, 
+	   session keys etc.
+	2. Change the name of the wrapper element in the SOAP message or to remove it altogether.
+
+	SOAP Request message that is generated without using Message Contracts
+		<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+			<s:Header>
+				<ActivityId CorrelationId="bf4c3934-..." xmlns="...">00000000-0000-0000-0000-000000000000</ActivityId>
+			</s:Header>
+			<s:Body>
+				<GetEmployee xmlns="http://tempuri.org/">
+					<id>1</id>
+				</GetEmployee>
+			</s:Body>
+		</s:Envelope>
+
+	SOAP Response message that is generated without using Message Contracts
+			<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+				<s:Header></s:Header>
+				<s:Body>
+					<GetEmployeeResponse xmlns="http://tempuri.org/">
+						<GetEmployeeResult i:type="b:FullTimeEmployee" xmlns:a="..." xmlns:i="..." xmlns:b="...">
+							<a:DateOfBirth>2017-12-12T00:00:00</a:DateOfBirth>
+							<a:Gender>Gender 1</a:Gender>
+							<a:ID>1</a:ID>
+							<a:Name>Name 1</a:Name>
+							<a:Type>FullTime</a:Type>
+							<b:AnnualSalary>123.123</b:AnnualSalary>
+						</GetEmployeeResult>
+					</GetEmployeeResponse>
+				</s:Body>
+			</s:Envelope>
+
+	In this demo, we will discuss how to use MessageContracts 
+		1. To include LicenseKey in the SOAP Header
+		2. Change the Name of the wrapper element in the SOAP Body
+
+	SOAP Request message that is generated using Message Contracts
+		<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+			<s:Header>
+				<h:LicenseKey xmlns:h="http://DNS.com/Employee">2_Key</h:LicenseKey>
+				<ActivityId CorrelationId="3c30f6f0-8f74-..." xmlns="...">00000000-0000-0000-0000-000000000000</ActivityId>
+			</s:Header>
+			<s:Body>
+				<EmployeeRequestObject xmlns="http://DNS.com/Employee">
+					<EmployeeId>2</EmployeeId>
+				</EmployeeRequestObject>
+			</s:Body>
+		</s:Envelope>
+
+	SOAP Response message that is generated using Message Contracts 
+	<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+		<s:Header></s:Header>
+		<s:Body>
+			<EmployeeInfoObject xmlns="http://DNS.com/Employee">
+				<Id>2</Id>
+				<Name>Name 2</Name>
+				<Gender>Male</Gender>
+				<DateOfBirth>1998-12-12T00:00:00</DateOfBirth>
+				<Type>FullTime</Type>
+				<AnnualSalary>125000</AnnualSalary>
+				<HourlySalary>0</HourlySalary>
+				<HourlyWorked>0</HourlyWorked>
+			</EmployeeInfoObject>
+		</s:Body>
+	</s:Envelope>
+
+	Decorate a class with MessageContract attribute, and then use that class as an operation contract parameter or return type. 
+	MessageContract attribute has the following parameters.
+	1. IsWrapped  2. WrapperName 	3. WrapperNamespace 	4. ProtectionLevel
+	
+	[MessageContract(IsWrapped=true, WrapperName="EmployeeRequestObject", WrapperNamespace="http://MyCompany.com/Employee")]
+	
+	MessageHeader attribute is applied on a property of the class that you want to include in the SOAP header. 
+	MessageHeader attribute has the following parameters.
+	1. Name 	2. Namespace 	3. ProtectionLevel 	4. Actor 	5. MustUnderstand 	6. Relay
+	[MessageHeader(Namespace = "http://MyCompany.com/Employee")]
+	public string LicenseKey { get; set; }
+
+	MessageBodyMember attribute is applied on a property of the class that you want to include in the SOAP body section. 
+	MessageBodyMember attribute has the following parameters.
+	1. Name 	2. Namespace  	3. Order	4. ProtectionLevel
+	[MessageBodyMember(Namespace = "http://MyCompany.com/Employee")]
+	public int EmployeeId { get; set; }
+
+
+	In general, use MessageContract only if there is a reason to tweak the structure of the soap XML message.
+
+	Employee.cs
+	using System.Runtime.Serialization;
+	using System.ServiceModel;
+	namespace Part10Employee {
+
+	    [MessageContract(IsWrapped=true, WrapperName="EmployeeRequestObject", WrapperNamespace="http://MyCompany.com/Employee")]
+	    public class EmployeeRequest {
+		[MessageBodyMember(Namespace = "http://MyCompany.com/Employee")]
+		public int EmployeeId { get; set; }
+
+		[MessageHeader(Namespace = "http://MyCompany.com/Employee")]
+		public string LicenseKey { get; set; }
+	    }
+
+	    [MessageContract(IsWrapped=true, WrapperName="EmployeeInfoObject", WrapperNamespace="http://MyCompany.com/Employee")]
+    	    public class EmployeeInfo    {
+        	public EmployeeInfo(){}
+        	public EmployeeInfo(Employee employee){
+		    this.ID = employee.Id;
+		    this.Name = employee.Name;
+		    this.Gender = employee.Gender;
+		    this.DOB = employee.DateOfBirth;
+		    this.Type = employee.Type;
+		    if (this.Type == EmployeeType.FullTimeEmployee) {
+			this.AnnualSalary = ((FullTimeEmployee)employee).AnnualSalary;
+		    } else {
+			this.HourlyPay = ((PartTimeEmployee)employee).HourlyPay;
+			this.HoursWorked = ((PartTimeEmployee)employee).HoursWorked;
+		    }
+		}
+
+		[MessageBodyMember(Order = 1,Namespace = "http://MyCompany.com/Employee")]
+		public int ID { get; set; }
+		[MessageBodyMember(Order = 2,Namespace = "http://MyCompany.com/Employee")]
+		public string Name { get; set; }
+		[MessageBodyMember(Order = 3,Namespace = "http://MyCompany.com/Employee")]
+		public string Gender { get; set; }
+		[MessageBodyMember(Order = 4,Namespace = "http://MyCompany.com/Employee")]
+		public DateTime DOB { get; set; }
+		[MessageBodyMember(Order = 5,Namespace = "http://MyCompany.com/Employee")]
+		public EmployeeType Type { get; set; }
+		[MessageBodyMember(Order = 6,Namespace = "http://MyCompany.com/Employee")]
+		public int AnnualSalary { get; set; }
+		[MessageBodyMember(Order = 7,Namespace = "http://MyCompany.com/Employee")]
+		public int HourlyPay { get; set; }
+		[MessageBodyMember(Order = 8,Namespace = "http://MyCompany.com/Employee")]
+		public int HoursWorked { get; set; }
+	    }
+    
+	    [DataContract(Namespace = "http://MyCompany.com/Employee")]
+	    public class Employee   {
+		[DataMember(Order = 1)]
+		public int Id { get; set; }
+
+		[DataMember(Order = 2)]
+		public string Name { get; set; }
+
+		[DataMember(Order = 3)]
+		public string Gender { get; set; }
+
+		[DataMember(Order = 4)]
+		public DateTime DateOfBirth { get; set; }
+
+		[DataMember(Order = 5)]
+		public EmployeeType Type { get; set; }
+	    }
+
+	    public enum EmployeeType    {
+		FullTimeEmployee = 1,
+		PartTimeEmployee = 2
+	    }
+	}
+
+	IEmployeeService.cs
+	using System.ServiceModel;
+	namespace Part10Employee {
+	    [ServiceContract]
+	    public interface IEmployeeService  {
+		[OperationContract]
+		EmployeeInfo GetEmployee(EmployeeRequest employeeRequest);
+
+		[OperationContract]
+		void SaveEmployee(EmployeeInfo Employee);
+	    }
+	}
+
+	EmployeeService.cs
+	namespace Part10Employee {
+	    public class EmployeeService : IEmployeeService  {
+		public EmployeeInfo GetEmployee(EmployeeRequest request) {
+		    int id = request.EmployeeId;
+			Employee e = null;
+			// e = new FullTimeEmployee(){...};
+			//e = new PartTimeEmployee(){...};
+	            return new EmployeeInfo(e);
+		}
+
+		public void SaveEmployee(EmployeeInfo employee)		{    save record}
+	    }
+	}
+
+	Client
+      	    Part3HelloService.IEmployeeService esc  = new Part3HelloService.EmployeeServiceClient("BasicHttpBinding_IEmployeeService");
+
+            Part3HelloService.EmployeeRequest request = new Part3HelloService.EmployeeRequest();
+            request.EmployeeId = Int32.Parse(textBox1.Text);
+            request.LicenseKey = textBox1.Text + "_Key";
+
+            var t = esc.GetEmployee(request);
+
+            Part3HelloService.EmployeeInfo ei = new Part3HelloService.EmployeeInfo();
+            ei = t;
+
+            esc.SaveEmployee(ei);	
+
+
+Part 11 - Difference between datacontract and messagecontract in wcf
+=====================================================================
+	DataContract gives very limited control over the SOAP messages. DataContract allows us to control the Name and Order of 
+	XML elements in the body section of the SOAP message. Beyond this we don't have much control over the SOAP messages.
+
+	MessageContract gives full control over the SOAP messages by providing access to the SOAP header and body sections 
+	using MessageHeader and MessageBodyMember attributes. Use MessageContract if there is a reason to tweak the structure of 
+	the soap XML i.e if you want to include any additional information in the SOAP header. 
+
+	WCF Interview Questions
+	1. Why do use MessageContract in WCF?
+	MessageContract gives full control over the SOAP messages. For example, it allows us to include custom information in the SOAP header.
+
+	2. What kind of custom information? User credentials to invoke the service.
+
+	3. Why do you need to pass user credentials in the header? Can't you pass them as method parameters?
+	We can, but user credentials are periphery to what the method has to do. So, it would make more sense to pass them out 
+	of band in the header, rather than as additional parameters.
+
+	4. SOAP messages are in xml format, so anyone can read the credentials? How you do you protect sensitive data?
+	Using MessageContract we can sign and encrypt messages. Use ProtectionLevel named parameter. 
+
+Part 12 - Backward compatible WCF contract changes
+==================================================
+	After a WCF service is deployed on the production server, the WSDL document should not be changed in any way that 
+	would break the existing clients. This is because the clients have already generated proxy classes and relevant 
+	configuration to interact with the service. If you intend to make changes, the changes should be done in such a 
+	way that they support backward compatibility. 
+
+	WCF contracts are version tolerant by default. The DataContractSerializer which is the default engine for serialization in 
+	WCF allows missing, non-required data and ignores superfluous data for service contracts, data contracts & message contracts.
+
+	For a full list of changes and the impact that could have on the existing clients, please refer to the following MSDN article
+	http://msdn.microsoft.com/en-us/library/ff384251.aspx 	
+	
+	Figure 1: Service contracts and backward compatibility
+
+	Service Contract Changes				Impact to Existing Clients
+	Adding new parameters to an operation signature		Client unaffected. New paras initialized to default values at the service.
+	  EmployeeInfo GetEmployee(EmployeeRequest request, string city) //added string city
+	Removing parameters from an operation signature		Client unaffected. params pass by clients are ignored, data lost at the service.
+	  EmployeeInfo GetEmployee() //removed request
+	Modifying parameter types				An exception, if the incoming type from the client cannot 
+	  EmployeeInfo GetEmployee(int request)[changed int] 	be converted to the parameter data type.
+	Modifying return value types				An exception, if the return value from the service cannot 
+								be converted to the expected data type in the client version of the operation signature.
+	Adding new operations					Client unaffected. Will not invoke operations it knows nothing about.
+		 [OperationContract]
+        	 EmployeeInfo GetEmployeeByName(string name); //added new opeartion
+	Removing operations					An exception, Messages sent by the client to the service 
+		//[OperationContract]				are considered to be using an unknown action header.
+        	//EmployeeInfo GetEmployee(int request); //removed existing opeartion
+        
+	Figure 2: Data contracts and backward compatibility
+
+	Data Contract Changes					Impact to Existing Clients
+	Add new non-required members				Client unaffected. Missing values are initialized to defaults.
+		[DataMember(Order = 6)]
+        	string City { get; set; } //added new members
+	Add new required members				An exception is thrown for missing values.
+		[DataMember(Order = 6,IsRequired =true)]
+        	string City { get; set; } //added new members with isrequired true	
+	Remove non-required members				Data lost at the service. Unable to return the full data set back to 
+		//[DataMember(Order = 2)]			the client, for example. No exceptions.
+		//string Name { get; set; } //removed members
+	Remove required members					An exception, when client receives responses from the service 
+		//[DataMember(Order = 6,IsRequired =true)]	with missing values.
+		//string City { get; set; } //added new members with isrequired true	
+	Modify existing member data types			If types are compatible no exception but may receive unexpected results.
+		[DataMember(Order = 4)]
+	        public string DateOfBirth { get; set; } //change DateTime to string
+
+Part 13 - ExtensionDataObject in WCF
+=====================================
+	For some reason we want to remove Gender property from Employee DataContract. 
+	    //[DataMember(Order = 3)]
+	    //public string Gender { get; set; }
+
+	Run the client application. The client application still references Gender property.(generated before we modified)
+	Save(Get) an employee with Gender property value. the value is unknown to the service and by default the value will be lost at the service.
+	
+	Employee objects converted into XML (Client side), this XML send to the servers -> is deserialize the XML to employee object
+	so in the process of deserialize, employee ID data is mapped from XML ID,..., but emplpyee object doesn't have Geneder property, 
+	so this service doesn't know what to do, simply by default throw away that unknown data
+
+	To preserve unknown elements that are sent by client and then return them back to the client. 
+	To achieve this has to implement IExtensibleDataObject interface with one ExtensionData property.
+
+	Employee.cs
+	using system.runtime.serialization
+	public class Employee : IExtensibleDataObject {
+		...
+		//Purpose this property, if there are any unknown elements of data within the XML that is received 
+		//on the service side those unknown elements will be stored in this extension data object
+		//and to return that data back to the client, to serialize the data into xml during that serialization, 
+		//take the unknown elements from this extension data object and put them in an xml format in a way that we receive them
+		
+		//It's act as a data store for those unknown elements on the service side 
+		//Can use this object on the client side also
+	    	public ExtensionDataObject ExtensionData { get; set; }
+	}
+
+	EmployeeService.cs
+	// First change
+	[ServiceBehavior(InstanceContextMode = InstanceContextMode.Single)]
+	public class EmployeeService : IEmployeeService	{
+    		// Second change
+    		private Employee _lastSavedEmployee;
+        
+    		public Employee GetEmployee(int Id) {
+    		    Employee employee = null;
+        	    .. sql 	
+			// Third change
+			if (_lastSavedEmployee != null && Id == _lastSavedEmployee.Id)
+			{
+			    employee.ExtensionData = _lastSavedEmployee.ExtensionData;
+			}
+			return employee;
+		}
+
+		public void SaveEmployee(Employee employee) {
+			// Fourth change
+			_lastSavedEmployee = employee;
+			sql statments
+		}
+    	}
+    	
+    	Save the record, th employee object does not contain gender property, but within the extension data 
+    	->expand you can see one members -> expand you can see Name "Gender" and value "Male"
+
+	IExtensibleDataObject to preserve unkown elements during serialization and deserialization of DataContracts. On the service side, 
+	at the time of deserialization the unknown elements from the client are stored in ExtensionDataObject. To send data to 
+	the client, the service has to serialize data into XML. During this serialization process the data from 
+	ExtensionDataObject is serialized into XML as it was provided at the time of service call. 	        
+
+Part 14 - Risks of Denial of Service attack of implementing IExtensibleDataObject interface
+================================================================
+	The extension data is stored in memory, the attacker may flood the server with requests that contains large 
+	number of unknown elements which can lead to system out of memory and DoS. 
+
+	How to turn off IExtensibleDataObject feature?
+	1)Remove the implementation of IExtensibleDataObject interface from all the DataContracts.  (downside, change code to rebuild)
+
+	What if there are large number of DataContracts that have implemented IExtensibleDataObject interface? 
+	enabled or disabled using service behavior configuration. 
+	<behaviors>
+	  <serviceBehaviors>
+	    <behavior name="ignoreExtensionData">
+	      <dataContractSerializer ignoreExtensionDataObject="true"/>
+	    </behavior>
+	  </serviceBehaviors>
+	</behaviors>
+
+	This can also be done programatically using ServiceBehaviorAttribute. Set IgnoreExtensionDataObject property to true.
+	[ServiceBehavior(IgnoreExtensionDataObject = true)]
+	public class EmployeeService : IEmployeeService
+
+	When IExtensibleDataObject feature is turned off, the deserializer will not populate the ExtensionData property. 	
+	
+	Get or Save the record, this employee object -> extension data members is null
+	
+Part 15 - Exception handling in WCF
+===================================
+	Error Messge before turned true = > "the server was unable to process the request due to an internal error ..."
+	
+	We are getting a soap fault exception -> what happened ->  it's a dotnet exception(object) need to be serialized 
+	into an XML format, this soap fault is returned to the client. But default,an unhandled exception details in a 
+	servers are not included in the fault exception. why? because of security reasons
+
+	When an exception occurs in a WCF service, the service serializes the exception into a SOAP fault, and then sends 
+	the SOAP fault to the client. By default unhandled exception details are not included in SOAP faults 
+	that are propagated to client applications for security reasons. Instead a generic SOAP fault is returned to the client.
+
+	For debugging purpose, if you want to include exception details in SOAP faults, enable IncludeExceptionDetailInFaults setting. 
+	This can be done in 2 ways as shown below.
+	1. In the config file using service behavior configuration
+	<behaviors>
+	  <serviceBehaviors>
+	    <behavior name="inculdeExceptionDetails">
+	      <serviceDebug includeExceptionDetailInFaults="true"/>
+	    </behavior>
+	  </serviceBehaviors>
+	</behaviors>
+
+	2. In code using ServiceBehavior attribute
+	[ServiceBehavior(IncludeExceptionDetailInFaults=true)]
+	public class CalculatorService : ICalculatorService { public int Divide(int Numerator, int Denominator)...
+
+	Frequently asked WCF interview questions ( the above is answer)
+	What happens when an exception occurs in a WCF service? OR What is a SOAP fault? OR How are WCF service exceptions reported to client applications? 
+
+Part 16 - Soap faults in WCF
+============================
+	SOAP faults are in XML format and are platform independent. 
+	A SOAP fault contains 1. FaultCode 	2. FaultSring(1.1) or FaultReason(1.2)  3. Detail elements etc.
+
+	The Detail element can be used to include any custom xml.
+
+	SOAP faults are formatted based on SOAP 1.1 or SOAP 1.2 speficications. SOAP format depends on the binding. 
+	BasicHttpBinding uses SOAP 1.1 whereas the other built-in WCF bindings use SOAP 1.2.
+
+	For the differences between SOAP 1.1 and 1.2 please refer to the following article. http://www.w3.org/2003/06/soap11-soap12.html
+	Format of 1.1 & 1.2 soap error message are different
+
+	as WCF formats the messages automatically based on the binding we have used to expose the service.
+	To view SOAP Fault messages, please enable message logging in WCF (Part 9)
+
+	To view SOAP 1.1 fault message, set binding to basicHttpBinding.
+
+	SOAP 1.1 Fault with includeExceptionDetailInFaults set to false:
+	<s:Envelope xmlns:s="http://...">
+	  <s:Body>
+	    <s:Fault>
+	      <faultcode xmlns:a="http://..." xmlns="">a:InternalServiceFault</faultcode>
+	      <faultstring xml:lang="en-GB" xmlns="http://...">
+		The server was unable to process the request due to an internal error....
+	      </faultstring>
+	    </s:Fault>
+	  </s:Body>
+	</s:Envelope>
+
+	SOAP 1.1 Fault with includeExceptionDetailInFaults set to true:
+	<s:Envelope xmlns:s="http://...">
+	  <s:Body>
+	    <s:Fault>
+	      <faultcode xmlns:a="http://..." xmlns="">a:InternalServiceFault</faultcode>
+	      <faultstring xml:lang="en-GB" xmlns="">Attempted to divide by zero.</faultstring>
+	      <detail xmlns="">
+		<ExceptionDetail xmlns="http://..." xmlns:i="http://...">
+		  <HelpLink i:nil="true"></HelpLink>
+		  <InnerException i:nil="true"></InnerException>
+		  <Message>Attempted to divide by zero.</Message>
+		  <StackTrace>
+		    at CalculatorService.CalculatorService.Divide(Int32 Numerator, Int32 Denominator) 
+		    in C:\CalculatorService\CalculatorService\CalculatorService.cs:line 7
+		  </StackTrace>
+		  <Type>System.DivideByZeroException</Type>
+		</ExceptionDetail>
+	      </detail>
+	    </s:Fault>
+	  </s:Body>
+	</s:Envelope>
+
+	To view SOAP 1.2 fault message, set binding to wsHttpBinding. By default Message Security is turned on for wsHttpBinding. 
+	Set the security mode for wsHttpBinding to None, so we could view the SOAP 1.2 fault message.
+	<bindings>
+	  <wsHttpBinding>
+	    <binding>
+	      <security mode="None">
+	      </security>
+	    </binding>
+	  </wsHttpBinding>
+	</bindings>
+
+	SOAP 1.2 Fault with includeExceptionDetailInFaults set to false:
+	<s:Envelope xmlns:s="http://..." xmlns:a="http://...">
+	  <s:Header>
+	    <a:Action s:mustUnderstand="1">http://...</a:Action>
+	    <a:RelatesTo>urn:uuid:3ea53f96-6e2f-48b3-83d8-ff81c8171153</a:RelatesTo>
+	  </s:Header>
+	  <s:Body>
+	    <s:Fault>
+	      <s:Code>
+		<s:Value>s:Receiver</s:Value>
+		<s:Subcode>
+		  <s:Value xmlns:a="http://...">a:InternalServiceFault</s:Value>
+		</s:Subcode>
+	      </s:Code>
+	      <s:Reason>
+		<s:Text xml:lang="en-GB">
+		  The server was unable to process the request due to an internal error....
+		</s:Text>
+	      </s:Reason>
+	    </s:Fault>
+	  </s:Body>
+	</s:Envelope>
+
+	SOAP 1.2 Fault with includeExceptionDetailInFaults set to true:
+	<s:Envelope xmlns:s="http://..." xmlns:a="http://...">
+	  <s:Header>
+	    <a:Action s:mustUnderstand="1">http://...</a:Action>
+	    <a:RelatesTo>urn:uuid:d649ab47-2813-4dd1-a97a-6ceea71c3e9c</a:RelatesTo>
+	  </s:Header>
+	  <s:Body>
+	    <s:Fault>
+	      <s:Code>
+		<s:Value>s:Receiver</s:Value>
+		<s:Subcode>
+		  <s:Value xmlns:a="http://...">a:InternalServiceFault</s:Value>
+		</s:Subcode>
+	      </s:Code>
+	      <s:Reason>
+		<s:Text xml:lang="en-GB">Attempted to divide by zero.</s:Text>
+	      </s:Reason>
+	      <s:Detail>
+		<ExceptionDetail xmlns="http://..." xmlns:i="http://...">
+		  <HelpLink i:nil="true"></HelpLink>
+		  <InnerException i:nil="true"></InnerException>
+		  <Message>Attempted to divide by zero.</Message>
+		  <StackTrace>
+		    at CalculatorService.CalculatorService.Divide(Int32 Numerator, 
+		    Int32 Denominator) in C:\CalculatorService\CalculatorService
+		    \CalculatorService.cs:line 7 ...
+		  </StackTrace>
+		  <Type>System.DivideByZeroException</Type>
+		</ExceptionDetail>
+	      </s:Detail>
+	    </s:Fault>
+	  </s:Body>
+	</s:Envelope> 
+
+	
+Part 17 - Unhandled exceptions in WCF
+=====================================
+	An unhandled exception in the WCF service, will cause the communication channel to fault and the session will be lost. 
+	Once the communication channel is in faulted state, we cannot use the same instance of the proxy class any more. 
+	We will have to create a new instance of the proxy class. 
+
+	Part3HelloService.IEmployeeService esc;
+	Form1()
+	esc  = new Part3HelloService.EmployeeServiceClient("BasicHttpBinding_IEmployeeService");
+	//Button Click
+	try {
+		var d = esc.Divide(Int32.Parse(textBox1.Text), Int32.Parse(textBox2.Text));
+    	} catch (FaultException faultException){
+		label2.Text = faultException.Code + " - " +faultException.Message;
+	}
+
+	BasicHttpBinding does not have sessions. So when there is an unhandled exception, it only faults the server channel.
+	The client proxy is still OK, because with BasicHttpBinding the channel is not maintaining sessions, 
+	and when the client calls again it is not expecting the channel to maintain any session.
+	
+		Example -> if i pass 5,10 i got value, 	if i pass 5,0 i got error
+		if i pass 5,10 i got value (so proxy is still ok)
+	
+
+	WSHttpBinding have secure sessions. So when there is an unhandled exception, it faults the server channel. 
+	At this point the existing client proxy is useless as it is also faulted, because with wsHttpBinding the 
+	channel is maintaining a secure session, and when the client calls again it expects the channel to maintain 
+	the same session. The same session does not exist at the server channel anymore, as the undhandled exception 
+	has already torn down the channel and the session along with it. 
+	
+		[comment <!-- <bindings>  <wsHttpBinding> -->, but if uncomment, proxy is okay]
+		Example if i pass 5,10 i got value, if i pass 5,0 i got error
+		if i pass 5,10 i got error (so proxy is useless), 
+		"System.ServiceModel.Channels.ServiceChannel, cannot be used for communication because it is in the Faulted state"
+
+Part 18 - Throwing fault exceptions from a WCF service
+=====================================================
+	why can't we simply throw .NET exceptions instead of Fault exceptions?
+
+	A WCF service should be throwing a FaultException or FaultException<T> instead of Dot Net exceptions. 
+	This is because of the following 2 reasons.
+	1. An unhandled .NET exception will cause the channel between the client and the server to fault. 
+	   Once the channel is in a faulted state we cannot use the client proxy anymore. We will have to re-create the proxy (Part 17). 
+	   On the other hand faultexceptions will not cause the communication channel to fault.
+
+	2. As .NET exceptions are platform specific, they can only be understood by a client that is also .NET. 
+	   If you want the WCF service to be interoperable,  then the service should be throwing FaultExceptions.
+
+	Server side
+        public int Divide(int Numerator, int Denominator){
+	    //if (Denominator == 0) throw new DivideByZeroException(); // using  WSHttpBinding,  error throws & so proxy is useless     	
+            if (Denominator == 0)
+                throw new FaultException("Denomintor cannot be ZERO", new FaultCode("DivideByZeroFault"));
+
+            return Numerator / Denominator;
+        }
+        
+Part 19 - Creating and throwing strongly typed SOAP faults - FaultContract
+=========================================================
+	Instead of throwing a generic SOAP fault(Part 18), we can create strongly typed SOAP faults and throw them. 
+	Creating our own strongly typed SOAP faults allow us to include any additional custom information about the exception that has occurred. 
+	Here are the steps to create a strongly typed SOAP fault. 
+
+	Step 1: Server, create a class file with name = DivideByZeroFault.cs.
+	using System.Runtime.Serialization;
+	namespace CalculatorService {
+	    [DataContract]
+	    public class DivideByZeroFault {
+		[DataMember]
+		public string Error { get; set; }
+
+		[DataMember]
+		public string Details { get; set; }
+	    }}
+
+	Step 2:Interface file,  used FaultContract attribute to specify that the Divide() method can throw DivideByZeroFault.
+        [FaultContract(typeof(DivideByZeroFault))]
+        [OperationContract]
+        int Divide(int Numerator, int Denominator);
+    
+	Step 3: Instead of throwing a generic SOAP fault, we are throwing a strongly typed SOAP fault 
+	using FaultException<T> class, where <T> is DivideByZeroFault.
+        public int Divide(int Numerator, int Denominator){
+            try{
+                return Numerator / Denominator;
+            } catch (DivideByZeroException ex) {
+                DivideByZeroFault divideByZeroFault = new DivideByZeroFault();
+                divideByZeroFault.Error = ex.Message;
+                divideByZeroFault.Details = "Denominator cannot be ZERO";
+
+                throw new FaultException<DivideByZeroFault>(divideByZeroFault);
+            }
+
+	Step 4:client application, modify the catch block as shown below.
+	catch (FaultException<CalculatorService.DivideByZeroFault> faultException){
+	    label1.Text = faultException.Detail.Error + " - " + faultException.Detail.Details;
+	}
+
+	So in short, to create a strongly typed SOAP fault
+	1. Create a class that represents your SOAP fault. Decorate the class with DataContract attribute 
+	   and the properties with DataMember attribute.
+	2. In the service data contract, use FaultContractAttribute to specify which operations can throw which SOAP faults.
+	3. In the service implementation create an instance of the strongly typed SOAP fault and throw it using FaultException<T>.         
+
+Part 20 - Centralized exception handling in WCF by implementing IErrorHandler interface (very common interview question)
+=======================================================================================
+	In an ASP .NET web applications we can use Application_Error() event handler method in Global.asax to 
+	log all the exceptions and redirect the user to a custom error page. 
+
+	In WCF, implement IErrorHandler interface. 3 steps involved in centralizing exception handling in WCF. 
+	 
+
+	Step 1: Implement IErrorHandler interface. add a class file GlobalErrorHandler.cs.
+	using System.ServiceModel;
+	using System.ServiceModel.Channels;
+	using System.ServiceModel.Dispatcher;
+	    public class GlobalErrorHandler : IErrorHandler
+	    {
+		public bool HandleError(Exception error) {
+		    // log the actual exception (want log to db or text write here),return true to indicate that the exception is handled
+		    return true;
+		}
+
+		//you can write log to db or text here, but it delay to client response, so use is HandelError asynchronously
+		public void ProvideFault(Exception error, 
+					 System.ServiceModel.Channels.MessageVersion version, [version is going to specified wheather we want soap 1.1 or soap 1.2]
+					 ref System.ServiceModel.Channels.Message fault) {
+		    if (error is FaultException)
+			return;
+
+		    // Return a general service error message to the client
+		    FaultException faultException = new FaultException("A general service error occured");
+		    MessageFault messageFault = faultException.CreateMessageFault();
+		    fault = Message.CreateMessage(version, messageFault, null); //action is null
+		}}}
+
+	IErrorHandler interface has 2 methods for which we need to provide implementation.
+		1. ProvideFault() - This method gets called automatically when there is an unhandled exception or a fault. 
+		   In this method we have the opportunity to write code to convert the unhandled exception into a generic 
+		   fault that can be returned to the client. ProvideFault() gets called before HandleError() method.
+
+		2. HandleError() - This method gets called asynchronously after ProvideFault() method is called and 
+		   the error message is returned to the client. This means that this method allows us to write code 
+		   to log the exception without blocking the client call.
+
+	Step 2: Create a custom Service Behaviour Attribute to let WCF know that we want to 
+	        use the GlobalErrorHandler class whenever an unhandled exception occurs. (GlobalErrorHandlerBehaviourAttribute.cs)
+	using System.Collections.ObjectModel;
+	using System.ServiceModel;
+	using System.ServiceModel.Channels;
+	using System.ServiceModel.Description;
+	using System.ServiceModel.Dispatcher;
+
+	    public class GlobalErrorHandlerBehaviourAttribute : Attribute, IServiceBehavior {
+		private readonly Type errorHandlerType;
+
+		public GlobalErrorHandlerBehaviourAttribute(Type errorHandlerType){
+		    this.errorHandlerType = errorHandlerType;
+		}
+
+		public void Validate(ServiceDescription serviceDescription,
+				     ServiceHostBase serviceHostBase){ }
+
+		public void AddBindingParameters(ServiceDescription serviceDescription,
+						 ServiceHostBase serviceHostBase,
+						 Collection<ServiceEndpoint> endpoints,
+						 BindingParameterCollection bindingParameters){}
+
+		public void ApplyDispatchBehavior(ServiceDescription serviceDescription,
+						  ServiceHostBase serviceHostBase){
+		    IErrorHandler handler = (IErrorHandler)Activator.CreateInstance(this.errorHandlerType);
+
+		    foreach (ChannelDispatcherBase channelDispatcherBase in serviceHostBase.ChannelDispatchers) {
+			ChannelDispatcher channelDispatcher = channelDispatcherBase as ChannelDispatcher;
+			if (channelDispatcher != null)
+			    channelDispatcher.ErrorHandlers.Add(handler);
+		    }
+		}
+	    }
+	}
+
+	Notice that the GlobalErrorHandlerBehaviourAttribute class 1. Inherits from Attribute abstract class.
+
+	2. Implements IServiceBehavior interface. This interface has 3 methods (Validate(), AddBindingParameters(), ApplyDispatchBehavior()).
+	   The implementation for Validate() and AddBindingParameters() method can be left blank. 
+	   In the ApplyDispatchBehavior() method, we create an instance of the GlobalErrorHandler class and associate the instance 
+	   with each channelDispatcher. 
+
+	3. Has a constructor that contains one Type parameter. We will use this constructor in Step 3.
+
+	Step 3: Decorate CalculatorService.cs class with GlobalErrorHandlerBehaviourAttribute. 
+	        Notice that this attribute has one constructor that expects a single Type parameter. 
+	        Pass GlobalErrorHandler class created in Step 1 as the argument.
+	[GlobalErrorHandlerBehaviour(typeof(GlobalErrorHandler))]
+	public class CalculatorService : ICalculatorService{
+	    public int Divide(int Numerator, int Denominator) {
+	    }
+	}
+
+	Step 4:For testing the global centralized error handler
+	1. Comment try-catch blocks in the Divide() method in CalculatorService.cs file
+	public int Divide(int Numerator, int Denominator)
+	{
+	    //try
+	    //{
+		return Numerator / Denominator;
+	    //}
+	    //catch (DivideByZeroException ex)
+	    //{
+	    //    DivideByZeroFault divideByZeroFault = new DivideByZeroFault();
+	    //    divideByZeroFault.Error = ex.Message;
+	    //    divideByZeroFault.Details = "Denominator cannot be ZERO";
+
+	    //    throw new FaultException<DivideByZeroFault>(divideByZeroFault);
+	    //}
+	}
+
+	2. Put a break point in ProvideFault() and HandleError() methods
+
+	3. Run the service in Debug mode
+
+	4. In the client application change the catch in button1_Click() event handler as shown below.
+	catch (FaultException faultException)
+	{
+	    label1.Text = faultException.Message;
+	}
+
+	5. Run the client application. Pass 0 as the denominator and click Divide button. 
+
+	Notice that ProvideFault() and HandleError() methods in GlobalErrorHandler class are automatically called. 
+
+Part 21 - Bindings in WCF (ABC) - wha are Contract?, EndPoint
+=========================
+	WCF service endpoint consists of 3 things , An end point is where the service is available for the clients of the service to consume
+	A - Address (Address where the WCF Service is available) (relative address or service address, so fully qualified address where the service is baseAddress)
+	B - Binding 
+	C - Contract (Specifies what the service can do. For example, the service contract describes which operations the client can perform on the service)
+
+	So, what is a binding in a WCF service?
+		WCF binding defines how the client needs to communicate with the service. The WCF binding that you choose determines the following for the communication between the client and the service.
+		Transport Protocol (for example, HTTP, TCP, NamedPipe, MSMQ)
+		Message Encoding (for example, text/XML, binary, or (MTOM) Message Transmission Optimization Mechanism)
+		Protocols (for example, reliable messaging, transaction support)
+
+	In WCF there are several built-in bindings that we could use. The complete list can be found at the following MSDN link
+	http://msdn.microsoft.com/en-us/library/ms730879(v=vs.110).aspx
+
+	Depending on your application requirement, you pick the binding that best suit your needs. 
+	If you are not sure, which binding to use there is a flowchart at the following link that can be handy.
+	http://stackoverflow.com/questions/10849920/different-wcf-bindings-their-differences-and-compatibility-with-other-platforms
+	WCF to WCF	Yes	Disconnected Calls	Yes	MSMQ
+							No	Cross Machine		Yes	TCP
+											No	Named Pipes
+			No	MSMQ Client		Yes	MSMQ Integration
+							NO	Legacy ASMX Client	Yes	Basic
+											No	WS
+		
+	BasicHttpBinding: Basic web service communication. Exposes WCF services as legacy ASMX web services. Used for interoperability. No security by default.
+	WSHttpBinding: Web services with WS-* support. Supports transactions and reliable messaging.
+	WSDualHttpBinding: Web services with duplex contract and transaction support.
+	WSFederationHttpBinding: Web services with federated security. Supports transactions.
+	MsmqIntegrationBinding: Communication directly with MSMQ applications. Supports transactions.
+	NetMsmqBinding: Communication between WCF applications by using queuing. Supports transactions.
+	NetNamedPipeBinding: Communication between WCF applications on same computer. Supports duplex contracts and transactions.
+	NetPeerTcpBinding: Communication between computers across peer-to-peer services. Supports duplex contracts. net.p2p
+	NetTcpBinding: Communication between WCF applications across computers. Supports duplex contracts and transactions.
+
+	Binding			Security				Transport Protocol	Encoding	Host
+	-----------------------------------------------------------------------------------------------------
+	basicHttpBinding	(None),Transport, Message, Mixed	HTTP			Text/XML, MTOM	IIS, WAS 
+	wsHttpBinding		(Message), Transport, Mixed		HTTP			Text/XML, MTOM	IIS, WAS
+	netTcpBinding		(Transport), Message, Mixed		TCP			Binary		WAS
+	netNamedPipeBinding	Transport,None				Named Pipe		Binary		WAS
+	netMsmqBinding		Message, Transport, None		TCP			Binary		WAS
+	netPeerTcpBinding	Transport				P2P			Binary		-
+
+Part 22 - Configure WCF service endpoint dynamically in code
+============================================================
+	We can configure an endpoint for WCF service in 2 ways 1. Declaratively using the configuration file  2. Dynamically in code
+
+	The above configuration
+		1. Configures HelloService to be available at the address net.tcp://localhost:8090/HelloService
+		2. Makes use of netTcpBinding
+		3. Configures Service Behavior to enable metadata exchange for clients to generate proxy classes
+
+	<?xml version="1.0" encoding="utf-8" ?>
+	<configuration>
+	  <system.serviceModel>
+	    <services>
+	      <service name="HelloService.HelloService">
+		<host>
+		  <baseAddresses>
+		    <add baseAddress="http://localhost:8080/" />
+		    <add baseAddress="net.tcp://localhost:8090"/>
+		  </baseAddresses>
+		</host>
+	      </service>
+	    </services>
+	  </system.serviceModel>
+	</configuration>
+
+	Step 2: In the Main() method in Program.cs file(in the Host project)
+	public static void Main() {
+	    using (System.ServiceModel.ServiceHost host = new
+		System.ServiceModel.ServiceHost(typeof(HelloService.HelloService)))
+	    {
+		host.Description.Behaviors.Add(new ServiceMetadataBehavior { HttpGetEnabled = true });
+		host.AddServiceEndpoint(typeof(HelloService.IHelloService), 
+		    new NetTcpBinding(), "HelloService");
+		host.Open();
+		Console.WriteLine("Host started @ " + DateTime.Now.ToString());
+		Console.ReadLine();
+	    }
+	}
+
+Part 23 - Hosting WCF service
+=============================
+	For a WCF service to be available for the clients to consume, we need to host the WCF service. The following are the different WCF service hosting options. 
+	
+	Hosting Option				Description
+	--------------				------------
+	Self-hosting (host.open() example)	A WCF service can be self-hosted using a console appliation or a WinForms application				
+	Windows Service				Hosting using a windows service
+	IIS					Hosting within IIS supports HTTP bindings, out of the box NON-HTTP bindings are not supported
+	Windows Activation Services (WAS)	Hosting a WCF service using IIS7 with WAS supports all bindings including the NON-HTTP bindings such as TCpp, MSMQ etc
+	
+
+Part 24 - Advantages and disadvantages of self hosting a wcf service in a console application or windows application
+====================================================================================================================
+	Hosting a wcf service in any managed .net application is called as self hosting. 
+	Console applications, WPF applications, WinForms applications are all examples of managed .net applications.
+
+	Advantages of self hosting a wcf service in a console application
+		1. Very easy to setup. Specify the configuration in app.config file and with a few lines of code we have the service up and running.
+		2. Easy to debug as we don't have to attach a separate process that hosts the wcf service.
+		3. Supports all bindings and transport protocols.
+		4. Very flexible to control the lifetime of the services through the Open() and Close() methods of ServiceHost.
+
+	Disadvantages of self hosting a wcf service in a console application
+		1. The service is available for the clients only when the service host is running.
+		2. Self hosting does not support automatic message based activation that we get when hosted within IIS.
+		3. Custom code required.
+
+	In general, self-hosting is only suitable during the development and demonstration phase and not for hosting live wcf services. 
+
+
+Part 26 - What is a windows service
+===================================
+	What is a windows service and how do they differ from regular applications and programs
+	A windows service is similar to any other program or application running on a windows machine. 
+	The following are the differences between a windows service and a regular application
+		1. Windows service runs in the background 
+		2. They can be configured to start automatically when the system starts
+		3. They don't have user interface.
+
+	What is the use of windows services
+		Windows services provide core operating system features such as 
+		Event Logging - Windows Event Log Service
+		Providing Security - Windows Firewall Service
+		Error reporting - Windows Error Reporting Service
+
+	When would an asp.net developer use a windows service
+		Create a Windows Service to run code in the background all the time, without any sort of user interaction. 
+		An asp.net developer can use a windows service to host a wcf service. We can then configure the windows service to start automatically when the computer starts. 
+		This makes our WCF service always available for clients to consume, even if no-one is logged on, on that computer.
+		
+
+Part 27 - Hosting a wcf service in a windows service
+=====================================================			
+	1 Add - New Windows Service Project (WindowsServiceHost), Rename Service1.cs ->"HelloWindowsService.cs", Add System.ServiceModel assembly and HelloService project.
+	2 Copy Part3HelloServiceHost App.config to WindowsServiceHost host
+	3 HelloWindowsService.cs
+		    public partial class HelloWindowsService : ServiceBase {
+			ServiceHost host;
+			
+			protected override void OnStart(string[] args){
+			    host = new ServiceHost(typeof(HelloService.HelloService));
+			    host.Open();
+			}
+
+			protected override void OnStop(){
+			    host.Close();
+			}
+		    }
+	4 Design surface of "HelloWindowsService.cs" file - > select "Add Installer" -> "ProjectInstaller.cs" file added.
+	5 Right click on "serviceInstaller1" -> "Properties" - > Set Name = HelloWindowsService, StartType = Automatic, 
+	6 Right click on "serviceProcessInstaller1" -> "Properties" -> Set Account = Network Service
+	7 Build the solution, install the HelloWindowsService now through VS Command Prompt as an administrator. , un install :use "-u"
+		installutil -i C:\HelloService\WindowsServiceHost\bin\Debug\WindowsServiceHost.exe
+	8 Verify "services.msc", open clinet and test it
+
+Part 28 - Advantages and disadvantages of hosting a wcf service in a windows service
+====================================================================================
+	Advantages of hosting a wcf service in a windows service
+		1. The Windows Service can be configured to start automatically when the system starts without having the need for any user to logon on the machine. 
+		This means that, the WCF service that the windows service hosts also starts automatically.
+		2. The Windows Service can be configured to automatically restart and recover when failures occur.
+		3. Supports all bindings and transport protocols
+
+	Disadvantages of hosting a wcf service in a windows service
+		1. Involves writing custom code to create a windows service.
+		2. Windows service that hosts the wcf service must be deployed to the production server.
+		3. Difficult to debug the wcf service, as we need to attach the process within which the windows service is running. 	
+
+Part 29 - Hosting wcf service in IIS
+====================================
+	To host a wcf service in IIS, create a file with .svc extension. This file contains ServiceHost directive. 
+	The Service attribute of ServiceHost directive, specifies which service this file points to. The service code can reside in
+		1. The .svc file  2. A separate assembly  3. A file in App_Code folder
+
+	The configuration for the wcf service goes in web.config file.
+
+	The ServiceHost directive in .svc file is responsible for creating an instance of ServiceHost when required. 
+	There is no need to write code to instantiate and start ServiceHost, as we did with self hosting. 
+ 
+	Here are the steps to host a wcf service in IIS
+	1: Create New WCF IIS Website, Delete (I)Service.cs, add reference HelloService, Rename Service.svc file to HelloService.svc. change HelloService.svc file.
+		<%@ ServiceHost Language="C#" Debug="true" Service="HelloService.HelloService"%>
+
+	2: Copy and paste the following code in web.config file , no need net.tcp baseaddress because does not support
+	<?xml version="1.0" encoding="utf-8" ?>
+	<configuration>
+	  <system.serviceModel>
+	    <behaviors>
+	      <serviceBehaviors>
+		<behavior name="mexBehavior">
+		  <serviceMetadata httpGetEnabled="true" />
+		</behavior>
+	      </serviceBehaviors>
+	    </behaviors>
+	    <services>
+	      <service behaviorConfiguration="mexBehavior" name="HelloService.HelloService">
+		<endpoint address="HelloService" binding="basicHttpBinding" contract="HelloService.IHelloService" />
+		<host>
+		  <baseAddresses>
+		    <add baseAddress="http://localhost:8080" />
+		  </baseAddresses>
+		</host>
+	      </service>
+	    </services>
+	  </system.serviceModel>
+
+	</configuration>
+
+	3: Configure IIS, run from client
+	
+Part 30 - Advantages and disadvantages of hosting wcf service in IIS
+====================================================================
+	Advantages:
+		1. No code required to host the service: The ServiceHost directive in .svc file is responsible for creating an instance of ServiceHost when required. 
+		   There is no need to write code to instantiate and start ServiceHost, as is the case with self hosting.
+		2. Automatic message based activation: IIS provides automatic message based activation. This means that the service can be activated on demand. 
+		   When a message arrives at the service, it then launches itself and fulfils the request. In case of self hosting, the service should always be running.
+		3. Automatic process recycling: IIS provides the capability of automatic process recycling, if the process is not healthy and 
+		   if it's taking a long time to service the requests. We don't get automatic process recycling with self hosting.
+
+	Disadvantages:
+		Hosting WCF service in IIS 5.1 and IIS 6.0 is limited to HTTP communication only. This means we can only use HTTP related bindings. 	
+		
+Part 31 - WAS(Windows Process Activation Service) hosting in WCF
+================================================================
+	if add web.config, "<add baseAddress="net.tcp://localhost:8090"/>", i will get error
+	"Could not find a base address that matches scheme net.tcp for the endpoint with binding NetTcpBinding. Registered base address schemes are [http]."
+	because other protocol is not open. to fix the issue below steps
+	
+	By default IIS supports only HTTP protocol. If you want to use NON-HTTP protocols like TCP, 
+	we need to install "Windows Communication Foundation Non-HTTP Activation" component and WAS component. 
+	WAS is supported on the following platforms with IIS 7 and above. 
+
+	To support NON-HTTP protocols in IIS, we need to do the following
+		1. Install WAS and "Windows Communication Foundation Non-HTTP Activation component"
+		2. Enable NON-HTTP protocol support in IIS for your application
+
+	Installing WAS and "Windows Communication Foundation Non-HTTP Activation" component
+		Type "Turn Windows fetures on or off option" -> select WAS, expand "Microsoft .NET Framework 3.5.1" and select "Windows Communication Foundation Non-HTTP Activation"
+
+	Enable NON-HTTP protocol support in IIS for your application
+		IIS -> Right click on your application - Manage Application - Advanced Settings -> set Enabled Protocols = http, net.tcp
+		
+		Added Bindings -> net.tcp -> Binding Information  "808:*"		
+
+	At this point we should be able to use both HTTP and TCP protocols
+
+	If you get an error stating - Could not load type 'System.ServiceModel.Activation.HttpModule' from assembly 'System.ServiceModel, Version=3.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.
+	Run VS Command Prompt as an administrator, aspnet_regiis.exe -iru
+
+	If you get an error stating - {System.ServiceModel.EndpointNotFoundException: The message could not be dispatched because the service at the endpoint address 
+	'net.tcp://venkat-pc/HelloService/HelloService.svc/HelloService' is unavailable for the protocol of the address.
+	Run VS Command Prompt as an administrator, C:\Windows\Microsoft.NET\Framework64\v4.0.30319> ServiceModelReg.exe -r
+
+	These days most of the companies host their wcf services in IIS with WAS (Windows Process Activation Service) enabled as it has the following benefits
+		1. No code required to host the service
+		2. IIS provides process recycling, automatic message based activation, idle time management etc
+		3. Supports all transport protocols including the NON-HTTP protocols like TCP, named pipes etc 
+
+Part 32 - Message Exchange Patterns - default Request-Reply = > [OperationContract] or [OperationContract(IsOneWay = false)] //both are same
+============================================================
+	Message Exchange Pattern describes how the client and the wcf service exchange messages. 
+	WCF supports the following 3 Message Exchange Patterns. 
+		1. Request-Reply (Default)   2. One-Way   3. Duplex
+
+	Request-Reply:
+		1.Client sends a message to a WCF Service and then waits for a reply. 
+		  During this time the client stops processing until a response is received from the wcf service.
+		2. The client waits for the service call to complete even if the operation return type is void.  //void RequestReplyOperation()
+		3. All WCF bindings except the MSMQ-based bindings support the Request-Reply Message Exchange Pattern.
+		4 In a Request-Reply message exchange pattern faults and exceptions get reported to the client immediately if any.
+		5. IsOneWay parameter of OperationContract attribute specifies the Message Exchange Pattern. 
+		   The default is false. This means that, if we don't specify this parameter, then the Message Exchange Pattern is Request/Reply. 
+
+
+	Service Implementation:
+	public class SampleService : ISampleService {
+	    // This method simply introduces 2 seconds of artifical processing time using Thread.Sleep(2000) and returns a string
+	    public string RequestReplyOperation() {
+		DateTime dtStart = DateTime.Now;
+		Thread.Sleep(2000);
+		DateTime dtEnd = DateTime.Now;
+
+		return dtEnd.Subtract(dtStart).Seconds.ToString() + " seconds processing time";
+	    }
+
+	    // This method throws an NotImplementedException exception
+	    public string RequestReplyOperation_ThrowsException() {
+		throw new NotImplementedException();
+	    }}
+
+	Create a windows client application and add a reference to the WCF service. 
+	        SampleService.SampleServiceClient lient = new SampleService.SampleServiceClient();
+		
+		private void btnRequestReplyOperation_Click (object sender, EventArgs e) {
+		    try {
+			listBox1.Items.Add("Request-Reply Operation Started @ " + DateTime.Now.ToString());
+			listBox1.Items.Add(client.RequestReplyOperation());
+			listBox1.Items.Add("Request-Reply Operation Completed @ " + DateTime.Now.ToString());
+		    } catch (Exception ex) {
+			MessageBox.Show(ex.Message);
+		    }
+		}
+
+		//After click "The method or operation is not implemented" error throws
+		//Next click, error throws "The communication object, ..sevicechangel cannot be used for communication 
+		//because it is in the faulted state." ,  even btnRequestReplyOperation_Click also throws same error.
+		private void btnRequestReplyOperation_ThrowsException_Click (object sender, EventArgs e){
+		    try {
+			listBox1.Items.Add("Request-Reply Throws Exception Operation Started @ " + DateTime.Now.ToString());
+			client.RequestReplyOperation_ThrowsException();
+			listBox1.Items.Add("Request-Reply Throws Exception Operation Completed @ " + DateTime.Now.ToString());
+		    } catch (Exception ex) {
+			MessageBox.Show(ex.Message);
+		    }
+		}}}
+
+Part 33 - OneWay Message Exchange Pattern in WCF => [OperationContract(IsOneWay = true)]
+===============================================
+	Only one message is exchanged between the client and the service. The client makes a call to the service method, 
+	but does not wait for a response message. So, in short, the receiver of the message does not send a reply message, 
+	nor does the sender of the message expects one. 
+
+	As messages are exchanged only in one way, faults if any while processing the request does not get reported.
+
+	Clients are unaware of the server channel faults until a subsequent call is made.
+
+	An exception will be thrown, if operations marked with IsOneWay=true declares output/by-reference parameters or return value. 
+		string OneWayOperation(), void OneWayOperation(out int), void OneWayOperation(ref int)
+
+	Are OneWay calls same as asynchronous calls? No, they are not. [Clicked couple of times]
+	When a oneway call is received at the service, and if the service is busy serving other requests, then the call 
+	gets queued and the client is unblocked and can continue executing while the service processes the operation in 
+	the background. One-way calls can still block the client, if the number of messages waiting to be processed has 
+	exceeded the server queue limit. So, OneWay calls are not asynchronous calls, they just appear to be asynchronous.
+
+	Service Implementation:
+	public void OneWayOperation() {
+	    Thread.Sleep(2000);
+	}
+
+	//1st click, nothinkg, 2nd click throws error "the socket connection was aborted,...."
+	//3rd click error "the communcation object, servicechanel...."
+	public void OneWayOperation_ThrowsException(){
+	    throw new NotImplementedException();
+	}
+
+Part 34 - Duplex message exchange pattern using Request/Reply or OneWay operations - CallbackContract, ServiceContract
+================================================
+	processing of report is a lengthy operation  
+		- use request reply pattern, the client has to wait to report processing to complete, so it doesn't make sense
+		- use oneway pattern, the client initiates & immediately freed up, the problem  no way to send the status back to the client
+					     
+		ex the clients wants the % of report processing, oneway is not possible, to achieve this by using duplex messaging pattern
+
+		if the WCF service has to send message to a client then we need some sort of listener or a callback method at the client 
+		that the WCF service can call and pump messages into and that callback method will take the responsibility of displaying 
+		that information in whatever control that the client wants
+
+	1.Duplex messaging pattern can be implemented using Request/Reply. 
+	
+	    // Associate callback contract with service contract using CallbackContract attribute
+	    [ServiceContract(CallbackContract = typeof(IReportServiceCallback))]
+	    public interface IReportService {
+		// Since we have not set IsOnway=true, the operation is Request/Reply operation
+		[OperationContract]
+		void ProcessReport();
+	    }
+
+	    // This is the callback contract
+	    public interface IReportServiceCallback  {
+		// Since we have not set IsOnway=true, the operation is Request/Reply operation
+		[OperationContract]
+		void Progress(int percentageComplete);
+	    }
+
+	    public class ReportService : IReportService {
+		public void ProcessReport() {
+		    for (int i = 1; i <= 100; i++)     {
+			// some logic to process the report
+			Thread.Sleep(100);
+			// Get the callback channel to send messages to the client
+			OperationContext.Current.GetCallbackChannel<IReportServiceCallback>().Progress(i);
+		    }}}}
+
+	    client side	
+	    // The Form1 class implements IReportServiceCallback interface
+	    public partial class Form1 : Form, ReportService.IReportServiceCallback   {
+
+		private void btnProcessReport_Click(object sender, EventArgs e) {
+		    InstanceContext instanceContext = new InstanceContext(this);
+		    ReportService.ReportServiceClient client =  new ReportService.ReportServiceClient(instanceContext);
+		    client.ProcessReport();
+		}
+
+		// This method recevies the progress update from the WCF service
+		// Report processing percentage is displayed in the textbox control
+		public void Progress(int percentageComplete) {
+		    //TextBox.CheckForIllegalCrossThreadCalls = false;
+		    textBox1.Text = percentageComplete.ToString() + " % completed";
+		}
+
+		Run server and client -> click on "Process Report" button. At this point we will get the following exception.
+		This operation would deadlock because the reply cannot be received until the current Message completes processing. 
+		If you want to allow out-of-order message processing, specify ConcurrencyMode of Reentrant or Multiple on ServiceBehaviorAttribute.
+
+		To fix the above error, we need to do 2 things
+			a) In ReportService.cs file, set ConcurrencyMode to Reentrant as shown below.
+			      [ServiceBehavior(ConcurrencyMode=ConcurrencyMode.Reentrant)]
+			      public class ReportService : IReportService
+			b) In Form1.cs file in DuplexClient project, set UseSynchronizationContext to false as shown below.
+			      [CallbackBehavior(UseSynchronizationContext = false)]
+			      public partial class Form1 : Form, ReportService.IReportServiceCallback
+
+		Run server & client
+		
+		Getting error, "An exception of type 'System.InvalidOperationException' occurred in System.Windows.Forms.dll but was not handled in user code
+		Additional information: Cross-thread operation not valid: Control 'textBox3' accessed from a thread other than the thread it was created on."
+		so i added  TextBox.CheckForIllegalCrossThreadCalls = false;
+		
+	2.Duplex messaging pattern can be implemented using OneWay operations. 
+	
+		 Remove ServiceBehavior attribute
+		   //[ServiceBehavior(ConcurrencyMode = ConcurrencyMode.Reentrant)]
+		   public class ReportService : IReportService
+
+		Remove CallbackBehavior attribute
+		   //[CallbackBehavior(UseSynchronizationContext = false)]
+		   public partial class Form1 : Form, ReportService.IReportServiceCallback
+
+		Set OneWay true
+		    [OperationContract(IsOneWay = true)]
+		    void ProcessReport();
+
+		    [OperationContract(IsOneWay = true)]
+		    void Progress(int percentageComplete);
+
+	
+Part 35 - Sending large messages in WCF using MTOM (Message Transmission Optimization Mechanism)
+==================================================
+	Sending large binary messages in WCF using MTOM for better performance.
+
+	The default message encoding mechanism in WCF is Text, which base64 encodes data. This has the following 2 disadvantages
+		1. Base64 encoding bloats the message size by approximately 33%.
+		2. Involves additional processing overhead to base64 encode and decode. 
+
+	The preferred approach to send large binary messages in WCF is to use MTOM message encoding. 
+	MTOM does not base64 encode data. means, the additional processing overhead to base64 encode and decode data is removed. 
+	Hence, MTOM can significantly improve the overall message transfer performance. 
+
+	With Text Message encoding, the binary data is base64 encoded and it is embedded in the SOAP envelop. 
+	With MTOM, binary data is included as a MIME (Multipurpose Internet Mail Extensions) attachment.
+
+	Create a project
+	    [ServiceContract]
+	    public interface IDownloadService	    {
+		[OperationContract]
+		File DownloadDocument();
+	    }
+
+	    [DataContract]
+	    public class File	    {
+		[DataMember]
+		public string Name { get; set; }
+
+		[DataMember]
+		public byte[] Content { get; set; }
+	    }
+
+
+	    public class DownloadService : IDownloadService	    {
+		public File DownloadDocument()		{
+		    File file = new File();
+		    file.Content = System.IO.File.ReadAllBytes(@"C:\Data\Introduction to WCF.ppt");
+		    file.Name = "Introduction to WCF.ppt";
+
+		    return file;
+		}   }
+
+	configuration - we are using Text message encoding.
+	    <bindings>
+	      <wsHttpBinding>
+		<!-- <binding name="wsHttp"/>  both are same default messageEncoding =text" 
+		the below code explicity described -->
+		<binding name="wsHttp" messageEncoding="Text"/>
+	      </wsHttpBinding>
+	    </bindings>
+	    ...
+	      <service behaviorConfiguration="mexBehavior" name="DownloadService.DownloadService">
+		<endpoint address="DownloadService" binding="wsHttpBinding"
+			  bindingConfiguration="wsHttp"
+			  contract="DownloadService.IDownloadService" />
+	      </service>
+
+	Client
+		private void button1_Click(object sender, EventArgs e){
+		    DownloadService.DownloadServiceClient client = new DownloadService.DownloadServiceClient();
+		    DownloadService.File file = client.DownloadDocument();
+		    System.IO.File.WriteAllBytes(@"C:\DownloadedFiles\" + file.Name, file.Content);
+		    MessageBox.Show(file.Name + " downloaded");
+		}
+
+	Run the client application, you will get the following error.
+	The maximum message size quota for incoming messages (65536) has been exceeded. 
+	To increase the quota, use the MaxReceivedMessageSize property on the appropriate binding element.
+
+		To fix this specify maxReceivedMessageSize and maxArrayLength both in the WCF service and the client.
+		<bindings>
+		  <wsHttpBinding>
+		  <!-- removed all options and added messageEncoding (no need), maxReceivedMessageSize is default 65536 ->
+		    <binding name="wsHttp" messageEncoding="Text" maxReceivedMessageSize="700000">
+		      <readerQuotas maxArrayLength="700000"/>
+		    </binding>
+		  </wsHttpBinding>
+		</bindings>
+
+	Fiddler tool and notice the data that is exchanged between the client and the WCF service.
+		Insepectors 
+		Content Type is application / soap + xml
+		TextView => The large binary message is base64 encoded and is part of SOAP envelope 
+		
+		Click on Statistics tab and notice bytes received 
+		
+	Sending large messages in wcf => set messageEncoding="Mtom" in both the WCF service and the client
+		<bindings>
+		  <wsHttpBinding>
+		    <binding name="wsHttp" messageEncoding="Mtom" maxReceivedMessageSize="700000">
+		      <readerQuotas maxArrayLength="700000"/>
+		    </binding>
+		  </wsHttpBinding>
+
+		</bindings>
+
+	Run the client application, Mtom message encoding in wcf
+		Content Type is multipart/related
+		The large binary message is not base64 encoded and included as a MIME attachment
+
+		Click on Statistics tab and notice bytes received 
+
+	The bytes received with MTOM is significantly less, when compared with Text message encoding. 
+
+Part 36 - Instancing modes in WCF
+================================
+	Instancing modes are also called as instance context modes.
+	
+	Instance context mode dictates, how long the service instance remains on the server. 
+	WCF Client	Request/Response 	WCF Service  [Service Instance]
+
+	There are 3 instancing modes 
+	1. PerCall - A new instance of service object is created for every request, 
+		irrespective of whether the request comes from the same client or a different client.
+
+	2. PerSession - A new instance of the service object is created for each new client session 
+		and maintained for the duration of that session.
+
+	3. Single - A single instance of the service object is created and handles all requests for the lifetime 
+		of the application, irrespective of whether the request comes from the same client or a different client.
+
+	How do you specify what instancing mode you want to use?
+		    [ServiceBehavior(InstanceContextMode = InstanceContextMode.PerCall)]
+
+Part 37 - PerCall instance context mode in WCF
+==============================================
+	When the instance context mode for a wcf service is set to PerCall, a new instance of 
+	the wcf service object is created for every request, irrespective of whether the request 
+	comes from the same client or a different client. 
+
+    [ServiceContract]
+    public interface ISimpleService   {
+        [OperationContract]
+        int IncrementNumber();
+    }
+
+    // Set InstanceContextMode to PerCall
+    [ServiceBehavior(InstanceContextMode = InstanceContextMode.PerCall)]
+    public class SimpleService : ISimpleService   {
+        int _number;
+        public int IncrementNumber()        {
+            _number = _number + 1;
+            return _number;
+        }    }}
+        
+	Client
+        public static void Main()      {
+            SimpleService.SimpleServiceClient client =   new SimpleService.SimpleServiceClient();
+            int number = client.IncrementNumber();
+            Console.WriteLine("Number after first call = " + number);
+            number = client.IncrementNumber();
+            Console.WriteLine("Number after second call = " + number);
+            number = client.IncrementNumber();
+            Console.WriteLine("Number after third call = " + number);
+        }
+
+	Run the application, and you should see the following output. 
+	Number after first call = 1
+	Number after first call = 1
+	Number after first call = 1
+
+	So, what's happening? Why is the number not incremented beyond 1?
+		The reason for this is simple. We have set instance context mode of the WCF service to PerCall. 
+		This means that, every time we call IncrementNumber() method from the client application, 
+		1. A new instance of SimpleService is created
+		2. Private variable _number in the wcf service is initialized to ZERO. The method returns 
+		   the incremented value 1 to the client and the service instance object is destroyed.
+		3. When a subsequent call is made either from the same client or different client, 
+		   the above steps are repeated. Hence the number always stays at 1.
+
+	What are the implications of a PerCall WCF service?
+		1. Better memory usage as service objects are freed immediately after the method call returns
+		2. Concurrency not an issue
+		3. Application scalability is better 
+		4. State not maintained between calls.
+		5. Performance could be an issue as there is overhead involved in reconstructing the 
+		   service instance state on each and every method call. 
+
+
+Part 38 - PerSession instance context mode in WCF
+==================================================
+	When the instance context mode for a wcf service is set to PerSession, a new instance of the 
+	service object is created for each new client session and maintained 
+	for the duration of that session. (default session timeout is 10 minutes)
+	
+	[ServiceBehavior(InstanceContextMode = InstanceContextMode.PerSession)]
+	public class SimpleService : ISimpleService
+
+	the above example, run, the value gets incremented each time. 
+	Number after first call = 1
+	Number after first call = 2
+	Number after first call = 3
+	
+	What are the implications of a PerCall WCF service?
+		1. State maintained between calls.
+		2. Greater memory consumption as service objects remain in memory until 
+		  the client session times out. This negatively affects application scalability.
+		3. Concurrency is an issue for multi-threaded clients
+
+	Interview question: 
+		How do you design a WCF service? 
+		Would you design it as a PerCall service or PerSession service?
+	
+		This is a tricky question. We can't blindly say one is better over the other. 
+		1. PerCall and PerSession services have different strengths and weaknesses. 
+
+		2. If you prefer using object oriented programming style, then PerSession is your choice. 
+		   On the other hand if you prefer SOA (Service Oriented Arhcitecture) style, 
+		   then PerCall is your choice.
+
+		3. In general, all things being equal, the trade-off is performance v/s scalability. 
+		    PerSession services perform better because the service object does not have 
+		    to be instantiated on subsequent requests. 
+		    PerCall services scale better because the service objects are destroyed 
+		    immediately after the method call returns.
+
+		So the decision depends on the application architecture, performance & scalability needs. 
+		
+	if you have 100000 client, you will have 100000 objects in the server, so object will stay untill
+	the session time outs
+	
+Part 39 - PerSession WCF services
+=================================
+
+	1.Does all bindings support sessions
+		No, not all bindings support sessions. For example basicHttpBinding does not support session. 
+		If the binding does not support session, then the service behaves as a PerCall service.
+
+		Please refer to the MSDN link below, to check which bindings do and donot support sessions
+		http://msdn.microsoft.com/en-us/library/ms730879(v=vs.110).aspx
+
+	2. How to control the WCF service session timeout? The default session timeout is 10 minutes. 
+		1.If you want to increase or decrease the default timeout value, Set receiveTimeout attribute 
+		<bindings>
+		  <netTcpBinding>
+		    <binding name="netTCP" receiveTimeout="00:00:10"/> //10 seconds remain, add both places
+		  </netTcpBinding>
+		</bindings>
+
+		2: Associate the binding element with the endpoint using bindingConfiguration attribute as shown below.
+		<endpoint address="SimpleService" binding="netTcpBinding" contract="SimpleService.ISimpleService" 
+			bindingConfiguration="netTCP"/>
+
+	3. What happens when the session timeout is reached
+		When the session timeout is reached, the connection to the wcf service is closed. As a result, the communication 
+		channel gets faulted and the client can no longer use the same proxy instance to communicate with 
+		the service. This also means that along with the session, the data in the service object is also lost.
+
+		After the session has timed out, 
+		1. On the first attempt to invoke the service using the same proxy instance would result in the following exception.
+		"The socket connection was aborted. This could be caused by an error processing your message or a 
+		receive timeout being exceeded by the remote host, or an underlying network resource issue. 
+		Local socket timeout was '00:00:59.9355444'."
+
+		2. On the second attempt, the following exception will be thrown
+		"The communication object, System.ServiceModel.Channels.ServiceChannel, cannot be used 
+		for communication because it is in the Faulted state."
+
+	4.How to fix, The communication channel is in a faulted state exception, 
+		Catch the CommunicationException & Check if the communication channel is in a faulted state 
+		and create a new instance of the proxy class.
+		try{
+		    MessageBox.Show("Number = " + client.IncrementNumber().ToString());
+		} catch (System.ServiceModel.CommunicationException){
+		    if (client.State == System.ServiceModel.CommunicationState.Faulted) {
+			MessageBox.Show("Session timed out. Your existing session will be lost. A new session will now be created");
+			client = new SimpleService.SimpleServiceClient();
+		 }}	
+
+
+Part 40 - How to retrieve the sessionid in WCF service and in the client application
+====================================================================================
+	In order to send messages from a particular client to a particular service instance on the server, WCF uses SessionId.  
+					
+					Service Instance for Client 1
+	SID:92F88Dcc-979c-$F29		SID:92F88Dcc-979c-$F29	
+	Client 1
+					WCF Service
+					
+					Service Instance for Client 2
+	SID:2222222c-979c-$F29		SID:2222222c-979c-$F29	
+	Client 2
+
+	There are different types of sessions in WCF.
+
+	To retrieve SessionId from the client application use  procyClassInstance.InnerChannel.SessionId property
+
+	To retrieve SessionId from the WCF service use OperationContext.Current.SessionId
+	
+	Run both client & server has different ids, the reason
+	Client Session ID uuid:60cb60da-4531-493d-8c51-ecbb45292bc7;id=1
+	Server Session ID uuid:123456da-4531-493d-8c51-ecbb45292bc7;id=1
+	
+	The client-side and service-side session IDs are corelated using the reliable session id. 
+	So, if TCP binding is being used with reliable sessions disabled then the client and server session id's will be different. 
+	On the other hand, if reliable sessions are enabled, the session id's will be same.
+
+	Enable reliable sessions using the binding element as shown below
+	<bindings>
+	  <netTcpBinding>
+	    <binding name="netTCP" receiveTimeout="00:00:10">
+	      <reliableSession enabled="true"/>
+	    </binding>
+	  </netTcpBinding>
+	</bindings>
+
+	With wsHttpBinding, irrespective of whether reliable sessions are enabled or not, the session id's will be same. 		
+
+Part 41 - Single (Singleton) instance context mode in WCF
+=============================================
+	When the instance context mode for a wcf service is set to Single, only one instance of the wcf service 
+	class is created to handle all requests, from all clients.
+
+
+	Client 1 Request/Response	Single WCF
+					
+		|-> Request/Response	Service
+	Client 2|			
+		|-> Request/Response	Instance
+
+
+	[ServiceBehavior(InstanceContextMode = InstanceContextMode.Single)]
+	public class SimpleService : ISimpleService
+	
+	When run the above example, i have 2 client exe, A Exe is clicked, number is 1, A Exe clicked number is 2,
+	B Exe clicked number is 3, A Exe is clicked number is 4.
+
+	Implications of creating a wcf service with Single instance context mode:
+		1. Since a single service instance is serving all client requests, state is maintained and 
+		   shared not only between requests from the same client but also between different clients.
+		2. Concurrency is an issue
+		3. Throughput can be an issue. To fix the concurrency issue, we can configure the service to 
+		  allow only a single thread to access the service instance. But the moment we do it throughput 
+		  becomes an issue as other requests queue up and wait for the current thread to finish it's work. 	
+		  
+
+Part 42 - ServiceContract SessionMode Enumeration in WCF
+========================================
+	Use SessionMode enumeration with the Service Contract to require, allow, or prohibit bindings to use sessions. 
+	SessionMode enum has the following members.
+	Allowed (default) : Service contract supports sessions if the binding supports them.
+	NotAllowed : Service contract does not support bindings that initiate sessions.
+	Required : Service contract requires a binding that supports session. 
+
+	Example 1: Set the service InstanceContextMode to Single and SessionMode to Allowed. 
+		[ServiceContract(SessionMode = SessionMode.Allowed) ]
+    		interface ISampleService	
+		If we use basicHttpBinding that does not support sessions, the service still works but without session.
+			Run 2 client exe, when click 1exe, number 1,2, but no sessionid, click 2nd exe, number is increased 3,4 but no session
+			same as server no session id
+		If we use, netTcpBinding that support sessions, the service gets a session, and continue to work as a singleton service.
+			Run 2 client exe, when click 1exe, number 1,2, with sessionid, click 2nd exe, number is increased 3,4 with session id
+			server also contains no session id
+
+	Example 2: Now change SessionMode to Required.
+		[ServiceContract(SessionMode = SessionMode.Allowed) ]
+		If we use, netTcpBinding that support sessions, the service gets a session, and continue to work as a singleton service.
+			Run 2 client exe, when click 1exe, number 1,2, with sessionid, click 2nd exe, number is increased 3,4 with session id
+			server also contains no session id
+		If we use basicHttpBinding that does not support sessions, the following exception is thrown
+			When run server host, i got error.
+			"System.InvalidOperationException: Contract requires Session, but Binding 'BasicHttpBinding' doesn't support 
+			it or isn't configured properly to support it."
+
+	The following MSDN link, shows all the possible combinations of Service Instance Context Mode values and 
+	SessionMode enumeration values, and the end result of using each of these combinations with bindings that 
+	does and does not support sessions.
+	http://msdn.microsoft.com/en-us/library/system.servicemodel.sessionmode(v=vs.110).aspx 		  
+
+[ServiceBehavior(ConcurrencyMode = ConcurrencyMode.Single)]
+ConcurrencyMode can be - Single(default), Reentrant, Multiple
+Part 43 - Single concurrency mode in WCF - 
+=======================================
+	To understand concurrency better, we need to understand
+		1. Instance Context Modes in WCF - Discussed in Parts 36 to 42 in WCF video series
+		2. Multithreading concepts - Discussed in Parts 86 to 97 in C# video series
+
+	In addition,understand the term throughput. Throughput is the amount of work done in a specified amount of time.
+
+	Multiple threads executing the application code simultaneously is called as concurrency. 
+	In general with concurrency we get better throughput. However, concurrency issues can occur 
+	when multiple threads access the same resource. In WCF, Service Instance is a shared resource. 
+
+	A single thread can access the service instance at any given point in time. While a request is being processed 
+	by the service instance, an exclusive lock is acquired and all the other threads will have to wait until the current 
+	request completes and the lock is released. Upon relasing the lock, next thread in the queue can access the service instance.
+
+	Single concurrency mode with the 3 different instance context modes available in WCF
+		PerCall - each request is served by a new instance of the service
+		PerSession - all requests from a single proxy instance are served by the same service instance
+		Single - all requests are served by the same instance of the service
+
+    [ServiceContract]
+    public interface ISimpleService {
+        [OperationContract]
+        List<int> GetEvenNumbers();
+
+        [OperationContract]
+        List<int> GetOddNumbers();
+    }
+
+    [ServiceBehavior(ConcurrencyMode = ConcurrencyMode.Single, InstanceContextMode = InstanceContextMode.PerSession)]
+    public class SimpleService : ISimpleService {
+        public List<int> GetEvenNumbers() {
+            Console.WriteLine("Thread {0} started processing GetEvenNumbers at {1}",
+                Thread.CurrentThread.ManagedThreadId, DateTime.Now.ToString());
+            List<int> listEvenNumbers = new List<int>();
+            for (int i = 0; i <= 10; i++) {
+                Thread.Sleep(200);
+                if (i % 2 == 0) {
+                    listEvenNumbers.Add(i);
+                }
+            }
+            Console.WriteLine("Thread {0} completed processing GetEvenNumbers at {1}",
+                Thread.CurrentThread.ManagedThreadId, DateTime.Now.ToString());
+            return listEvenNumbers;
+        }
+
+        public List<int> GetOddNumbers() {
+            Console.WriteLine("Thread {0} started processing GetOddNumbers at {1}",
+                Thread.CurrentThread.ManagedThreadId, DateTime.Now.ToString());
+            List<int> listOddNumbers = new List<int>();
+            for (int i = 0; i <= 10; i++) {
+                Thread.Sleep(200);
+                if (i % 2 != 0) {
+                    listOddNumbers.Add(i);
+                }
+            }
+            Console.WriteLine("Thread {0} completed processing GetOddNumbers at {1}",
+                Thread.CurrentThread.ManagedThreadId, DateTime.Now.ToString());
+            return listOddNumbers;
+        }}
+
+        <add baseAddress="net.tcp://localhost:8090" />
+
+	Design the form as shown below. 
+	Get Even Numbers	Get Odd Numbers
+	ListBox			LisBox
+	Clear Results
+	2 instances of background workers 
+	
+    	public partial class Form1 : Form{
+    	    SimpleService.SimpleServiceClient client;
+
+        public Form1(){
+            client = new SimpleService.SimpleServiceClient();
+        }
+
+        private void btnGetEvenNumbers_Click (object sender, EventArgs e){
+            backgroundWorker1.RunWorkerAsync();
+        }
+
+        private void btnGetOddNumbers_Click (object sender, EventArgs e){
+            backgroundWorker2.RunWorkerAsync(); //invoke
+        }
+
+        private void btnClearResults_Click (object sender, EventArgs e){
+            listBoxEvenNumbers.DataSource = null;
+            listBoxOddNumbers.DataSource = null;
+        }
+
+        private void backgroundWorker1_DoWork (object sender, DoWorkEventArgs e){
+            e.Result = client.GetEvenNumbers();
+        }
+
+        private void backgroundWorker1_RunWorkerCompleted (object sender, RunWorkerCompletedEventArgs e){
+            listBoxEvenNumbers.DataSource = (int[])e.Result;
+        }
+
+        private void backgroundWorker2_DoWork (object sender, DoWorkEventArgs e){
+            e.Result = client.GetOddNumbers();
+        }
+
+        private void backgroundWorker2_RunWorkerCompleted (object sender, RunWorkerCompletedEventArgs e){
+            listBoxOddNumbers.DataSource = e.Result;
+        }
+  
+
+	Test the WCF service using the Windows Client application while changing the binding and Instance Context Mode.
+
+	Whether a WCF service handles client requests concurrently or not depends on 3 things
+		1. Service Instance Context Mode
+		2. Service Concurrency Mode and
+		3. Whether if the binding supports session or not 
+
+	Instance	Concurrency	Binding		Concurrent Calls processed			Throughput Impact		
+	Context		Mode		supports
+	Mode				session
+	-----------------------------------------------------------------------------------------------------------------------
+	[ServiceBehavior(ConcurrencyMode = ConcurrencyMode.Single, InstanceContextMode = InstanceContextMode.PerCall)]
+	PerCall		Single		No	Yes						Positive
+		press button Get Even and odd  Numbers buttons, both will start
+		Thread 4 started processing GetOddNumbers at 4/6/2018 3:41:54 PM
+		Thread 5 started processing GetEvenNumbers at 4/6/2018 3:41:54 PM
+		Thread 4 completed processing GetOddNumbers at 4/6/2018 3:41:56 PM
+		Thread 5 completed processing GetEvenNumbers at 4/6/2018 3:41:56 PM
+
+	PerCall		Single		Yes		No						Negative
+		changed to netTcpBinding, set base address, so one thread is allowed at a time, even process then odd will process
+		Thread 3 started processing GetOddNumbers at 4/6/2018 3:46:27 PM
+		Thread 3 completed processing GetOddNumbers at 4/6/2018 3:46:29 PM
+		Thread 4 started processing GetEvenNumbers at 4/6/2018 3:46:29 PM
+		Thread 4 completed processing GetEvenNumbers at 4/6/2018 3:46:32 PM
+		
+	PerSession	Single		No		Yes						Positive
+	PerSession	Single		Yes		Yes - Between Different client requests		Positive - Between clients
+							No - For the requests from the same client	Negative - For the same client requests	
+		start 2 client exe, press get even numbers from 2 exe, it's "Yes" , but press even and odd from one exe, it's "No"							
+	
+	Single		Single		No		No						Negative - Between clients and for the requests from the same client
+	Single		Single		Yes		No						Negative - Between clients and for the requests from the same client
+	
+Part 44 - Multiple concurrency mode in WCF
+==========================================
+	With Multiple concurrency mode an exclusive lock is not acquired on the service instance. This means multiple threads 
+	are allowed to access the service instance simultaneously and we get better throughput. However, shared resources 
+	if any must be protected from concurrent access by multiple threads to avoid concurrency issues. 
+	
+	Single Concurrency Mode		Multiple Concurrency Mode
+	T1 T2 T3 T4 T5			T1 T2 T3 T4 T5
+	|  |  |  |  |			|  |  |  |  |
+	|  ----------			|  |  |  |  |
+	V    Blocked 			V  V  V  V  v
+					No Lock. All Threads allowed access
+	Service Instance		Service Instance
+
+	When concurrency mode is set to Multiple, requests are processed concurrently by the service instance 
+	irrespective of the Service Instance Context Mode and whether if the binding supports session or not. 
+	
+	Instance	Concurrency	Binding supports	Concurrent Calls	Throughput
+	Context Mode	Mode		session			processed		Impact
+	-------------------------------------------------------------------------------------------------------
+	PerCall		Multiple	No			Yes			Positive
+	PerCall		Multiple	Yes			Yes			Positive
+	PerSession	Multiple	No			Yes			Positive
+	PerSession	Multiple	Yes			Yes			Positive
+	PerCall		Multiple	No			Yes			Positive
+	Single		Multiple	Yes			Yes			Positive
+	Single		Multiple	No			Yes			Positive
+	
+
+Part 45 - Reentrant concurrency mode in WCF
+===========================================
+	Reentrant mode allows the WCF service to issue callbacks to the client application.  
+	
+	Client	-> Client Request -> 	WCF
+		<-Call back <-	  	Service
+		->Call back Response->	 Instance
+	
+	1. The WCF service concurrency mode is set to Single. This means only one thread is allowed to access the service instance.
+	2. Client makes a request to the WCF Service. The service instance gets locked by the thread that is executing the 
+	   client request. At this point no other thread can access the service instance, until the current thread 
+	   has completed and released the lock.
+	3. While the service instance is processing the client request, the service wants to callback the client. 
+	   The callback operation is not one way. This means the response for the callback from the client needs to 
+	   get back to the same service instance, but the service instance is locked and the response from the client 
+	   cannot reenter and access the service instance. This situation leads to a deadlock.
+
+	There are 2 ways to solve this problem.
+		1. Set the concurrency mode of the WCF service to Reentrant. OR
+		2. Make the callback operation oneway. When the callback operation is made oneway, 
+		  the service is not expecting a response for the callback from the client, so locking will not be an issue.
+	example => Part 34 - Duplex message exchange pattern using Request/Reply or OneWay operations - CallbackContract
+ 
+Part 46 - WCF throttling
+=========================
+    [ServiceContract]
+    public interface ISimpleService {
+        [OperationContract(IsOneWay = true)]
+        void DoWork();
+    }
+
+    [ServiceBehavior(ConcurrencyMode = ConcurrencyMode.Multiple, InstanceContextMode = InstanceContextMode.PerCall)]
+    public class SimpleService : ISimpleService {
+        public void DoWork() {
+            Thread.Sleep(1000);
+            Console.WriteLine("Thread {0} processing request @ {1}", Thread.CurrentThread.ManagedThreadId, DateTime.Now);
+        }}
+
+	basicHttpBinding
+
+        static void Main() {
+            SimpleService.SimpleServiceClient client = new SimpleService.SimpleServiceClient();
+            for (int i = 1; i <= 100; i++) {
+                Thread thread = new Thread(client.DoWork);
+                thread.Start();
+            }
+            
+	Run, client, server display          
+	Thread 6 processing request @ 4/6/2018 5:19:31 PM
+	Thread 8 processing request @ 4/6/2018 5:19:31 PM
+	Thread 4 processing request @ 4/6/2018 5:19:32 PM
+	Thread 5 processing request @ 4/6/2018 5:19:32 PM
+	Thread 9 processing request @ 4/6/2018 5:19:32 PM
+	Thread 6 processing request @ 4/6/2018 5:19:33 PM
+	Thread 9 processing request @ 4/6/2018 5:19:33 PM
+	Thread 8 processing request @ 4/6/2018 5:19:33 PM
+	Thread 5 processing request @ 4/6/2018 5:19:33 PM
+	
+	5:19:31 at that time there are 2 threads 6,8, these threads are currently executing on the do work operation
+	5:19:32/33 at that time there are 3/4 threads, so basically at the moment we don't have control on 
+		how many concurrent calls are being executed now, want to control that use the throttling settings.
+
+	What is throughput? - Throughput is the amount of work done in a given time. In addition to Service 
+	Instance Context Mode and Concurrency Mode, Throttling settings also influence the throughput of a WCF service.
+
+	Throttling settings can be specified either in the config file or in code
+
+	Throttling settings in config file
+	<behaviors>
+	  <serviceBehaviors>
+	    <behavior name="throttlingBehavior">
+	      <serviceThrottling
+		maxConcurrentCalls="3"  //max concurrent calls is how many concurrent calls a process at maximum , similiary others
+		maxConcurrentInstances="3"
+		maxConcurrentSessions="100"/>
+	    </behavior>
+	  </serviceBehaviors>
+	</behaviors>
+
+	Throttling settings in code
+	using (ServiceHost host = new ServiceHost(typeof(SimpleService.SimpleService))) {
+	    ServiceThrottlingBehavior throttlingBehavior = new ServiceThrottlingBehavior {
+		MaxConcurrentCalls = 3,
+		MaxConcurrentInstances = 3,
+		MaxConcurrentSessions = 100
+	    };
+	    host.Description.Behaviors.Add(throttlingBehavior);
+	    host.Open();
+	    Console.WriteLine("Host started @ " + DateTime.Now.ToString());
+	    Console.ReadLine();
+	}
+
+	With the above throttling settings a maximum of 3 concurrent calls are processed.
+	
+	Run, client, server display          
+		Thread 6 processing request @ 4/6/2018 5:29:31 PM
+		Thread 8 processing request @ 4/6/2018 5:29:31 PM
+		Thread 8 processing request @ 4/6/2018 5:29:31 PM
+		Thread 5 processing request @ 4/6/2018 5:29:32 PM
+		Thread 9 processing request @ 4/6/2018 5:29:32 PM
+		Thread 8 processing request @ 4/6/2018 5:29:32 PM
+		
+
+	5:29:31/32/33 only three concurrent calls a process,  because we limited the number of concurrent.
+
+	In addition to maxConcurrentCalls property, maxConcurrentInstances and maxConcurrentSessions may also 
+	impact the number of calls processed concurrently.
+
+	For example, if we set maxConcurrentCalls="3", maxConcurrentInstances="2", and maxConcurrentSessions="100", 
+	With a PerCall instance context mode, only 2 calls are processed concurrently. This is because every call requires a 
+	new service instance, and here we are allowing only a maximum of 2 concurrent instances to be created.
+		Thread 6 processing request @ 4/6/2018 5:39:31 PM
+		Thread 8 processing request @ 4/6/2018 5:39:31 PM
+		Thread 8 processing request @ 4/6/2018 5:39:32 PM
+		Thread 5 processing request @ 4/6/2018 5:39:32 PM
+		
+	With a Single instance context mode, 3 calls are processed concurrently. This is because with a singleton 
+	service there is only one service instance which handles all the requests from all the clients. With singleton 
+	maxConcurrentInstances property does not have any influence.
+	[ServiceBehavior(ConcurrencyMode = ConcurrencyMode.Single, InstanceContextMode = InstanceContextMode.PerCall)]
+	
+		with singletoninstance context mode the max concurrent instances property is actually irrelevant
+
+	Please note: maxConcurrentSessions is the sum of all types of sessions, that is 
+		1. Application sessions  2. Transport sessions  3. Reliable sessions 4. Secure sessions
+
+	Defaults:
+	Before WCF 4.0
+		MaxConcurrentCalls: 16
+		MaxConcurrentSessions: 10
+		MaxConcurrentInstances: MaxConcurrentCalls + MaxConcurrentSessions (26)
+
+	WCF 4.0 and later
+		MaxConcurrentCalls: 16 * processor count
+		MaxConcurrentSessions: 100 * processor count
+		MaxConcurrentInstances: MaxConcurrentCalls + MaxConcurrentSessions 
+		
+
+Part 47 - WCF security
+========================
+	First let's understand some of the fundamental security terms
+		Authentication - The process of identifying the sender and recipient of the message.
+		Authorization - The process of determining what rights the authenticated user has.
+		Confidentiality - The process of ensuring that only the intended recipient of the message can view the 
+			message as it is being transmitted from the sender to the receiver. We achieve confidentiality 
+			by encrypting the message.
+		Integrity - The process of ensuring that the message is not tampered with by a malicious user as it is 
+			being transmitted from the sender to the receiver. We achieve Integrity by signing the messages.
+			
+			Client---Message(not encrypting, plain text)---WCF Service
+				integrity by signing message,  the sender of the message is going to digitally sign the message upon
+				that message arriving at the recipient the recipient is going to check the digital signature 
+				if there is a mismatch obviously the message is tampered with as it was being transmitted from the
+				sender to the receiver
+		
+		Most of the bindings in WCF except the basic HTTP binding provides all of these(above) security features 
+		the basic HTTP binding is the only binding which does not provide any of these security features by default (None)
+
+
+	Bindings in WCF determine the security scheme. 
+	http://msdn.microsoft.com/en-us/library/ms731092(v=vs.110).aspx
+
+	Notice that the default security scheme for NetTcpBinding is Transport and for WSHttpBinding it is Message. 
+	Difference between Message security and Transport security.
+	From a security perspective, when sending a message between a client and a WCF service, there are 2 things to consider
+		1. The WCF Message itself
+		2. The medium or protocol (HTTP, TCP, MSMQ) over which the message is sent
+
+	Transport Security - Securing the transport channel is called transport security. Each of the protocols (HTTP, TCP, MSMQ etc) 
+		have their own way of providing transport security. 
+		TCP provides transport security, by implementing Transport Layer Security (TLS). 
+			The TLS implementation is provided by the OS. 
+		HTTP provides transport security by using Secure Sockets Layer (SSL) over HTTP. 
+	Transport security provides only point-to-point channel security. It means if there is 	an intermediary 
+		(Load balancer, proxy etc) between, then that intermediary has direct access to content of the message.
+		That's because transport security provide security at the transport layer so when the message reaches the
+		intermediary the message itself is not protected which means that intermediary has access to 
+		the contents of the message before it is ultimately sent to the ultimate recipient.
+
+	Message Security -Securing the message itself by encapsulating the security credentials with every SOAP message is called message security. 
+		As the message itself is protected, it provides end to end security.
+
+	Explains all the differences between message and transport security and when to use one over the other.
+		http://msdn.microsoft.com/en-us/library/ms733137.aspx
+
+    [ServiceContract]
+    public interface IHelloService {
+        [OperationContract]
+        string GetMessage(string message);
+    }
+    public class HelloService : IHelloService {
+        public string GetMessage(string message) {
+            return "Hello " + message;
+        }
+    }
+
+	wsHttpBinding (With wsHttpBinding by default, the SOAP message body is Encrypted and Signed)
+
+
+    public partial class Form1 : Form {
+        private void btnGetMessage_Click(object sender, EventArgs e) {
+            HelloService.HelloServiceClient client =
+                new HelloService.HelloServiceClient();
+            MessageBox.Show(client.GetMessage(textBox1.Text));
+        }
+
+	Run, see logging(Part 9), message is Encrypted.
+	
+	In the WCF Service config file change security mode to None as shown below.
+	<bindings>
+	  <wsHttpBinding>
+	    <binding name="wsHttp">
+	      <security mode="None">
+	      </security>
+	    </binding>
+	  </wsHttpBinding>
+	</bindings>
+
+	Add binding configuration with the endpoint
+	<endpoint...  bindingConfiguration="wsHttp"/>
+
+	Run, see the log, the message is not encrypted and signed. 
+
+
+Part 48 - Controlling WCF message protection using ServiceContract & OperationContract ProtectionLevel parameter
+==============================================================================
+	The following 6 attributes has the ProtectionLevel named parameter, which implies that 
+	ProtectionLevel can be specified using any of the below 6 attributes. They are specified in the order of precedence. 
+	For example ProtectionLevel specified at an operation contract level overrides the ProtectionLevel specified 
+	at the service contract level.
+		ServiceContractAttribute  (over ride below )
+		      OperationContractAttribute
+			    FaultContractAttribute
+			    MessageContractAttribute
+				     MessageHeaderAttribute
+				     MessageBodyMemberAttribute
+
+	ProtectionLevel specified on the ServiceContract will be applicable for all the operation contracts within 
+	that service contract. ProtectionLevel specified on the OperationContract will be applicable for just that 
+	OperationContract. If we specify ProtectionLevel on a MessageContract, then that protection level will be 
+	applicable for all messages of that MessageContract type.
+
+	When we use wsHttpBinding, by default the messages are encrypted and signed. Encryption provides confidentiality 
+	and signing provides integrity. To customize the level of message protection use ProtectionLevel parameter.
+
+	ProtectionLevel enum has the following values
+		None - No protection. Message is not signed and not encrypted. Provides only authentication.
+		Sign - No encryption but is digitally signed to ensure the integrity of the message
+		EncryptAndSign - Message is encrypted and then signed to ensure confidentiality and integrity of the message
+
+    [ServiceContract]
+    public interface IHelloService {
+        //[OperationContract(ProtectionLevel = ProtectionLevel.None)]
+        string GetMessageWithoutAnyProtection();
+
+        //[OperationContract(ProtectionLevel = ProtectionLevel.Sign)]
+        string GetSignedMessage();
+
+        //[OperationContract(ProtectionLevel = ProtectionLevel.EncryptAndSign)]
+        string GetSignedAndEncryptedMessage();
+    }
+
+    public class HelloService : IHelloService {
+        public string GetMessageWithoutAnyProtection() {
+            return "Message without signature and encryption";
+        }
+
+        public string GetSignedMessage() {
+            return "Message with signature but without encryption"; //but digitialy signed
+        }
+
+        public string GetSignedAndEncryptedMessage(){
+            return "Message signed and encrypted";
+        }
+    
+	wsHttpBinding
+
+
+    public partial class Form1 : Form {
+        SimpleService.HelloServiceClient client = new SimpleService.HelloServiceClient();
+        
+        private void btnGetMessage_Click(object sender, EventArgs e) {
+            MessageBox.Show(client.GetMessageWithoutAnyProtection());
+        }
+
+        private void btnGetSignedMessage_Click (object sender, EventArgs e) {
+            MessageBox.Show(client.GetSignedMessage());
+        }
+
+        private void btnGetSignedEncryptedMessage_Click (object sender, EventArgs e) {
+            MessageBox.Show(client.GetSignedAndEncryptedMessage());
+        }
+    
+
+	Run, all are encrypted & signed
+	now add enable [OperationContract(ProtectionLevel = ProtectionLevel.None)]
+	Now enable message logging for the WCF Service.Run, examine the logged messages. 
+	
+	We can specify protection level @ [ServiceContract(ProtectionLevel = ProtectionLevel.Sign)] level	
+
+
+Part 49 - WCF bindings and the impact on message (OperationContract) protection
+==========================================================
+	What happens if the binding does not provide security, and you have explicitly set ProtectionLevel other than None
+	An exception will be thrown. 
+
+	For example, out of the box security is not enabled for basicHttpBinding. So, if you set ProtectionLevel 
+	other than None using the ProtectionLevel named parameter as shown below
+	[ServiceContract]
+	public interface IHelloService {
+	    [OperationContract(ProtectionLevel = ProtectionLevel.None)]
+	    string GetMessageWithoutAnyProtection();
+
+	    [OperationContract(ProtectionLevel = ProtectionLevel.Sign)]
+	    string GetSignedMessage();
+
+	    [OperationContract(ProtectionLevel = ProtectionLevel.EncryptAndSign)]
+	    string GetSignedAndEncryptedMessage();
+	}
+
+	basicHttpBinding
+
+	The following exception will be be thrown
+	"Unhandled Exception: System.InvalidOperationException: The request message must be protected. This is required by an operation 
+	of the contract ('IHelloService','http://tempuri.org/'). The protection must be provided by the binding 
+	('BasicHttpBinding','http://tempuri.org/')."
+
+	In general ProtectionLevel parameter is used to enforce the minimum level of protection required. If the binding does not 
+	provide that minimum level of protection then an exception will be thrown. 	
+	
+
+Part 50 - Authentication in WCF
+===============================
+	For example, out of the box, both wsHttpBinding and netTcpBinding provides windows authentication. Let's understand this with an example.
+	    [ServiceContract]
+	    public interface ISimpleService    {
+		[OperationContract]
+		string GetUserName();
+	    }
+
+	    public class SimpleService : ISimpleService    {
+		public string GetUserName()        {
+		    Console.WriteLine("Is Authenticated: " +
+			ServiceSecurityContext.Current.PrimaryIdentity.IsAuthenticated);
+		    Console.WriteLine("Authentication Type: " +
+			ServiceSecurityContext.Current.PrimaryIdentity.AuthenticationType);
+		    Console.WriteLine("Username: " +
+			ServiceSecurityContext.Current.PrimaryIdentity.Name);
+
+		    return "Authenticated User Name: " +
+			ServiceSecurityContext.Current.PrimaryIdentity.Name;
+		}    }
+
+	wsHttpBinding
+
+        private void btnCallService_Click(object sender, EventArgs e)  {
+            SimpleService.SimpleServiceClient client = new SimpleService.SimpleServiceClient();
+            MessageBox.Show(client.GetUserName());
+        }
+
+	Run, you should see the following
+		1. Whether if the client is Is Authenticated
+		2. Authentication Type 
+		3. Authenticated user name
+
+	App.config => change from wsHttpBinding to netTcpBinding. Run, netTcpBinding also provides windows authentication by default.
+	
+	Click exe, select run as different user.
+
+	To customize the security mode for a binding, use mode attribute of security element with in the respective binding 
+		 <netTcpBinding>
+		        <binding name="netTCP">
+		          <security mode="None|Transport|Message|TransportWithMessageCredential"/>
+		        </binding>
+      		</netTcpBinding>
+
+	To customize the authentication mode for a binding, use clientCredentialType attribute of either the message element or transport element with in the respective binding 
+		<security mode="Transport|Message">
+			<transport clientCredentialType ="None|Windows|Cerficate"/>
+			<message clientCredentialType ="None|Windows|UserName|Cerficate|IssuedToken"/>
+		</security>
+		
+Part 51 - Message confidentiality and integrity with transport security
+=======================================================================
+	Part 47, we discussed Message confidentiality and integrity with message based security by logged message. 
+	Out of the box, wsHttpBinding provides message based security. 
+	Message based security automatically encrypts and signs the message to provide confidentiality and integrity.
+
+	Out of the box, netTcpBinding provides transport security. Even with transport security, all messages are encrypted and digitially signed. 
+	Let's discuss this with an example (the above example). 
+
+	At the moment we are using netTcpBinding which provides transport security.
+
+	Run, the logged messages are in plain text (we expected the message are encrypted and digitially signed). 
+	The reason for this is that, the messages are encrypted and signed at the transport layer. 
+	By the time the message is arrived at the log it is already decrypted. 
+
+Part 52 - Configure wsHttpBinding to use transport security and basic client credential type  
+==============================================================================================
+	The following are the defaults of wsHttpBinding 
+		Security Mode - Message
+		ClientCredentialType - Windows
+
+	The following MSDN article contains all the system provided bindings and their security defaults.
+	http://msdn.microsoft.com/en-us/library/ms731092(v=vs.110).aspx
+
+	use the above example, Hosting wcf service in iis with wsHttpBinding
+
+	Client app.config, Notice that the defaults of wsHttpBinding are being used
+		<security mode="Message">
+		<message clientCredentialType="Windows"/>
+
+	Run, snspect the logged messages, the body of the SOAP message is encrypted, which implies that the wsHttpBinding is using message based security.
+
+	Create a self-signed SSL certificate using IIS. Add Https binding using the self-signed SSL certificate
+
+	In IIS, configure SSL settings for SimpleService -> Select "Require SSL" & "Accept" checked -> "Apply" link button. 
+
+	 web.config, to customize the wsHttpBinding to use Transport security and Basic client credential type.
+		<bindings>
+		  <wsHttpBinding>
+		    <binding name="wsHttp">
+		      <security mode="Transport">
+			<transport clientCredentialType="Basic"/>
+		      </security>
+		    </binding>
+		  </wsHttpBinding>
+		</bindings>
+
+	 Associate the above customization with the service endpoint using bindingConfiguration attribute as shown below.
+	<endpoint ...   bindingConfiguration="wsHttp"/>
+
+	At this point, trying to navigate to https://localhost/SimpleService/SimpleService.svc will throw the following error.
+	"Security settings for this service require 'Basic' Authentication but it is not enabled for the IIS application that hosts this service."
+
+	To fix the above error, enable 'Basic' Authentication in IIS. -> enable Basic Authentication in IIS 
+
+	Trying to navigate to https://localhost/SimpleService/SimpleService.svc will throw the following error.
+	"The HttpGetEnabled property of ServiceMetadataBehavior is set to true and the HttpGetUrl property is a relative address, 
+	but there is no http base address.  Either supply an http base address or set HttpGetUrl to an absolute address."
+
+	To fix the above error, change <serviceMetadata httpGetEnabled="true" /> to <serviceMetadata httpsGetEnabled="true" />. 
+	Now Try, you can see the SimpleService WSDL.
+
+	Client application, re create with https://localhost/SimpleService/SimpleService.svc.  
+	App.config, notice that instead of the defaults of wsHttpBinding, we are now using "Transport" security mode and "Basic" client credential type.
+		<security mode="Transport">
+		<transport clientCredentialType="Basic"/>
+
+	Run, The following error will be thrown."The username is not provided. Specify username in ClientCredentials."
+
+	To fix 
+	private void btnCallService_Click(object sender, EventArgs e){
+	    SimpleService.SimpleServiceClient client = new
+		SimpleService.SimpleServiceClient();
+	    client.ClientCredentials.UserName.UserName = "WindowsUserName";
+	    client.ClientCredentials.UserName.Password = "Password";
+	    MessageBox.Show(client.GetMessage("Pragim"));
+	}
+
+	Run, inspect the logged messages, the body of the SOAP message is not encrypted, which implies that the wsHttpBinding is now using Transport security. 
+	
+	
+Part 53 - Configure netTcpBinding to use message security
+========================================================
+	use netTcpBinding, the above sample code
+	Run, the logged messages -> the body of the SOAP message is not encrypted, which implies that the default security mode (transport security) of netTcpBinding is being used. 
+	Transport security provides message protection(Encryption and Digital signatures) at the transport layer. 
+	By the time the message is arrived at the message log it is already decrypted. 
+	That is the reason why we see messages in plain text in the log.
+
+	Change  <binding name="netTcp">      <security mode="Message"></security>    </binding>
+	add bindingConfiguration="netTcp"/>
+
+	Run ,the logged messages -> the body of the SOAP message is encrypted, which implies that the netTcpBinding is now using Message security. 	
+
+
+WCF Template in VS
+===================
+	WCF Service Library - A simple service library which uses App.config is the configuration file.
+
+	WCF Service Application - It will create a website & will be hosting a Service in it. Web.config is configuration settings.
+
+	WCF Workflow Service Application - It is useful when you want your workflow to be accessed as a web service.
+	
+	Syndication service Library - It is useful when you want to expose RSS as a web service.
+	
+WCF Architecture
+=================
+	- 4 layers with a service-oriented programming model
+		Application
+		Contracts -> Contract  - Data, Operation, Message, Service, Fault., Policy & Binding
+		Service Runtime -> Behavior - Throttling, Error, Metadata, Instance, Message, Transaction, Dispatch, Concurrenty., Parameter Filtering
+		Messaging -> Channel - WS Security, WS Reliable Messaging, HTTP,TCP, Transaction Flow, NamedPiped MSMQ., Encoders(Binary/MTOM/XML)
+		Activattion and Hosting - Windows Activation Service, EXE, WindowsSerivces, COM+
+
+Difference between Web Service	WCF
+===================================
+Features	Web Service				WCF
+------------------------------------------------------------
+Hosting		It can be hosted in IIS			It can be hosted in IIS, windows activation service, Self-hosting, Windows service
+Programming	[WebService] attribute has to 		[ServiceContraact] attribute has to be added to the class
+		be added to the class	
+Model		[WebMethod] attribute represents	[OperationContract] attribute represents the method exposed to client 
+		the method exposed to client	
+Operation	One-way, Request- Response are the 	One-Way, Request-Response, Duplex are different type of operations supported in WCF
+		different operations supported in web service	
+XML		System.Xml.serialization name space	System.Runtime.Serialization namespace is used for serialization 
+		is used for serialization		XML 1.0, MTOM, Binary, Custom
+Encoding	XML 1.0, MTOM(Message Transmission 
+		Optimization Mechanism), DIME, Custom	
+Transports	Can be accessed through HTTP, TCP, 	Can be accessed through HTTP, TCP, Named pipes, MSMQ,P2P, Custom
+		Custom	
+Protocols	Security				Security, Reliable messaging, Transactions		
+
+
+ What are the features and advantage of WCF?
+===========================================
+	Features of WCF- WCF is a secure, reliable, and scalable messaging platform for the .NET Framework 3.0,
+		Service Orientation
+		Interoperability	
+		Multiple Message Patterns
+		Service Metadata
+		Data Contracts
+		Security
+		Multiple Transports and Encodings
+		Reliable and Queued Messages
+		Durable Messages
+		Transactions
+		AJAX and REST Support
+		Extensibility
+		Advantages of WCF
+
+	Service Oriented
+		Location Independent
+		Language Independent
+		Platform Independent
+		Support Multiple operation
+		WCF can maintain transaction like COM+ Does
+		It can maintain state
+		It can control concurrency
+		It can be hosted on IIS, WAS, Self hosting, Windows services.
+		It has AJAX Integration and JSON (JavaScript object notation) support.
+		
+Service Contract (ServiceContract) Attributes 
+==============================================
+	ServiceContract defines the operations that a service will perform when executed
+
+	[ServiceContract(
+		CallbackContract = typeof(IReportServiceCallback), 
+		ConfigurationName = "string", 
+		Namespace="IHelloService", 
+		ProtectionLevel =ProtectionLevel.EncryptAndSign|None|Sign, 
+		SessionMode =SessionMode.NotAllowed|Allowed|Required)]		
+
+Operation Contract (OperationContractAttribute) Attributes 		
+==========================================================
+	- It can only be applied on methods. It is used to declare methods which belong to a Service Contract. 
+	  It controls the service description and message formats.
+
+	[OperationContract(
+		Action ="string",  Gets or sets the WS-Addressing action of the request message.
+		AsyncPattern = true, 
+		IsInitiating =true, => initiating session, m1(one/t,init/t,term/f), m2(init/f,term/f), m3(one/t,init/t,term/t), 
+				       called m2,m3 throw exception, called m1, m3 end session, called m1, m2 any times untill m3.
+		IsOneWay =true, 
+		IsTerminating =true,  close the session
+		Name ="string", 
+		ProtectionLevel =ProtectionLevel.EncryptAndSign,
+		ReplyAction ="string")]
+
+Transactions in WCF
+====================
+	 types of the Transactions - Atomic, Long Running
+	 Phases of WCF Transaction - Prepare & commit
+
+	TransactionFlowOption.Allowed|Mandatory|NotAllowed
+
+	[ServiceContract]
+	public interface IService{
+	    [OperationContract]
+	    [TransactionFlow(TransactionFlowOption.Allowed  )]
+	    bool AddEmployee(int id, string name, int salary);
+	}
+
+	public class Service : IService{
+	    [OperationBehavior(TransactionScopeRequired = true)]
+	    public bool AddEmployee(int id, string name, int salary)   {
+		try{
+		    //Insert the employee tables inside the transaction
+		    SqlConnection conn = ...
+		    SqlCommand cmd = new SqlCommand("INSERT ...", conn);
+		    cmd.CommandType = System.Data.CommandType.Text;
+		    conn.Open();
+		    cmd.ExecuteNonQuery();
+		    conn.Close();
+		    return true;
+		}catch(Exception ex){
+		    //return false ;
+		    throw new FaultException(ex.Message);
+		}}}
+
+	    <bindings>
+	      <wsHttpBinding>
+		<binding name="myTransactionBinding" transactionFlow="true"/>
+	      </wsHttpBinding>
+	    </bindings>
+
+	Client
+	
+            bool result=false ;
+
+            using (TransactionScope ts = new TransactionScope
+                            (TransactionScopeOption.RequiresNew)) {
+                try{
+
+                    EmployeeService.ServiceClient service = 
+                                new EmployeeService.ServiceClient();
+                    result = service.AddEmployee(1, "test", 3000);
+                    ts.Complete();
+                } catch (Exception ex){
+                    ts.Dispose();
+                    Console.WriteLine(ex.Message);
+                }
+            }
+
+          
+            if( result == true )
+                Console.WriteLine("Employee details add successfully");
+            else
+                Console.WriteLine ("Error while adding employee details");
+
+            Console.ReadLine();
+        }
+
+	Output shows the employee detail is added successfully and DB also shows the new entry is made
+
+	transaction by throwing the exception from server side after successful execution of employee details insert statement
+
+	try{
+            SqlConnection conn = ...
+            conn.Close();
+            //Throw Exception after successful insert statement execution
+            throw new Exception("Sample exeception for testing");
+            return true;
+        } catch(Exception ex){
+            //return false ;
+            throw new FaultException(ex.Message);
+        }
+
+	Run, Error is thrown after insert statement, DB is not updated. 
+	Because all the code execution is comes under the transaction so failure in 
+	any module of code will revert back all code execution.	 

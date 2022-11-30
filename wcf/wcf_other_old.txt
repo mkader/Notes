@@ -1,0 +1,904 @@
+Windows Communication Foundation (WCF)
+
+Windows Communication Foundation
+A WCF client connects to a WCF service via an Endpoint. Each service exposes its contract via one or more endpoints. 
+An endpoint has an address (which is a URL specifying where the endpoint can be accessed) and binding properties that 
+specify how the data will be transferred.
+
+
+Web Services
+
+A Web Service is programmable application logic accessible via standard Web protocols. Consumers of a Web Service do not need to know anything about the platform, object model, or programming language used to implement the service; they only need to understand how to send and receive SOAP messages (HTTP and XML).
+
+Communication between applications is very important. 
+(Disadvantage) Major limitation 
+ -the communication can happen over HTTP only. 
+ -Only singlex communication,  no half duplex and full duplex communication. 
+ -They work in an stateless fasion over HTTP and are hosted inside a web server like IIS.
+ -Web Services Use XmlSerializer.
+ -Hosting - ASP.NET web services are compiled into a class library assembly and a service file with an extension .asmx
+ -Client Development - Clients for the ASP.NET Web services are generated using the command-line tool WSDL.EXE.
+ -Message Representation - The Header of the SOAP Message can be customized in ASP.NET Web service.
+ -Exception Handling - In ASP.NET Web services, unhandled exceptions are returned to the client as SOAP faults.
+
+Key issues with XmlSerializer to serialize .NET types to XML
+
+Only Public fields or Properties of .NET types can be translated into XML
+Only the classes which implement IEnumerable interface
+Classes that implement the IDictionary interface, such as Hash table cannot be serialized
+
+[WebService] 
+public class Service : System.Web.Services.WebService 
+{ 
+      [WebMethod] 
+      public string Test(string strMsg) 
+      { 
+          return strMsg; 
+      } 
+}
+
+
+WCF
+
+It is a framework for building service-oriented applications. Using WCF, you can send data as asynchronous messages from one service endpoint to another. A service endpoint can be part of a continuously available service hosted. An endpoint can be a client of a service that requests data from a service endpoint. The messages can be as simple as a single character or word sent as XML, or as complex as a stream of binary data.
+
+ -WCF Service support HTTP, TCP, IPC, and even Message Queues for communication.
+ -We can consume Web Services using server side scripts (ASP.NET), JavaScript Object Notations (JSON), and even REST (Representational State Transfer).
+ -It can be configured to have singlex, request-response, or even full duplex communication. 
+ -These can be hosted in many ways inside IIS, inside a Windows service, or even self hosted.
+ -WCF Uses DataContractSerializer which is better in Performance as compared to XmlSerializer.
+ -Hosting - Compile the service type into a class library and a service file with an extension .svc
+ -Client Development - WCF uses the ServiceMetadata tool (svcutil.exe) to generate the client for the service.
+ -Message Representation - WCF provides attributes MessageContractAttribute, MessageHeaderAttribute and MessageBodyMemberAttribute to describe the structure of the SOAP Message.
+ -Exception Handling - unhandled exceptions are not returned to clients as SOAP faults. A configuration setting is provided to have the unhandled exceptions returned to clients for the purpose of debugging.
+
+Important difference between DataContractSerializer and XMLSerializer
+The DataContractSerializer is better performance over Xmlserializer.
+XML Serialization does not indicate which fields or properties of the type are serialized into XML whereas DataCotractSerializer
+ Explicitly shows the which fields or properties are serialized into XML
+The DataContractSerializer can translate the HashTable into XML
+
+The WCF service has the concept of endpoints. A WCF service provides endpoints which client applications can use to communicate with the WCF service. 
+
+In what scenarios must WCF be used
+A secure service to process business transactions.
+A service that supplies current data to others, such as a monitoring service, chat service, Workflow, latest feeds
+
+
+Address (URI): Like a webservice, which can be used by clients to get to the WCF service.
+
+Binding: The binding is what defines how the WCF service handles the communication. It could also define other communication parameters like message encoding, etc. 
+
+Contract: Contract is what defines the public data and interfaces that WCF service provides to the clients.
+
+Creating a WCF Service
+
+1.The Contract part of the WCF service, it contains the DataContract attribute. 
+The attribute specifies the data type of the WCF service. 
+
+[DataContract]
+public class Contact
+{
+    strubg m_name;
+    public Contact() { m_name = ""; }
+
+    public Contact(string name) { m_name = name;}
+
+    [DataMember]
+    public string name { get; set; }
+}
+
+2.Specify the service contracts and operations of the service. 
+Create an interface with the ServiceContract attribute that will list all the functionalities provided by the service.
+Write methods for all operations provided by the service with the OperationContract attribute.
+
+[ServiceContract]
+public interface IContactService
+{
+    [OperationContract]
+    Contact Add(Contact p1, Contact p2);
+    
+    [OperationContract]
+    [WebInvoke(Method = "POST",
+	RequestFormat = WebMessageFormat.Json,
+	BodyStyle = WebMessageBodyStyle.WrappedRequest)]
+    void GenerateXML(string loginGuid, string entityName);
+    
+    [OperationContract]
+    [WebInvoke(Method = "POST",
+	RequestFormat = WebMessageFormat.Json,
+	ResponseFormat = WebMessageFormat.Xml,
+	BodyStyle = WebMessageBodyStyle.WrappedRequest)]
+    string StreetName(string loginGuid, string name);
+    
+}
+
+namespace EDM.VoterManagement.Service
+{
+    [ServiceContract]
+    public interface IFelon
+    {
+        [OperationContract(IsOneWay=true)]
+        [WebInvoke(Method = "POST",
+            RequestFormat = WebMessageFormat.Json,
+            BodyStyle = WebMessageBodyStyle.WrappedRequest)]
+        void OffenderList(string loginGuid);
+    }
+}
+
+3.the service is to implement the functionalities. that is create a class that will implement the interface.
+
+public class ContactService : IContactService
+{
+    Contact IContactService.Add(Contact p1, Contact p2)
+    {
+        Contact result = new Contact();
+
+        result.name = p1.name + " " + p2.name;
+        return result;
+    }
+}
+We have our Contract part declared and defined. 
+
+4.Make the service visible to the client applications and the client extract the meta data information out of the service. so specify the service behavior in the web.config.
+
+<system.serviceModel>
+    <behaviors>
+      <serviceBehaviors>
+        <behavior name="">
+          <serviceMetadata httpGetEnabled="true"/>
+          <serviceDebug includeExceptionDetailInFaults="false"/>
+        </behavior>
+      </serviceBehaviors>
+    </behaviors>
+    <serviceHostingEnvironment multipleSiteBindingsEnabled="true"/>
+</system.serviceModel>
+
+httpGetEnabled="true" which enables the service to provide its meta data when a client requests for it. 
+
+5.Build our WCF service, access the .svc file
+
+http://localhost:1111/WCFTest/ContactService.svc?wsdl
+C#
+
+class Test
+{
+    static void Main()
+    {
+        ContactServiceClient client = new ContactServiceClient();
+        client.Close();
+    }
+}
+
+6.Consuming a WCF Service, Adding the service reference will mainly do two things:
+
+Create the Address and Binding part to access the service in the web.config file.
+Create the proxy class for us to access the service.
+
+<system.serviceModel>
+    <bindings>
+      <basicHttpBinding>
+        <binding name="BasicHttpBinding_IContactService"/>
+      </basicHttpBinding>
+    </bindings>
+    <client>
+      <endpoint address="http://localhost:1111/WCFTest/ContactService.svc" 
+          binding="basicHttpBinding" bindingConfiguration="BasicHttpBinding_IContactService" 
+          contract="ContactServiceReference.IContactServiceService" 
+          name="BasicHttpBinding_IContactServiceService"/>
+    </client>
+</system.serviceModel>
+
+<binding name="SoapBinding" closeTimeout="00:30:00" openTimeout="00:30:00" receiveTimeout="00:30:00" sendTimeout="00:30:00">
+ 
+The web.config shows the address of the WCF service, the binding to use the webservice, and the contract that is being exposed by this web service. All this was generated by extracting the meta data from the service.
+
+7.How to use the proxy class that was generated. 
+
+ContactServiceReference.Contact p1 = new ContactServiceReference.Contact();
+p1.name = txtFirst.Text;
+
+ContactServiceReference.Contact p2 = new ContactServiceReference.Contact();
+p2.name = txtLast.Text;
+
+ContactServiceReference.ContactServiceClient psc = 
+           new ContactServiceReference.ContactServiceClient();
+ContactServiceReference.Contact res = psc.Add(p1, p2);
+
+lblnamem.Text =  res.name;
+
+
+8. Exception Handling in WCF Service - FaultException and FaultContract
+'DivideByZeroException' to demonstrate Exception handling in a WCF service.
+
+A).NET provides a very simple way of dealing with exceptions using try-catch-throw
+
+IArithmaticService.cs
+
+using System.Runtime.Serialization;  
+using System.ServiceModel;  
+  
+namespace FaultContractDemo  
+{  
+    [ServiceContract]  
+    public interface IArithmaticService  
+    {  
+        [OperationContract]  
+        int Divide(int Divident, int Divisor);  
+    }  
+}  
+
+ArithmaticService.svc.cs
+
+using System;  
+using System.ServiceModel;  
+  
+namespace FaultContractDemo  
+{  
+    public class ArithmaticService : IArithmaticService  
+    {  
+        public int Divide(int Divident, int Divisor)  
+        {  
+            int Quotient;  
+            try  
+            {  
+                Quotient = Divident / Divisor;  
+            }  
+            catch (Exception Ex)  
+            {  
+                throw Ex;  
+            }  
+            return Quotient;  
+        }  
+    }  
+}  
+
+Now, let's create a client application to consume this service.
+
+try  
+{  
+	int Divident, Divisor;  
+	int.TryParse(txtFirstNum.Text, out Divident);  
+	int.TryParse(txtSecondNum.Text, out Divisor);  
+	var ObjProxy = new ArithmaticServiceReference.ArithmaticServiceClient();  
+	lblQuotient.Text = ObjProxy.Divide(Divident, Divisor).ToString();  
+}  
+catch (Exception Ex)  
+{  
+	lblException.Text = Ex.Message;  
+}  
+
+4/0, zero for the divisor. You will get an exception as follows.
+
+"System.ServiceModel.FaultException: The server was unable to process the request due to internal error...."
+
+So the exception message indicates something went wrong in the service. But, it is not giving any clear message of what went wrong.
+
+B) FaultException - Since the service and client applications are interacting with each other using SOAP, we need to exception details in SOAP format. We can use FaultException & FaultContract (in System.ServiceModel namespace) to these exception details to the client.
+
+ArithmaticService.svc.cs
+ 
+try  
+{  
+	Quotient = Divident / Divisor;  
+}  
+catch (Exception Ex)  
+{  
+	throw new FaultException(Ex.ToString());  
+}  
+
+Form1.cs
+try  
+{  
+	int Divident, Divisor;  
+	int.TryParse(txtFirstNum.Text, out Divident);  
+	int.TryParse(txtSecondNum.Text, out Divisor);  
+	var ObjProxy = new ArithmaticServiceReference.ArithmaticServiceClient();  
+	lblQuotient.Text = ObjProxy.Divide(Divident, Divisor).ToString();  
+}  
+catch (FaultException Ex)  
+{  
+	lblException.Text = Ex.Message;  
+}              
+
+Now, if you zero for the divisor then you will get an exception like:
+
+"System.ServiceModel.FaultException: System.DivideByZeroException:Attempted to divide by zero. at FaultContractDemo.ArithmaticService.Divide(int32 Divident, int32 Divison) in e:\dns\wcfservice\..."
+
+C) FaultContract - If you want to send some additional details (maybe to describe some business requirements) to the client then you can use a FaultContract.
+ 
+Create a custom class with properties for holding the details you want to send to the client application.
+The method with a FaultContract attribute with the type of object you want to throw.
+
+IArithmaticService.cs
+
+using System.Runtime.Serialization;  
+using System.ServiceModel;  
+  
+namespace FaultContractDemo  
+{  
+    [ServiceContract]  
+    public interface IArithmaticService  
+    {  
+        [OperationContract]  
+        [FaultContract(typeof(CustomExceptionDetails))]  
+        int Divide(int Divident, int Divisor);  
+    }  
+  
+    [DataContract]  
+    public class CustomExceptionDetails  
+    {  
+        [DataMember]  
+        public int Id { get; set; }  
+  
+        [DataMember]  
+        public string Message { get; set; }  
+          
+        [DataMember]  
+        public string Details { get; set; }  
+    }  
+}  
+
+ArithmaticService.svc.cs
+using System;  
+using System.ServiceModel;  
+  
+namespace FaultContractDemo  
+{  
+    public class ArithmaticService : IArithmaticService  
+    {  
+        public int Divide(int Divident, int Divisor)  
+        {  
+            int Quotient;  
+            try  
+            {  
+                if (Divisor == 0)  
+                {  
+                    var ObjCustom = new CustomExceptionDetails  
+                        {  
+                            Message = "Divisor should be non-zero.",  
+                            Details = @"Dividing a number by 0 will always give you infinity,so enter a non-zero number for divisor.",  
+                            Id = 1  
+                        };  
+                    throw new FaultException<CustomExceptionDetails>(ObjCustom);  
+                }  
+                Quotient = Divident / Divisor;  
+            }  
+            catch (Exception Ex)  
+            {  
+                throw Ex;  
+            }  
+            return Quotient;  
+        }  
+    }  
+}  
+
+Form1.cs
+    try  
+    {  
+	int Divident, Divisor;  
+	int.TryParse(txtFirstNum.Text, out Divident);  
+	int.TryParse(txtSecondNum.Text, out Divisor);  
+	var ObjProxy = new ArithmaticServiceReference.ArithmaticServiceClient();  
+	lblQuotient.Text = ObjProxy.Divide(Divident, Divisor).ToString();  
+    }  
+    catch (FaultException<ArithmaticServiceReference.CustomExceptionDetails> Ex)  
+    {  
+	lblException.Text = "Id: " + Ex.Detail.Id + "\nMessage: " + Ex.Detail.Message +  
+			    "\nDetails: " + Ex.Detail.Details;  
+    }  
+    catch (FaultException Ex)  
+    {  
+	lblException.Text = Ex.Message;  
+    }  
+    catch (Exception Ex)  
+    {  
+	lblException.Text = Ex.Message;  
+    }  
+
+
+WCF Service Binding - ABC of WCF
+
+A WCF service allows communication through an Endpoint. And the endpoint is the only point of communication of the WCF service that enables message exchange with the client.
+ 	    expose	    consume		
+WCF service -----> EndPoint <------ WCF Client
+
+And the Endpoint needs to set the ABC attributes of the WCF service.
+
+ 	    expose	          |-> Address 		
+WCF service -----> EndPoint ------|-> Binding
+			          |-> Contract		
+
+An example of the Endpoint,  web.config file at the service side. 
+
+<!-- Endpoint settings in WCF service -->
+<endpoint address="http://localhost:8731/EmployeeWCFService.ServiceImplementation.Manager/" 
+binding="basicHttpBinding" 
+contract="EmployeeWCFService.ServiceContract.IEmployee" />
+
+Where, address is the network address of the service, binding specifies transport protocol (HTTP, TCP, etc.) selected for the service and contract is the interface the service implements. 
+
+So, what is the Binding?
+
+The Binding is an attribute of an endpoint and it lets you configure transport protocol, encoding and security requirements
+
+ 	    expose	          |-> Address 	  |-> Transport Protocol	
+WCF service -----> EndPoint ------|-> Binding ----|-> Security
+			          |-> Contract	  |-> Encoding	
+
+Types of Binding
+
+basicHttpBinding -  It support backward compatibility with ASMX based clients (WS-Basic Profile 1.1). Basic http binding sends SOAP 1.1 messages and is used when there is a requirement for the WCF services to communicate with non WCF based systems. All other bindings except basicHttpBinding support WS* specifications including security, reliable messaging and transaction support, where appropriate.
+
+Step1.
+<endpoint 
+address="http://localhost:8731/EmployeeWCFService.ServiceImplementation.Manager/"
+binding="basicHttpBinding"  
+bindingConfiguration="basicBinding"
+contract=" EmployeeWCFService.ServiceContract.IEmployee">
+
+Step 2: This step is optional and is only required if the binding's default properties need to be modified. 
+
+<bindings>|
+	<basicHttpBinding>
+            <binding    name="basicBinding" textEncoding="utf-8" openTimeout="00:03:00" closeTimeout="00:03:00"/>
+	</basicHttpBinding>           
+</bindings>
+
+Note: All other types of binding are setup in the same way.
+
+wsHttpBinding - It sends SOAP 1.2 messages and implements WS* specifications to support enterprise requirements of security, reliability, ordered delivery and transaction management. 
+
+netTcpBinding - It sends SOAP 1.2 messages, provides binary encoding and optimized communication between WCF services and WCF clients on Windows network. This binding is the fastest binding amongst all WCF binding options between different nodes in the TCP network. Unlike http bindings, the TCP binding does not offer interoperability but is highly optimized. 
+
+netNamedPipeBinding - It is used to provide secure and reliable Named Pipe based communication between WCF services and WCF client on the same machine. It is the ideal choice for communication between processes on the same machine.
+
+netPeerTcpBinding - It is used to peer-to-peer computing using WCF services. 
+
+How to setup the netPeerTcpBinding?
+Step 1: Before peer-to-peer binding can be used, make sure you have Peer Name Resolution Protocol installed on your machine. To enable PNRP on your Windows XP SP2 and above, take following steps:
+
+Go to Add or Remove Programs in the Control Panel
+Select Add/Remove Windows Components option
+Select Networking Services from the list of Components and click Details button
+Select Peer-to-Peer option from the list, as shown in the screenshot, and click the OK button
+
+Additionally, you can also make sure that the PNRP and its dependent services are started as follows:
+Peer Name Resolution Protocol
+Peer Networking
+Peer Networking Group Authentication
+Peer Networking Identity Manager
+
+Step 2: Choose netPeerTcpBinding as a value in the binding attribute of an endpoint. 
+
+<endpoint 
+address="net.p2p://localhost/MemberWCFService.ServiceImplementation.Member/"
+binding="netPeerTcpBinding"  
+bindingConfiguration="netp2pBinding"
+contract="MemberWCFService.ServiceContract.IMember">
+
+Step 3: To configure the binding as shown in the example below. 
+
+<bindings>
+      <netPeerTcpBinding>
+        <binding name="netP2P" >
+          <resolver mode="Pnrp" />
+          <security mode="None" />
+        </binding>
+</netPeerTcpBinding>
+</bindings>
+
+Thumb rules in choosing endpoint' binding
+
+If service to be consumed by clients compatible with SOAP 1.1, use basicHttpBinding for interoperability
+If service to be consumed within the corporate network, use netTCPBinding for performance
+If service to be consumed over the internet and the client is a WCF compatible, use wsHttpBinding.
+If service to be accessible only in the same machine, use netNamedPipeBinding
+If service to be queue messages, use netMsmqBinding
+If service to act as server as well as client in a peer to peer environment, utilise netPeerTcpBinding setting
+
+Binding configuration summary
+
+Following table shows parameters such as security, transport protocol, encoding and hosting environment choices available with different binding for a WCF service. This summary should help choose an appropriate binding for your project environment.
+
+Binding			Security			Transport Protocol	Encoding	Host
+			Default Configurable					Default Other
+basicHttpBinding	None,				HTTP			Text/XML, MTOM	IIS, WAS 
+			Transport, Message, Mixed
+wsHttpBinding		Message, Transport, Mixed	HTTP			Text/XML, MTOM	IIS, WAS
+netTcpBinding		Transport, Message, Mixed	TCP			Binary		WAS
+netNamedPipeBinding	Transport,None			Named Pipe		Binary		WAS
+netMsmqBinding		Message, Transport, None	TCP			Binary		WAS
+netPeerTcpBinding	Transport			P2P			Binary		-
+
+
+Can I have multiple endpoints for a WCF service? Yes
+ 
+Can I have multiple endpoints of the same binding type e.g. multiple endpoints of basicHttpBinding? Yes
+ 
+Can I have multiple endpoints of different binding types to serve different types of clients e.g. an endpoint with basicHttpBinding, an endpoint with wsHttpBinding and an endpoint with netTcpBinging?  Yes
+
+
+WCF Security
+
+Authentication - Authentication as identifying the message sender. Mutual authentication involves authenticating both the sender and the message receiver, to prevent possible attacks. (Windows tokens, username and password, certificates and issued tokens)
+Authorization - After authenticating the message sender, authorization determines what system features and functionality they are entitled to execute. (Windows roles, ASP.NET roles or you can provide custom authorization policies)
+Integrity - Messages should be digitally signed to ensure they have not been altered between sender and receiver.
+Confidentiality - Sensitive messages or specific message parts should be encrypted to ensure they cannot be openly viewed on the wire.
+
+Default Security Settings
+Each binding has a default set of security settings. For example NetTcpBinding, callers must provide Windows credentials for authentication and all message packets are signed and encrypted over TCP protocol. 
+
+<system.serviceModel>
+  <services>
+    <service name ="HelloIndigo.HelloIndigoService" >
+      <endpoint contract ="HelloIndigo.IHelloIndigoService" binding ="netTcpBinding" />
+    </service>
+  </services>
+</system.serviceModel>
+
+Look at the expanded binding configuration illustrating these default settings.
+
+<netTcpBinding>
+  <binding name="netTcp">
+    <security mode="Transport">
+      <transport clientCredentialType="Windows" />
+    </security>
+  </binding>
+</netTcpBinding>
+
+Security Mode (Not all bindings support all security modes.)
+None -  Turns security off.
+Transport - Uses transport security for mutual authentication and message protection.
+Message -  Uses message security for mutual authentication and message protection.
+Both -  Allows you to supply settings for transport and message-level security (only MSMQ supports this).
+TransportWithMessageCredential -  Credentials are passed with the message and message protection and server authentication are provided by the transport layer.
+TransportCredentialOnly - Client credentials are passed with the transport layer and no message protection is applied.
+
+Each transport protocol (TCP, IPC, MSMQ, or HTTP) has their own mechanism for passing credentials and handling message protection. 
+
+For example, this <wsHttpBinding> snippet illustrates how to require UserName credentials be passed with the message.
+
+<wsHttpBinding>
+  <binding name="wsHttp">
+    <security mode="Message">
+      <message clientCredentialType="UserName" />
+    </security>
+  </binding>
+</wsHttpBinding>
+NOTE: 
+
+Client Credential Type
+Transport security supports - windows, Certificate
+Message security supports - None, Windows, UserName, Certificate, IssuedToken
+
+BasicHttpBinding only supports UserName and Certificate credentials.
+
+Protection Level
+By default, all secure WCF bindings will encrypt and sign messages. You cannot disable this for transport security, however, for message security you may wish to disable this for debugging purposes.
+
+Protection-level settings are controlled by the contract. The following example illustrates disabling encryption.
+
+[ServiceContract(Name="HelloIndigoContract", Namespace="http://www.dns.com/2006/06/Samples", ProtectionLevel=ProtectionLevel.Sign)]
+public interface IHelloIndigoService
+{
+  string HelloIndigo(string inputString);
+}
+
+Message protection per operation using the OperationContractAttribute.
+[ServiceContract(Name="HelloIndigoContract", Namespace=http://www.dns.com/2006/06/Samples]
+public interface IHelloIndigoService
+{
+  [OperationContract(ProtectionLevel=ProtectionLevel.Sign)]
+  string HelloIndigo(string inputString);
+}
+
+ProtectionLevel options are:
+None disables message protection. 
+EncryptAndSign provides full message protection and is the default behavior. 
+Sign indicates the message should be signed but not encrypted.
+
+
+Algorithm Suite - Each binding uses Basic256 as the default algorithm suite for message-level security. This suite defines the algorithms and key lengths for cryptographic operations like key signatures, encryption, and key wrap..
+
+<wsHttpBinding>
+  <binding name="wsHttp">
+    <security mode="Message">
+      <message clientCredentialType="UserName" algorithmSuite ="TripleDes" />
+    </security>
+  </binding>
+</wsHttpBinding>
+
+Service Credentials and Negotiation
+
+The default behavior for message security supports negotiation. A service certificate must be specified in the <behaviors> section under <serviceCredentials>.
+
+<behaviors>
+  <serviceBehaviors>
+    <behavior name="serviceBehavior" >
+      <serviceCredentials>
+        <serviceCertificate findValue="RPKey" storeLocation ="LocalMachine" storeName="My" x509FindType ="FindBySubjectName" />
+      </serviceCredentials>
+    </behavior>
+  </serviceBehaviors>
+</behaviors>
+
+You can set negotiateServiceCredential to false in the <message> section to accomplish this.
+
+<wsHttpBinding>
+  <binding name="wsHttp">
+    <security mode="Message">
+      <message clientCredentialType="UserName" negotiateServiceCredential ="false" />
+    </security>
+  </binding>
+</wsHttpBinding>
+
+When negotiation is disabled for Windows client credentials, a Kerberos domain must exist. For other credential types the client must have access to the service public key to encrypt messages.
+
+When you generate a service proxy with configuration settings for the client (using svcutil.exe) an encoded version of the public certificate is supplied in the <identity> section to handle this case.
+
+<client>
+  <endpoint address ="http://localhost:8000/HelloIndigo" binding ="wsHttpBinding" bindingConfiguration ="wsHttp" 
+  contract ="Client.localhost.HelloIndigoContract" name ="WSHttpBinding_HelloIndigoContract">
+    <identity>
+      <certificate encodedValue=" AwAAAAEAAAAUAAAAreiGqilku9hngWEQL1g+ … oBd0vDwZaqjy47g0jFV9pF0VHhoVbTtOA=="/>
+    </identity>
+  </endpoint>
+</client>
+
+It is also possible to install the public key of the service in the client certificate store and retrieve it from there at run time.
+
+Secure Session - to reduce the overhead of one-off key exchange and validation. By default, secure sessions are enabled for message security. A security context token (SCT) is generated through an initial exchange between caller and service. This token is used to authorize and secure subsequent message exchanges.
+
+If the caller plans to make several calls to a service, secure sessions are more efficient. For a single call, however, you can disable this feature by setting establishSecurityContext to false.
+
+<wsHttpBinding>
+  <binding name="wsHttp">
+    <security mode="Message">
+      <message clientCredentialType="UserName" establishSecurityContext ="false" />
+    </security>
+  </binding>
+</wsHttpBinding>
+
+
+Access to resources during a service operation is influenced by three key elements:
+
+Process Identity -  Service operations are executed under the process identity of the service host. For ASP.NET hosts this is usually the ASP.NET account, and for self-hosting it may be a different service account. 
+Security Principal -  .NET role-based security, which may or may not be tied to a Windows account and its roles.
+ServiceSecurityContext -  Provides run time access to other relevant information about the security context for a service operation.
+	AuthorizationContext - Contains one or more claimsets for authorization. Use this information to perform custom authorization.
+	AuthorizationPolicies -  Contains the policies used to grant claims.
+	PrimaryIdentity - Contains the identity claim from the claim set, as a traditional IIdentity reference.
+	WindowsIdentity - Contains the identity claim from the claim set if it is a WindowsIdentity.
+
+You can access the ServiceSecurityContext through the OperationContext.
+
+ServiceSecurityContext security = OperationContext.Current.ServiceSecurityContext;
+
+With that reference, you could implement a custom authorization check that is based on claims. For example, you could check to see that the user was authenticated and that an e-mail claim was also provided.
+
+string user = security.PrimaryIdentity.Name;
+string email = null;
+    
+IEnumerable<Claim> claims = security.AuthorizationContext.ClaimSets[0].FindClaims(ClaimTypes.Email,Rights.PossessProperty);
+    
+foreach (Claim c in claims)
+{
+  email = c.Resource as string;
+}
+if (string.IsNullOrEmpty(user) || email == null)
+  throw new SecurityException  ("Unauthorized access. Email claim not found.");
+  
+
+Role-Based Authorization
+
+The identity of the caller is attached to the executing request thread in the form of a security principal, accessible through the CurrentPrincipal property. System.Threading.Thread.CurrentPrincipal (IIdentity or IsInRole)
+
+Options for role provider include:
+None -  No role provider.
+Windows -  Use Windows roles and add a WindowsPrincipal to the security context.
+UseAspNetProvider -  Use the configured RoleProvider type, which defaults to the ASP.NET role provider.
+Custom -  Relies on a custom authorization policy to add a security principal to the security context.
+
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+	<system.web><httpModules><clear/></httpModules></system.web>
+
+	<system.serviceModel>
+		<bindings>
+			<basicHttpBinding>
+				<binding name="VMBasicHttpBinding" >
+					<security mode="Transport" />
+				</binding>  
+			</basicHttpBinding>
+			<webHttpBinding>
+				<binding name="VMWebHttpBinding" >          
+					<security mode="Transport" />                      
+				</binding>
+			</webHttpBinding>
+		</bindings>
+
+		<behaviors>
+			<serviceBehaviors>
+				<behavior name="VMServiceBehavior">
+					<serviceDebug includeExceptionDetailInFaults="true" httpHelpPageEnabled="True" />
+					<serviceMetadata httpGetEnabled="true" httpsGetEnabled="true" />
+				</behavior>
+			</serviceBehaviors>
+			<endpointBehaviors>        
+				<behavior name="AJAXEndPoint"> <webHttp /> </behavior>
+			</endpointBehaviors>
+		</behaviors>
+
+		<services>
+			<service name="DNSVMervice.PeopleSearch" behaviorConfiguration="VMServiceBehavior">
+				<endpoint address="" binding="webHttpBinding" contract="DNSVMervice.IPeopleSearch" 
+				    bindingConfiguration="VMWebHttpBinding" behaviorConfiguration="AJAXEndPoint" />
+				<endpoint address="mex" binding="mexHttpsBinding" contract="IMetadataExchange"   />
+				<endpoint address="soapreq" binding="basicHttpBinding" 
+				    contract="DNSVMervice.IPeopleSearch" 
+				    bindingConfiguration="VMBasicHttpBinding"/>
+				<host>
+					<baseAddresses>
+						<add baseAddress="https://dnsser.com/DNSVMervice/"/>
+					</baseAddresses>
+				</host>
+			</service>
+			<service name="DNSVMervice.Money" behaviorConfiguration="VMServiceBehavior">
+				<endpoint address="" binding="webHttpBinding" contract="DNSVMervice.IMoney"
+				    bindingConfiguration="VMWebHttpBinding" behaviorConfiguration="AJAXEndPoint"/>
+				<endpoint address="soapreq" binding="basicHttpBinding" contract="DNSVMervice.IMoney"
+				    bindingConfiguration="VMBasicHttpBinding" />
+			</service>
+		</services>
+
+		<!--<serviceHostingEnvironment aspNetCompatibilityEnabled="true" multipleSiteBindingsEnabled="true" />-->
+	</system.serviceModel>
+
+	<system.webServer>
+		<modules runAllManagedModulesForAllRequests="true" />
+		<directoryBrowse enabled="true" />
+	</system.webServer>
+</configuration>
+
+
+
+<!DOCTYPE html />
+<html>
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js"></script>
+</head>
+<body>
+
+    <div style="margin:10px auto;">
+        <input type="text" id="txtStreetName" />
+        <input type="button" value="StreetName" id="btnStreetName" /><br /><br />
+        <input type="button" value="Search" id="btnSearch" /> 
+	<input type="button" value="Off List" id="btnOffList" />
+	<span id="error"></span>
+    </div>
+
+    <script>
+        var loginGuid = "00000000-0000-0000-0000-000000000000";
+	var devurl = "https://dnsser.com/DNSVMervice/";
+        var svcurl = devurl +"PeopleSearch.svc/";
+	var docurl = devurl + "Money.svc/";
+		
+	$('#btnOffList').click(function () {
+            var idata = JSON.stringify({ loginGuid: loginGuid });
+            CallAJAX(docurl + "OffList", idata);
+        });
+				
+        $('#btnStreetName').click(function () {
+            var idata = JSON.stringify({ loginGuid: loginGuid, name: $('#txtStreetName').val() });
+            CallAJAX(svcurl + "StreetName", idata);
+        });
+
+        $('#btnSearch').click(function () {
+            var jsonEntity = "{'Result':'List','SearchFocus':{'Type':'state'},'GeneralFocus':{'First':'a','Last':'ab'}}";
+            CallAJAX(svcurl + "Search", jsonEntity);
+        });
+        
+        function CallAJAX(iurl, idata) {
+            $.ajax({
+                url: iurl,
+                data: idata,
+                type: "POST",
+                dataType: "text",
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    alert(data);
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    $('#error').html(XMLHttpRequest.responseText)
+                    //alert(XMLHttpRequest.responseText);
+                }
+            });
+        }
+
+    </script>
+
+</body>
+</html>
+
+void MoneyProcess(string loginId)
+{
+	string url = "https://dnsser.com/DNSVMervice//Money.svc/soapreq";
+	BasicHttpBinding bhBinding = new BasicHttpBinding();
+	bhBinding.Name = "MoneyService";
+	bhBinding.Security.Mode = BasicHttpSecurityMode.Transport;
+	bhBinding.Security.Transport.ClientCredentialType = HttpClientCredentialType.None;
+	bhBinding.Security.Transport.ProxyCredentialType = HttpProxyCredentialType.None;
+	bhBinding.Security.Message.ClientCredentialType = BasicHttpMessageCredentialType.UserName;
+	EndpointAddress eAddress = new EndpointAddress(url);
+
+	MoneyService.MoneyClient vsclnt = new MoneyService.MoneyClient(bhBinding, eAddress);
+	vsclnt.OffListAsync(loginId);
+}
+
+Features of WCF
+Service Orientation
+Interoperability
+Multiple Message Patterns
+Service Metadata
+Data Contracts
+Security
+Multiple Transports and Encodings
+Reliable and Queued Messages
+Durable Messages
+Transactions
+AJAX and REST Support
+Extensibility
+
+
+Adding Security and Membership to an ASP.NET Web 
+
+<appSettings>
+    <add key="enableSimpleMembership" value="true" />
+</appSettings>
+
+
+Creating a Members-Only Page
+@{
+    if (!WebSecurity.IsAuthenticated) {
+        Response.Redirect("~/Account/Login?returnUrl="
+            + Request.Url.LocalPath);
+    }
+    Layout = "~/_SiteLayout.cshtml";
+    Page.Title = "Members Information";
+}
+
+Roles
+@{
+    Layout = "~/_SiteLayout.cshtml";
+    PageData["Title"] = "Administrators only";
+}
+
+@if ( Roles.IsUserInRole("admin")) {
+    <span> Welcome <b>@WebSecurity.CurrentUserName</b>! </span>
+}
+else {
+     Response.Redirect("~/AdminError");
+}
+
+-----------------------------------------------
+10.   How WCF + Ajax works?
+WebScriptEnablingBehavior
+This is an endpoint behavior that enables a javascript proxy endpoint.  It enables the HTTP programming model for dispatching 
+operations based on a URI templates and provides support for HTTP verb selection (aka RESTful services). 
+WebHttpBinding
+This is a new binding that goes hand in hand with the WebScriptEnablingBehavior.  It is required in order for 
+WebScriptEnablingBehavior to function.  The binding uses a new message encoder that enables plain old xml (POX) 
+messaging rather than SOAP based messaging
+
+WebGet and WebInvoke attributes to the applicable service operation
+
+After enabling AJAX requests, you can generate a javascript proxy for your client by browsing 
+to http://localhost/myWebApp/WeatherService.svc/js (based on the configuration example).  
+You can then use the ASP.NET AJAX ScriptManager to supply a ScriptReference to the javascript proxy:
+<asp:ScriptManager ID="ScriptManager1" runat="server">
+   <Scripts>
+      <asp:ScriptReference Path="~/WeatherService.js" />
+   </Scripts>
+</asp:ScriptManager>
