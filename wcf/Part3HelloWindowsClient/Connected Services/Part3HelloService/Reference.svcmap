@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ReferenceGroup xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ID="f5108fc0-47e3-490d-88a0-04188a7b4ae8" xmlns="urn:schemas-microsoft-com:xml-wcfservicemap">
+  <ClientOptions>
+    <GenerateAsynchronousMethods>false</GenerateAsynchronousMethods>
+    <GenerateTaskBasedAsynchronousMethod>true</GenerateTaskBasedAsynchronousMethod>
+    <EnableDataBinding>true</EnableDataBinding>
+    <ExcludedTypes />
+    <ImportXmlTypes>false</ImportXmlTypes>
+    <GenerateInternalTypes>false</GenerateInternalTypes>
+    <GenerateMessageContracts>false</GenerateMessageContracts>
+    <NamespaceMappings />
+    <CollectionMappings />
+    <GenerateSerializableTypes>true</GenerateSerializableTypes>
+    <Serializer>Auto</Serializer>
+    <UseSerializerForFaults>true</UseSerializerForFaults>
+    <ReferenceAllAssemblies>true</ReferenceAllAssemblies>
+    <ReferencedAssemblies />
+    <ReferencedDataContractTypes />
+    <ServiceContractMappings />
+  </ClientOptions>
+  <MetadataSources>
+    <MetadataSource Address="http://elec106725.accounts.wistate.us/HelloService.svc?wsdl" Protocol="http" SourceId="1" />
+  </MetadataSources>
+  <Metadata>
+    <MetadataFile FileName="HelloService.xsd" MetadataType="Schema" ID="e67655c3-16e0-4ecc-8d9b-04f95d2ad3ea" SourceId="1" SourceUrl="http://elec106725.accounts.wistate.us/HelloService.svc?xsd=xsd1" />
+    <MetadataFile FileName="HelloService1.xsd" MetadataType="Schema" ID="c3c7289d-333b-442e-995b-5afee6a19807" SourceId="1" SourceUrl="http://elec106725.accounts.wistate.us/HelloService.svc?xsd=xsd3" />
+    <MetadataFile FileName="HelloService2.xsd" MetadataType="Schema" ID="10c155c2-5af9-4a94-921d-f68d919d1ebe" SourceId="1" SourceUrl="http://elec106725.accounts.wistate.us/HelloService.svc?xsd=xsd2" />
+    <MetadataFile FileName="EmployeeService.wsdl" MetadataType="Wsdl" ID="719d707f-312a-4c5c-add6-b83e55bec5a3" SourceId="1" SourceUrl="http://elec106725.accounts.wistate.us/HelloService.svc?wsdl" />
+    <MetadataFile FileName="HelloService3.xsd" MetadataType="Schema" ID="f5c82136-2f89-4c05-a32e-e96b57aa1d35" SourceId="1" SourceUrl="http://elec106725.accounts.wistate.us/HelloService.svc?xsd=xsd0" />
+  </Metadata>
+  <Extensions>
+    <ExtensionFile FileName="configuration91.svcinfo" Name="configuration91.svcinfo" />
+    <ExtensionFile FileName="configuration.svcinfo" Name="configuration.svcinfo" />
+  </Extensions>
+</ReferenceGroup>
